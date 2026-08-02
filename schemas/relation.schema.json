@@ -1,0 +1,63 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/relation.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Relation",
+  "allOf": [
+    {
+      "$ref": "entity.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "entity_type",
+        "participants",
+        "purpose",
+        "trust",
+        "reciprocity"
+      ],
+      "properties": {
+        "entity_type": {
+          "const": "relation"
+        },
+        "participants": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "common.schema.json#/$defs/HOSId"
+          }
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "trust": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "reciprocity": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "boundaries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "flow_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/HOSId"
+          }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "continuity_without_hos": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        }
+      }
+    }
+  ]
+}

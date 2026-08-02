@@ -1,0 +1,61 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/intent.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Intent",
+  "allOf": [
+    {
+      "$ref": "entity.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "entity_type",
+        "author_id",
+        "desired_change",
+        "origin",
+        "value_alignment",
+        "confidence",
+        "reversibility"
+      ],
+      "properties": {
+        "entity_type": {
+          "const": "intent"
+        },
+        "author_id": {
+          "$ref": "common.schema.json#/$defs/HOSId"
+        },
+        "desired_change": {
+          "type": "string"
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "self_declared",
+            "co_created",
+            "inferred",
+            "external_request"
+          ]
+        },
+        "value_alignment": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/Confidence"
+        },
+        "time_horizon": {
+          "type": "string",
+          "enum": [
+            "immediate",
+            "short",
+            "medium",
+            "long",
+            "lifelong"
+          ]
+        },
+        "reversibility": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        }
+      }
+    }
+  ]
+}

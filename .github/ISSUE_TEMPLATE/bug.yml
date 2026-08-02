@@ -1,0 +1,33 @@
+name: Błąd
+description: Zgłoś błąd techniczny lub naruszenie zasad Human OS
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Zaobserwowane zachowanie
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Oczekiwane zachowanie
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Kroki odtworzenia
+    validations:
+      required: true
+  - type: dropdown
+    id: constitutional
+    attributes:
+      label: Czy błąd może naruszać Konstytucję?
+      options:
+        - Tak
+        - Nie
+        - Nie wiem
+    validations:
+      required: true

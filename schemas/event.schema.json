@@ -1,0 +1,65 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/event.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Human OS Event",
+  "type": "object",
+  "required": [
+    "id",
+    "event_type",
+    "occurred_at",
+    "actor_id",
+    "subject_ids",
+    "payload",
+    "correlation_id"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/HOSId"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "ENTITY_CREATED",
+        "ENTITY_UPDATED",
+        "ENTITY_ARCHIVED",
+        "CONSENT_GRANTED",
+        "CONSENT_REVOKED",
+        "INTENT_DECLARED",
+        "ACTION_PROPOSED",
+        "ACTION_APPROVED",
+        "ACTION_BLOCKED",
+        "ACTION_EXECUTED",
+        "FLOW_RECORDED",
+        "STATE_OBSERVED",
+        "PROOF_COMPLETED",
+        "LIMITATION_DISCLOSED",
+        "VERSION_RELEASED"
+      ]
+    },
+    "occurred_at": {
+      "$ref": "common.schema.json#/$defs/Timestamp"
+    },
+    "actor_id": {
+      "$ref": "common.schema.json#/$defs/HOSId"
+    },
+    "subject_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/HOSId"
+      }
+    },
+    "payload": {
+      "type": "object"
+    },
+    "correlation_id": {
+      "type": "string"
+    },
+    "causation_id": {
+      "type": "string"
+    },
+    "immutable": {
+      "const": true
+    }
+  },
+  "additionalProperties": false
+}

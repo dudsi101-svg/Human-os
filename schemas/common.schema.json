@@ -1,0 +1,52 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/common.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Human OS Common Definitions",
+  "$defs": {
+    "HOSId": {
+      "type": "string",
+      "pattern": "^HOS-[A-Z]{2,8}-[0-9]{6,}$"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "CapabilityStatus": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "BETA",
+        "LIMITED",
+        "SIMULATED",
+        "DESIGNED",
+        "PLANNED",
+        "DISABLED"
+      ]
+    },
+    "Confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "ConstitutionalStatus": {
+      "type": "string",
+      "enum": [
+        "APPROVED",
+        "APPROVED_WITH_LIMITS",
+        "REQUIRES_CONSENT",
+        "REQUIRES_HUMAN_DECISION",
+        "REQUIRES_REDESIGN",
+        "CONSTITUTIONAL_VIOLATION"
+      ]
+    },
+    "VectorScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "Version": {
+      "type": "string",
+      "pattern": "^0\\.2\\.[0-9]+$"
+    }
+  }
+}

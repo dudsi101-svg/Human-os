@@ -1,0 +1,133 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/human.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Human",
+  "allOf": [
+    {
+      "$ref": "entity.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "entity_type",
+        "state",
+        "consent"
+      ],
+      "properties": {
+        "entity_type": {
+          "const": "human"
+        },
+        "state": {
+          "type": "object",
+          "required": [
+            "health",
+            "energy",
+            "attention",
+            "autonomy",
+            "responsibility",
+            "creative_agency",
+            "relationships",
+            "security",
+            "meaning",
+            "value_alignment",
+            "competence",
+            "resilience"
+          ],
+          "properties": {
+            "health": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "energy": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "attention": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "autonomy": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "responsibility": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "creative_agency": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "relationships": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "security": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "meaning": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "value_alignment": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "competence": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "resilience": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            }
+          },
+          "additionalProperties": false
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "intentions": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/HOSId"
+          }
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "consent": {
+          "type": "object",
+          "required": [
+            "scope",
+            "granted",
+            "recorded_at"
+          ],
+          "properties": {
+            "scope": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "granted": {
+              "type": "boolean"
+            },
+            "recorded_at": {
+              "$ref": "common.schema.json#/$defs/Timestamp"
+            },
+            "expires_at": {
+              "$ref": "common.schema.json#/$defs/Timestamp"
+            },
+            "revocable": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

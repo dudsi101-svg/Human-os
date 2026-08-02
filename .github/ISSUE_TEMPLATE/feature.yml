@@ -1,0 +1,30 @@
+name: Propozycja funkcji
+description: Zaproponuj rozwój zgodny z Konstytucją Human OS
+title: "[Feature]: "
+labels: ["proposal"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem człowieka lub społeczności
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proponowane rozwiązanie
+    validations:
+      required: true
+  - type: textarea
+    id: constitutional
+    attributes:
+      label: Wpływ konstytucyjny
+      description: Jak rozwiązanie wpływa na autonomię, autorstwo, zgodę i możliwość wyjścia?
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Ryzyka i możliwe skutki uboczne
+    validations:
+      required: true

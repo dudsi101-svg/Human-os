@@ -1,0 +1,220 @@
+{
+  "engine": "Human OS Engine",
+  "version": "0.9.0",
+  "status": "BETA",
+  "runtime": "Signed protocol, identity, trust and replay-protection reference runtime",
+  "capabilities": [
+    {
+      "id": "CAP-001",
+      "name": "Structural models",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-002",
+      "name": "State transitions",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-003",
+      "name": "Append-only event store",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-004",
+      "name": "Executable Proof Kernel",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-005",
+      "name": "Generative Flow scoring",
+      "status": "SIMULATED"
+    },
+    {
+      "id": "CAP-006",
+      "name": "Production security",
+      "status": "PLANNED"
+    },
+    {
+      "id": "CAP-007",
+      "name": "Persistent database",
+      "status": "PLANNED"
+    },
+    {
+      "id": "CAP-008",
+      "name": "Independent constitutional audit",
+      "status": "PLANNED"
+    },
+    {
+      "id": "CAP-009",
+      "name": "SQLite persistence",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-010",
+      "name": "Hash-chained event integrity",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-011",
+      "name": "State reconstruction",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-012",
+      "name": "GitHub collaboration environment",
+      "status": "DESIGNED"
+    },
+    {
+      "id": "CAP-013",
+      "name": "Knowledge graph nodes and edges",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-014",
+      "name": "Provenance records",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-015",
+      "name": "Graph traversal",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-016",
+      "name": "Confidence propagation",
+      "status": "SIMULATED"
+    },
+    {
+      "id": "CAP-017",
+      "name": "Cycle and orphan detection",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-018",
+      "name": "Agent identity and manifests",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-019",
+      "name": "Capability grants",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-020",
+      "name": "Tool invocation guard",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-021",
+      "name": "Human approval gates",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-022",
+      "name": "Delegation chain auditing",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-023",
+      "name": "Agent action receipts",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-025",
+      "name": "Scenario definitions",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-026",
+      "name": "Counterfactual branches",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-027",
+      "name": "Simulation invariants",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-028",
+      "name": "Outcome scoring",
+      "status": "SIMULATED"
+    },
+    {
+      "id": "CAP-029",
+      "name": "Monte Carlo uncertainty runs",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-030",
+      "name": "Pre-execution safety gate",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-031",
+      "name": "Human profile records",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-032",
+      "name": "Evidence classification",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-033",
+      "name": "Consent grants and revocation",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-034",
+      "name": "Purpose limitation",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-035",
+      "name": "Consent-aware personalization",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-036",
+      "name": "User correction and contestability",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-038",
+      "name": "Component identity registry",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-039",
+      "name": "Signed protocol envelopes",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-040",
+      "name": "Replay protection",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-041",
+      "name": "Trust policies",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-042",
+      "name": "Key rotation metadata",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-043",
+      "name": "Security gateway",
+      "status": "BETA"
+    }
+  ],
+  "ecosystem": {
+    "constitution": "0.3.0-draft",
+    "protocol": "0.2.0-draft",
+    "specification": "0.2.0-draft",
+    "sdk_python": "0.2.0-alpha",
+    "hub": "0.2.0-prototype"
+  }
+}

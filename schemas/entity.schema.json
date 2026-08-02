@@ -1,0 +1,80 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/entity.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Human OS Base Entity",
+  "type": "object",
+  "required": [
+    "id",
+    "entity_type",
+    "version",
+    "created_at",
+    "updated_at",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/HOSId"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "human",
+        "relation",
+        "flow",
+        "intent",
+        "action",
+        "project",
+        "knowledge",
+        "community",
+        "system",
+        "event"
+      ]
+    },
+    "version": {
+      "$ref": "common.schema.json#/$defs/Version"
+    },
+    "created_at": {
+      "$ref": "common.schema.json#/$defs/Timestamp"
+    },
+    "updated_at": {
+      "$ref": "common.schema.json#/$defs/Timestamp"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "paused",
+        "completed",
+        "archived",
+        "revoked"
+      ]
+    },
+    "owner_id": {
+      "$ref": "common.schema.json#/$defs/HOSId"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/Confidence"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": true
+}

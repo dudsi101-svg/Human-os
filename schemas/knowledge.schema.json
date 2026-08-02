@@ -1,0 +1,60 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/knowledge.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Knowledge Object",
+  "allOf": [
+    {
+      "$ref": "entity.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "entity_type",
+        "content",
+        "source",
+        "confidence",
+        "validity_context",
+        "last_verified_at"
+      ],
+      "properties": {
+        "entity_type": {
+          "const": "knowledge"
+        },
+        "content": {
+          "type": [
+            "string",
+            "object",
+            "array"
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/Confidence"
+        },
+        "validity_context": {
+          "type": "string"
+        },
+        "last_verified_at": {
+          "$ref": "common.schema.json#/$defs/Timestamp"
+        },
+        "expires_at": {
+          "$ref": "common.schema.json#/$defs/Timestamp"
+        },
+        "application_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "known_risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}

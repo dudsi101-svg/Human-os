@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://human-os.org/schemas/scenario.schema.json",
+  "title": "Human OS Scenario",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "name",
+    "initial_state",
+    "horizon_steps"
+  ],
+  "properties": {
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^HOS-SCN-"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "initial_state": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "assumptions": {
+      "type": "object"
+    },
+    "horizon_steps": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    }
+  },
+  "additionalProperties": false
+}

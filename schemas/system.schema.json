@@ -1,0 +1,100 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/system.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "External or Internal System",
+  "allOf": [
+    {
+      "$ref": "entity.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "entity_type",
+        "name",
+        "system_class",
+        "impact_profile",
+        "exit_cost"
+      ],
+      "properties": {
+        "entity_type": {
+          "const": "system"
+        },
+        "name": {
+          "type": "string"
+        },
+        "system_class": {
+          "type": "string",
+          "enum": [
+            "digital",
+            "institutional",
+            "economic",
+            "social",
+            "organizational",
+            "behavioral",
+            "ai",
+            "other"
+          ]
+        },
+        "impact_profile": {
+          "type": "object",
+          "properties": {
+            "autonomy": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "attention": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "energy": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "creative_agency": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "responsibility": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "relationships": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "value_alignment": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "autonomy",
+            "attention",
+            "energy",
+            "creative_agency",
+            "responsibility",
+            "relationships",
+            "value_alignment"
+          ],
+          "additionalProperties": false
+        },
+        "exit_cost": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "portability": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "dependency_risk": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        }
+      }
+    }
+  ]
+}

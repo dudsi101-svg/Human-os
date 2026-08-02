@@ -1,0 +1,53 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/action.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Action",
+  "allOf": [
+    {
+      "$ref": "entity.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "entity_type",
+        "intent_id",
+        "actor_id",
+        "affected_entities",
+        "responsibility_owner_id",
+        "constitutional_status"
+      ],
+      "properties": {
+        "entity_type": {
+          "const": "action"
+        },
+        "intent_id": {
+          "$ref": "common.schema.json#/$defs/HOSId"
+        },
+        "actor_id": {
+          "$ref": "common.schema.json#/$defs/HOSId"
+        },
+        "affected_entities": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/HOSId"
+          }
+        },
+        "predicted_effects": {
+          "type": "object"
+        },
+        "actual_effects": {
+          "type": "object"
+        },
+        "responsibility_owner_id": {
+          "$ref": "common.schema.json#/$defs/HOSId"
+        },
+        "constitutional_status": {
+          "$ref": "common.schema.json#/$defs/ConstitutionalStatus"
+        },
+        "proof_id": {
+          "$ref": "common.schema.json#/$defs/HOSId"
+        }
+      }
+    }
+  ]
+}

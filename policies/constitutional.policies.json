@@ -1,0 +1,68 @@
+{
+  "version": "0.3.0",
+  "policy_language": "Human OS Policy JSON v0.1",
+  "policies": [
+    {
+      "id": "POL-001",
+      "name": "Human authorship required",
+      "when": {
+        "field_missing": "responsibility_owner_id"
+      },
+      "result": "REQUIRES_HUMAN_DECISION"
+    },
+    {
+      "id": "POL-002",
+      "name": "High extraction prohibited",
+      "when": {
+        "field_gt": [
+          "predicted_effects.extraction",
+          0.5
+        ]
+      },
+      "result": "CONSTITUTIONAL_VIOLATION"
+    },
+    {
+      "id": "POL-003",
+      "name": "Consent required",
+      "when": {
+        "field_ne": [
+          "consent",
+          true
+        ]
+      },
+      "result": "REQUIRES_CONSENT"
+    },
+    {
+      "id": "POL-004",
+      "name": "Degrading dependency cannot materially increase",
+      "when": {
+        "field_gt": [
+          "predicted_effects.degrading_system_dependency",
+          0.4
+        ]
+      },
+      "result": "APPROVED_WITH_LIMITS"
+    },
+    {
+      "id": "POL-005",
+      "name": "Exit must remain viable",
+      "when": {
+        "any": [
+          {
+            "field_lt": [
+              "portability",
+              0.3
+            ]
+          },
+          {
+            "field_gt": [
+              "exit_cost",
+              0.7
+            ]
+          }
+        ]
+      },
+      "result": "REQUIRES_REDESIGN"
+    }
+  ]
+}

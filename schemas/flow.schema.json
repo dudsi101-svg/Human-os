@@ -1,0 +1,100 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/flow.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Generative Flow",
+  "allOf": [
+    {
+      "$ref": "entity.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "entity_type",
+        "source_id",
+        "recipient_ids",
+        "value_type",
+        "cost",
+        "gain",
+        "reciprocity",
+        "consent",
+        "generativity",
+        "extraction",
+        "dependency_effect",
+        "externalities"
+      ],
+      "properties": {
+        "entity_type": {
+          "const": "flow"
+        },
+        "source_id": {
+          "$ref": "common.schema.json#/$defs/HOSId"
+        },
+        "recipient_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "common.schema.json#/$defs/HOSId"
+          }
+        },
+        "value_type": {
+          "type": "string",
+          "enum": [
+            "knowledge",
+            "time",
+            "care",
+            "capital",
+            "attention",
+            "access",
+            "skill",
+            "trust",
+            "opportunity",
+            "other"
+          ]
+        },
+        "cost": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "gain": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "reciprocity": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "consent": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "durability": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "generativity": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "extraction": {
+          "$ref": "common.schema.json#/$defs/VectorScore"
+        },
+        "dependency_effect": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "-1 reduces degrading dependency; +1 increases it"
+        },
+        "externalities": {
+          "type": "object",
+          "properties": {
+            "positive": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            },
+            "negative": {
+              "$ref": "common.schema.json#/$defs/VectorScore"
+            }
+          },
+          "required": [
+            "positive",
+            "negative"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

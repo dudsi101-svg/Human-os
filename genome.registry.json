@@ -1,0 +1,65 @@
+{
+  "version": "0.2.0",
+  "genes": [
+    {
+      "id": "GEN-001",
+      "name": "Prymat człowieka"
+    },
+    {
+      "id": "GEN-002",
+      "name": "Autorstwo życia"
+    },
+    {
+      "id": "GEN-003",
+      "name": "Autonomia"
+    },
+    {
+      "id": "GEN-004",
+      "name": "Świadomy wybór"
+    },
+    {
+      "id": "GEN-005",
+      "name": "Odpowiedzialność"
+    },
+    {
+      "id": "GEN-006",
+      "name": "Twórcza sprawczość"
+    },
+    {
+      "id": "GEN-007",
+      "name": "Generatywny przepływ"
+    },
+    {
+      "id": "GEN-008",
+      "name": "Symbioza"
+    },
+    {
+      "id": "GEN-009",
+      "name": "Dobrowolność"
+    },
+    {
+      "id": "GEN-010",
+      "name": "Prywatność"
+    },
+    {
+      "id": "GEN-011",
+      "name": "Niezawłaszczanie wartości"
+    },
+    {
+      "id": "GEN-012",
+      "name": "Malejąca niezbędność systemu"
+    },
+    {
+      "id": "GEN-013",
+      "name": "Różnorodność dróg"
+    },
+    {
+      "id": "GEN-014",
+      "name": "Odwracalność"
+    },
+    {
+      "id": "GEN-015",
+      "name": "Transparentność wpływu"
+    }
+  ]
+}

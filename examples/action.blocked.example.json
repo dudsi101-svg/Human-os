@@ -1,0 +1,20 @@
+{
+  "id": "HOS-ACT-000002",
+  "entity_type": "action",
+  "version": "0.3.0",
+  "status": "draft",
+  "responsibility_owner_id": "HOS-HUM-000001",
+  "consent": true,
+  "reversibility": 0.1,
+  "portability": 0.1,
+  "exit_cost": 0.9,
+  "predicted_effects": {
+    "autonomy": -0.5,
+    "generativity": 0.1,
+    "extraction": 0.8,
+    "degrading_system_dependency": 0.7
+  },
+  "limitations": [
+    "High dependency risk."
+  ]
+}

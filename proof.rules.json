@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "rules": [
+    {
+      "id": "PROOF-001",
+      "name": "Test autorstwa",
+      "fail_status": "REQUIRES_HUMAN_DECISION"
+    },
+    {
+      "id": "PROOF-002",
+      "name": "Test autonomii",
+      "fail_status": "REQUIRES_REDESIGN"
+    },
+    {
+      "id": "PROOF-003",
+      "name": "Test generatywności",
+      "fail_status": "APPROVED_WITH_LIMITS"
+    },
+    {
+      "id": "PROOF-004",
+      "name": "Test ekstrakcji",
+      "fail_status": "CONSTITUTIONAL_VIOLATION"
+    },
+    {
+      "id": "PROOF-005",
+      "name": "Test zgody",
+      "fail_status": "REQUIRES_CONSENT"
+    },
+    {
+      "id": "PROOF-006",
+      "name": "Test odwracalności",
+      "fail_status": "REQUIRES_REDESIGN"
+    },
+    {
+      "id": "PROOF-007",
+      "name": "Test zależności od systemów degradujących",
+      "fail_status": "APPROVED_WITH_LIMITS"
+    },
+    {
+      "id": "PROOF-008",
+      "name": "Test przenośności i wyjścia",
+      "fail_status": "REQUIRES_REDESIGN"
+    },
+    {
+      "id": "PROOF-009",
+      "name": "Test transparentności ograniczeń",
+      "fail_status": "APPROVED_WITH_LIMITS"
+    }
+  ]
+}

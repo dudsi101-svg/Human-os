@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+data/*.db
+data/*.sqlite
+data/*.jsonl
+!data/.gitkeep
+.DS_Store
+
+# Local runtime artifacts
+data/*.jsonl
+**/__pycache__/
+*.pyc

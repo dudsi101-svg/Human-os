@@ -1,0 +1,61 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/capability.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Human OS Capability",
+  "type": "object",
+  "required": [
+    "capability_id",
+    "name",
+    "status",
+    "version",
+    "supported_genes",
+    "risked_genes",
+    "limitations"
+  ],
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "pattern": "^CAP-[0-9]{3}$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "status": {
+      "$ref": "common.schema.json#/$defs/CapabilityStatus"
+    },
+    "version": {
+      "$ref": "common.schema.json#/$defs/Version"
+    },
+    "supported_genes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^GEN-[0-9]{3}$"
+      }
+    },
+    "risked_genes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^GEN-[0-9]{3}$"
+      }
+    },
+    "safeguards": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "proof_required": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "additionalProperties": false
+}

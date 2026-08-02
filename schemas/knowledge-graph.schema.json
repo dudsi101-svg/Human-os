@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://human-os.org/schemas/knowledge-graph.schema.json",
+  "title": "Human OS Knowledge Graph Export",
+  "type": "object",
+  "required": [
+    "nodes",
+    "edges",
+    "provenance"
+  ],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "label",
+          "properties"
+        ]
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "source_id",
+          "target_id",
+          "relation_type",
+          "confidence"
+        ]
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array"
+      }
+    }
+  }
+}

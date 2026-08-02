@@ -1,0 +1,80 @@
+{
+  "$id": "https://human-os.org/schemas/v0.2/proof.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Constitutional Proof",
+  "type": "object",
+  "required": [
+    "id",
+    "subject_id",
+    "evaluated_at",
+    "tests",
+    "final_status",
+    "human_review_required"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/HOSId"
+    },
+    "subject_id": {
+      "$ref": "common.schema.json#/$defs/HOSId"
+    },
+    "evaluated_at": {
+      "$ref": "common.schema.json#/$defs/Timestamp"
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "object",
+        "required": [
+          "test_id",
+          "name",
+          "result",
+          "evidence",
+          "confidence"
+        ],
+        "properties": {
+          "test_id": {
+            "type": "string",
+            "pattern": "^PROOF-[0-9]{3}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "WARN",
+              "FAIL",
+              "UNKNOWN"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "confidence": {
+            "$ref": "common.schema.json#/$defs/Confidence"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "final_status": {
+      "$ref": "common.schema.json#/$defs/ConstitutionalStatus"
+    },
+    "human_review_required": {
+      "type": "boolean"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

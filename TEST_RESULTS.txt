@@ -1,0 +1,43 @@
+Spreadsheet runtime warmup failed during python startup
+Traceback (most recent call last):
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/patches/warm_spreadsheet_runtime_on_startup.py", line 26, in warm_spreadsheet_runtime_on_startup
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/spreadsheet_warmup.py", line 785, in warm_spreadsheet_runtime
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/spreadsheet_warmup.py", line 720, in _warm_feature_flows
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/spreadsheet_warmup.py", line 704, in _warm_collaboration_flows
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/generated/interface/models.py", line 30820, in hydrate_crdt_from_proto
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/rpc/remote.py", line 749, in __call__
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/rpc/client.py", line 150, in call
+artifact_tool.rpc.client.RemoteError: hydrateCrdtFromProto requires an empty collaborative document.
+test_delegation (test_agent_runtime.AgentRuntimeTests.test_delegation) ... ok
+test_human_gate (test_agent_runtime.AgentRuntimeTests.test_human_gate) ... ok
+test_read (test_agent_runtime.AgentRuntimeTests.test_read) ... ok
+test_scope (test_agent_runtime.AgentRuntimeTests.test_scope) ... ok
+test_purpose_and_revoke (test_consent.T.test_purpose_and_revoke) ... ok
+test_approved_action (test_engine.EngineTests.test_approved_action) ... ok
+test_extractive_action_blocked (test_engine.EngineTests.test_extractive_action_blocked) ... ok
+test_flow_score (test_engine.EngineTests.test_flow_score) ... ok
+test_invalid_state_transition (test_engine.EngineTests.test_invalid_state_transition) ... ok
+test_valid_state_transition (test_engine.EngineTests.test_valid_state_transition) ... ok
+test_persistence_counts (test_graph_store.GraphStoreTests.test_persistence_counts) ... ok
+test_contest (test_human_model.T.test_contest) ... ok
+test_supersede (test_human_model.T.test_supersede) ... ok
+test_cycle_detection (test_knowledge_graph.KnowledgeGraphTests.test_cycle_detection) ... ok
+test_path_confidence (test_knowledge_graph.KnowledgeGraphTests.test_path_confidence) ... ok
+test_provenance (test_knowledge_graph.KnowledgeGraphTests.test_provenance) ... ok
+test_shortest_path (test_knowledge_graph.KnowledgeGraphTests.test_shortest_path) ... ok
+test_hash_chain_is_valid (test_persistence.PersistenceTests.test_hash_chain_is_valid) ... ok
+test_projection (test_personalization.T.test_projection) ... ok
+test_signature_and_tamper (test_protocol_security.ProtocolSecurityTests.test_signature_and_tamper) ... ok
+test_rebuild_state (test_replay.ReplayTests.test_rebuild_state) ... ok
+test_replay_and_expiry (test_replay_guard.ReplayTests.test_replay_and_expiry) ... ok
+test_allow_and_deny (test_security_gateway.GatewayTests.test_allow_and_deny) ... ok
+test_compare (test_simulation.SimulationTests.test_compare) ... ok
+test_monte_carlo (test_simulation.SimulationTests.test_monte_carlo) ... ok
+test_positive (test_simulation.SimulationTests.test_positive) ... ok
+test_unsafe (test_simulation.SimulationTests.test_unsafe) ... ok
+test_block (test_simulation_gate.GateTests.test_block) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 0.023s
+
+OK

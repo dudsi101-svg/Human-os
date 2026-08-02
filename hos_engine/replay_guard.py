@@ -1,0 +1,15 @@
+from dataclasses import dataclass
+import time
+@dataclass(frozen=True)
+class ReplayDecision: accepted:bool; reason:str
+class ReplayGuard:
+    def __init__(self): self.ids=set(); self.nonces=set()
+    def check(self,envelope,now_epoch=None):
+        now=time.time() if now_epoch is None else now_epoch
+        mid=str(envelope.get("message_id","")); nonce=str(envelope.get("nonce",""))
+        if not mid or not nonce:return ReplayDecision(False,"Missing identifier")
+        if float(envelope.get("expires_at",0))<=now:return ReplayDecision(False,"Envelope expired")
+        if mid in self.ids:return ReplayDecision(False,"Message already processed")
+        if nonce in self.nonces:return ReplayDecision(False,"Nonce already used")
+        self.ids.add(mid); self.nonces.add(nonce)
+        return ReplayDecision(True,"Envelope accepted")

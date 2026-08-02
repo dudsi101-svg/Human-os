@@ -1,0 +1,21 @@
+{
+  "id": "HOS-ACT-000001",
+  "entity_type": "action",
+  "version": "0.3.0",
+  "status": "draft",
+  "responsibility_owner_id": "HOS-HUM-000001",
+  "consent": true,
+  "reversibility": 0.9,
+  "portability": 0.85,
+  "exit_cost": 0.15,
+  "predicted_effects": {
+    "autonomy": 0.2,
+    "generativity": 0.75,
+    "extraction": 0.05,
+    "degrading_system_dependency": -0.25
+  },
+  "limitations": [
+    "Predicted effects are estimates.",
+    "Human review required for high-impact use."
+  ]
+}

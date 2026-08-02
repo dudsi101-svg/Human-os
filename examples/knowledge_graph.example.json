@@ -1,0 +1,42 @@
+{
+  "nodes": [
+    {
+      "id": "HOS-HUM-000001",
+      "type": "human",
+      "label": "Founder Steward",
+      "properties": {}
+    },
+    {
+      "id": "HOS-KNW-000001",
+      "type": "knowledge",
+      "label": "Human OS Constitution",
+      "properties": {
+        "version": "0.1"
+      }
+    },
+    {
+      "id": "HOS-INT-000001",
+      "type": "intent",
+      "label": "Build Human OS Engine 1.0",
+      "properties": {
+        "status": "active"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "HOS-EDG-000001",
+      "source_id": "HOS-HUM-000001",
+      "target_id": "HOS-INT-000001",
+      "relation_type": "AUTHORS",
+      "confidence": 1.0
+    },
+    {
+      "id": "HOS-EDG-000002",
+      "source_id": "HOS-INT-000001",
+      "target_id": "HOS-KNW-000001",
+      "relation_type": "GOVERNED_BY",
+      "confidence": 0.95
+    }
+  ]
+}

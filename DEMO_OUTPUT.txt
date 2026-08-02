@@ -1,0 +1,199 @@
+APPROVED EXAMPLE
+{
+  "id": "HOS-PRF-000001",
+  "subject_id": "HOS-ACT-000001",
+  "tests": [
+    {
+      "test_id": "PROOF-001",
+      "name": "Test autorstwa",
+      "result": "PASS",
+      "evidence": [
+        "Human author/responsibility owner is explicit."
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-002",
+      "name": "Test autonomii",
+      "result": "PASS",
+      "evidence": [
+        "Predicted autonomy impact: 0.2"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-003",
+      "name": "Test generatywności",
+      "result": "PASS",
+      "evidence": [
+        "Generativity: 0.75"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-004",
+      "name": "Test ekstrakcji",
+      "result": "PASS",
+      "evidence": [
+        "Extraction risk: 0.05"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-005",
+      "name": "Test zgody",
+      "result": "PASS",
+      "evidence": [
+        "Consent confirmed."
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-006",
+      "name": "Test odwracalności",
+      "result": "PASS",
+      "evidence": [
+        "Reversibility: 0.9"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-007",
+      "name": "Test zależności od systemów degradujących",
+      "result": "PASS",
+      "evidence": [
+        "Dependency impact: -0.25"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-008",
+      "name": "Test przenośności i wyjścia",
+      "result": "PASS",
+      "evidence": [
+        "Portability: 0.85; exit cost: 0.15"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-009",
+      "name": "Test transparentności ograniczeń",
+      "result": "PASS",
+      "evidence": [
+        "Limitations disclosed."
+      ],
+      "confidence": 1.0
+    }
+  ],
+  "final_status": "APPROVED",
+  "human_review_required": false,
+  "limitations": [
+    "Rule thresholds are normative design assumptions, not empirical truth.",
+    "Runtime evaluates declared inputs; it cannot verify whether declarations are honest."
+  ]
+}
+
+BLOCKED EXAMPLE
+{
+  "id": "HOS-PRF-000002",
+  "subject_id": "HOS-ACT-000002",
+  "tests": [
+    {
+      "test_id": "PROOF-001",
+      "name": "Test autorstwa",
+      "result": "PASS",
+      "evidence": [
+        "Human author/responsibility owner is explicit."
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-002",
+      "name": "Test autonomii",
+      "result": "FAIL",
+      "evidence": [
+        "Predicted autonomy impact: -0.5"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-003",
+      "name": "Test generatywności",
+      "result": "WARN",
+      "evidence": [
+        "Generativity: 0.1"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-004",
+      "name": "Test ekstrakcji",
+      "result": "FAIL",
+      "evidence": [
+        "Extraction risk: 0.8"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-005",
+      "name": "Test zgody",
+      "result": "PASS",
+      "evidence": [
+        "Consent confirmed."
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-006",
+      "name": "Test odwracalności",
+      "result": "FAIL",
+      "evidence": [
+        "Reversibility: 0.1"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-007",
+      "name": "Test zależności od systemów degradujących",
+      "result": "FAIL",
+      "evidence": [
+        "Dependency increase: 0.7"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-008",
+      "name": "Test przenośności i wyjścia",
+      "result": "FAIL",
+      "evidence": [
+        "Portability: 0.1; exit cost: 0.9"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "test_id": "PROOF-009",
+      "name": "Test transparentności ograniczeń",
+      "result": "PASS",
+      "evidence": [
+        "Limitations disclosed."
+      ],
+      "confidence": 1.0
+    }
+  ],
+  "final_status": "CONSTITUTIONAL_VIOLATION",
+  "human_review_required": true,
+  "limitations": [
+    "Rule thresholds are normative design assumptions, not empirical truth.",
+    "Runtime evaluates declared inputs; it cannot verify whether declarations are honest."
+  ]
+}
+Spreadsheet runtime warmup failed during python startup
+Traceback (most recent call last):
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/patches/warm_spreadsheet_runtime_on_startup.py", line 26, in warm_spreadsheet_runtime_on_startup
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/spreadsheet_warmup.py", line 785, in warm_spreadsheet_runtime
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/spreadsheet_warmup.py", line 720, in _warm_feature_flows
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/spreadsheet_warmup.py", line 704, in _warm_collaboration_flows
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/generated/interface/models.py", line 30820, in hydrate_crdt_from_proto
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/rpc/remote.py", line 749, in __call__
+  File "/tmp/tmp.yTcnQsZYiA/artifact_tool_v2-2.8.4/artifact_tool/rpc/client.py", line 150, in call
+artifact_tool.rpc.client.RemoteError: hydrateCrdtFromProto requires an empty collaborative document.
