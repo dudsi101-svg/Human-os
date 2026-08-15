@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Human OS &mdash; Proof Kernel Console</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Human OS &mdash; Proof Kernel Console</h1>
+    <p class="subtitle">
+      Submit an <code>action</code> entity and evaluate it against the constitutional
+      Proof Kernel (<code>hos_engine.policy.ProofKernel</code>, tests PROOF-001&ndash;PROOF-009).
+      Reference engine, BETA &mdash; not a production authorization system.
+    </p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Action</h2>
+      <form method="post" action="{{ url_for('evaluate') }}">
+        <div class="examples">
+          <span>Load example:</span>
+          <a href="{{ url_for('index', example='approved') }}">approved</a>
+          <a href="{{ url_for('index', example='blocked') }}">blocked</a>
+        </div>
+
+        <label for="actor_id">Actor ID</label>
+        <input type="text" id="actor_id" name="actor_id" value="{{ actor_id }}" spellcheck="false">
+
+        <label for="action_json">Action (JSON)</label>
+        <textarea id="action_json" name="action_json" rows="18" spellcheck="false">{{ action_json }}</textarea>
+
+        <button type="submit">Evaluate</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Proof</h2>
+      {% if error %}
+        <p class="error">{{ error }}</p>
+      {% elif result %}
+        <p>
+          <span class="badge decision decision-{{ result.final_status|lower|replace('_', '-') }}">
+            {{ result.final_status }}
+          </span>
+          {% if result.human_review_required %}
+            <span class="badge flag">human review required</span>
+          {% endif %}
+        </p>
+
+        <table class="tests">
+          <thead>
+            <tr><th>Test</th><th>Result</th><th>Evidence</th><th>Confidence</th></tr>
+          </thead>
+          <tbody>
+            {% for test in result.tests %}
+            <tr>
+              <td><code>{{ test.test_id }}</code><br>{{ test.name }}</td>
+              <td><span class="badge result-{{ test.result|lower }}">{{ test.result }}</span></td>
+              <td>
+                <ul class="evidence">
+                  {% for line in test.evidence %}<li>{{ line }}</li>{% endfor %}
+                </ul>
+              </td>
+              <td>{{ test.confidence }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        {% if result.limitations %}
+        <h3>Limitations</h3>
+        <ul>
+          {% for limitation in result.limitations %}<li>{{ limitation }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <details>
+          <summary>Raw JSON</summary>
+          <pre>{{ result_json }}</pre>
+        </details>
+      {% else %}
+        <p class="hint">Evaluate an action to see its Proof here.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>
