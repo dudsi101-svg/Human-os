@@ -93,5 +93,6 @@ See `CONTRIBUTING.md`. Every material change must describe:
 
 ## License
 
-The final licensing model is intentionally not frozen yet. See
-`LICENSE-DECISION.md`.
+Code is licensed under Apache-2.0 (`LICENSE`); documentation and specifications
+under CC BY 4.0 (`LICENSE-DOCS`). The Human OS name and marks are not yet
+covered by a published trademark policy. See `LICENSE-DECISION.md`.

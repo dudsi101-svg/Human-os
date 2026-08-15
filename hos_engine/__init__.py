@@ -18,6 +18,8 @@ from .agent_policy import constitutional_capability
 from .agent_runtime import *
 from .consent import *
 from .graph_store import SQLiteGraphStore
+from .hos_core import *
+from .hub_entity_registry import *
 from .human_model import *
 from .key_rotation import *
 from .knowledge_graph import GraphEdge, GraphNode, KnowledgeGraph, ProvenanceRecord
