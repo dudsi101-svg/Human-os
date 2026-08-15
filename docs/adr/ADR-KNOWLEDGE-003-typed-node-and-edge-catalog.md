@@ -37,3 +37,12 @@ general primitive awaiting specialization — but it is a documented gap the
 project should track, analogous to how `CLAUDE.md` already marks
 `hub_entity_registry.EntityRegistry` as an `MVP_IMPLEMENTED_SUBSET` against
 the full Hub spec.
+
+**Update 2026-08-15 (Phase 3):** the catalog now exists in code as
+`KnowledgeNodeType` (13 values) and `KnowledgeRelationType` (9 values) in
+`knowledge_graph.py`, with an opt-in
+`KnowledgeGraph.validate_against_catalog()` that *reports* departures as
+`CatalogViolation` records rather than raising — existing untyped graphs
+keep working, per the project-wide surface-don't-silently-correct error
+contract. Making the catalog mandatory (rejecting rather than reporting)
+remains a future decision.

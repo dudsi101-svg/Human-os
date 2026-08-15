@@ -13,13 +13,16 @@ class RecordStatus(str,Enum):
  ACTIVE='ACTIVE'; CONTESTED='CONTESTED'; SUPERSEDED='SUPERSEDED'; DELETED='DELETED'
 @dataclass(frozen=True)
 class HumanRecord:
- record_id:str; subject_id:str; domain:str; key:str; value:Any; evidence_type:EvidenceType; confidence:float; source_id:str; created_at:str; status:RecordStatus=RecordStatus.ACTIVE; supersedes:str | None=None; sensitive:bool=False; tags:set[str]=field(default_factory=set)
+ # context/unit/quality/consent_scope added per ADR-HUMAN-004 (Layer 2's
+ # mandatory per-record metadata, source SS19.2); optional so pre-existing
+ # records and callers keep working unchanged.
+ record_id:str; subject_id:str; domain:str; key:str; value:Any; evidence_type:EvidenceType; confidence:float; source_id:str; created_at:str; status:RecordStatus=RecordStatus.ACTIVE; supersedes:str | None=None; sensitive:bool=False; tags:set[str]=field(default_factory=set); context:str | None=None; unit:str | None=None; quality:str | None=None; consent_scope:str | None=None
 class HumanModel:
  def __init__(self): self._records:dict[str,HumanRecord]={}
- def add(self,*,subject_id,domain,key,value,evidence_type,confidence,source_id,sensitive=False,tags=None,supersedes=None):
+ def add(self,*,subject_id,domain,key,value,evidence_type,confidence,source_id,sensitive=False,tags=None,supersedes=None,context=None,unit=None,quality=None,consent_scope=None):
   if not 0<=confidence<=1: raise ValueError('confidence must be between 0 and 1')
   if supersedes and supersedes not in self._records: raise KeyError('superseded record does not exist')
-  r=HumanRecord('HOS-HMR-'+uuid.uuid4().hex[:12].upper(),subject_id,domain,key,value,evidence_type,confidence,source_id,datetime.now(UTC).isoformat(),supersedes=supersedes,sensitive=sensitive,tags=set(tags or [])); self._records[r.record_id]=r
+  r=HumanRecord('HOS-HMR-'+uuid.uuid4().hex[:12].upper(),subject_id,domain,key,value,evidence_type,confidence,source_id,datetime.now(UTC).isoformat(),supersedes=supersedes,sensitive=sensitive,tags=set(tags or []),context=context,unit=unit,quality=quality,consent_scope=consent_scope); self._records[r.record_id]=r
   if supersedes: self._records[supersedes]=replace(self._records[supersedes],status=RecordStatus.SUPERSEDED)
   return r
  def contest(self,record_id,*,subject_id):

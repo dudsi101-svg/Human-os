@@ -65,3 +65,13 @@ independent "R"-prefixed scales and either the Constitution's R0–R4 or
 Layer 6's coded scales — integration between Layer 5 and Layer 6 is
 described only in natural-language field names (§41's interface table), not
 shared numeric codes.
+
+**Update 2026-08-15 (Phase 3):** a first MVP slice now exists —
+`hos_engine.decision_engine.DecisionEngine` implements the nine hard gates
+G0–G8, the R-NISKIE..R-KRYTYCZNE reaction classes, the evidence-asymmetry
+threshold (declared evidence 0–5 vs. risk class), non-commutable
+gate-before-ranking ordering, and an RC0/RC3/RC5/RC6 outcome subset, with
+21 tests (`tests/test_decision_engine.py`). Intent classes DI-1..8,
+IQ0–IQ5, AR0–AR5, the ten-axis §18 profile, and live Knowledge Map
+integration remain unimplemented; like the Proof Kernel, the engine
+evaluates declared inputs only.

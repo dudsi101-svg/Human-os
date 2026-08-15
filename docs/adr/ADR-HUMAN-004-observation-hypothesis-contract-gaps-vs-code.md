@@ -52,7 +52,10 @@ rather than abstract.
 subject_id, domain, key, value, evidence_type, confidence, source_id,
 created_at, status, supersedes, sensitive, tags`) lack the source's
 `source` (as distinct from `source_id`), `context`, `quality`, `unit`, and
-`consent_scope` fields per-record. The source's discrete five-level worded
+`consent_scope` fields per-record. *(Update 2026-08-15, Phase 3: `context`,
+`unit`, `quality`, and `consent_scope` added as optional fields on
+`HumanRecord` and `HumanModel.add()`; the discrete-vs-continuous confidence
+mapping and richer hypothesis statuses below remain open.)* The source's discrete five-level worded
 confidence scale has no defined mapping to the code's continuous
 `confidence: float` in [0,1] — neither this document nor `human_model.py`
 defines that mapping. `RecordStatus` (ACTIVE/CONTESTED/SUPERSEDED/DELETED)

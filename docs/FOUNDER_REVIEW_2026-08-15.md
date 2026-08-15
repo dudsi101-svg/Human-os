@@ -611,3 +611,43 @@ zamiast tylko jednego lub tylko drugiego).
 dokumencie. Zgodnie z decyzją założyciela z tej samej tury pytań, zmiana
 scalona bezpośrednio do `main` bez osobnej rundy przeglądu (transkrypcja
 1:1, bez interpretacji).
+
+## Siódma tura — Faza 3: pierwsze moduły domenowe (15 sierpnia 2026)
+
+Founder zatwierdził samodzielne przejście przez Fazę 3 planu z audytu
+("Tak śmiało samodzielnie możesz przejść przez fazę 3"). Zrealizowano trzy
+ograniczone, w pełni przetestowane wycinki — wszystkie zgodnie z wcześniej
+przyjętymi ADR-ami, bez nowych decyzji projektowych:
+
+1. **Silnik Decyzji — pierwszy MVP** (`hos_engine/decision_engine.py`,
+   21 testów): dziewięć bram twardych G0–G8 przed jakimkolwiek rankingiem,
+   klasy reakcji R-NISKIE..R-KRYTYCZNE, zasada asymetrii dowodowej
+   (deklarowany poziom dowodów 0–5 vs. klasa ryzyka; R-KRYTYCZNE nigdy
+   niedopuszczalne), abstencja z ośmioma nazwanymi powodami i eskalacja
+   miękka/warunkowa/twarda jako pełnoprawne wyniki, nieprzemienne
+   wykluczenia (ranking nie wskrzesza kandydata odrzuconego przez bramę).
+   Dwa niezmienniki z ADR-DECISION-005 wymuszone kodem i testem:
+   determinacja użytkownika nie zmienia żadnego wyniku, sponsorowanie nie
+   wpływa na ranking. Jak Proof Kernel — silnik ocenia deklarowane wejścia.
+2. **Typowany słownik Mapy Wiedzy** (`knowledge_graph.py`):
+   `KnowledgeNodeType` (13 typów) i `KnowledgeRelationType` (9 relacji) z
+   ADR-KNOWLEDGE-003, plus opcjonalne
+   `KnowledgeGraph.validate_against_catalog()` — raportuje odstępstwa jako
+   `CatalogViolation`, nigdy nie rzuca wyjątku ani nie poprawia po cichu;
+   istniejące nietypowane grafy działają bez zmian.
+3. **Brakujące pola `HumanRecord`** (`human_model.py`): opcjonalne
+   `context`, `unit`, `quality`, `consent_scope` z ADR-HUMAN-004 (metadane
+   obowiązkowe Warstwy 2, §19.2), wstecznie kompatybilne.
+
+Świadomie NIE zrobione w tej fazie (pozostają otwarte): klasy intencji
+DI-1..8, skale IQ/AR, dziesięcioosiowy profil decyzyjny §18, żywa
+integracja Silnika Decyzji z Mapą Wiedzy, obowiązkowość katalogu grafu
+(dziś tylko raportowanie), mapowanie dyskretnej skali pewności 0–4 Warstwy
+2 na ciągłe `confidence: float`, SAFE MODE (odblokowany decyzyjnie w
+Piątej turze, nadal czeka na implementację).
+
+Zaktualizowane ADR-y (noty "Update" w Consequences, bez zmiany historii):
+ADR-DECISION-001/003/005, ADR-KNOWLEDGE-003, ADR-HUMAN-004.
+
+**Weryfikacja:** 89/89 testów (67 + 22 nowe), ruff czysty, mypy bez nowych
+błędów w dotykanych modułach, demo bez zmian.

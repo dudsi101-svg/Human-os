@@ -38,3 +38,9 @@ escalation gradient. `hos_engine.execution_loop.IntentOutcome` already has
 eight named abstention reasons do — a future Decision Engine module should
 not assume the existing refusal vocabulary is granular enough without
 extending it.
+
+**Update 2026-08-15 (Phase 3):** implemented in
+`hos_engine.decision_engine` — `AbstentionReason` carries all eight named
+reasons, `EscalationType` carries the soft/conditional/hard gradient, and
+`DecisionOutcomeKind.ABSTENTION`/`ESCALATION` are first-class returns of
+`DecisionEngine.decide()`, never exceptions.

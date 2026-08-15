@@ -50,3 +50,13 @@ cannot influence ranking" and "determination never lowers the safety floor"
 as hard, code-level constraints — not something a prompt or a UI warning
 label can satisfy on its own, consistent with `ADR-DECISION-004`'s
 architecture-with-constraints requirement.
+
+**Update 2026-08-15 (Phase 3):** both constraints are now code-level in
+`hos_engine.decision_engine`: `DecisionCandidate.sponsored` exists but is
+deliberately absent from the ranking key, and
+`DecisionRequest.user_determination` is read by nothing — each enforced by
+a dedicated invariant test (`test_sponsorship_never_improves_ranking`,
+`test_user_determination_never_changes_any_outcome`). The fuller high-risk
+path (§28's minimum conditions, harm-reduction procedure) remains
+unimplemented; the MVP simply never admits an R-KRYTYCZNE candidate and
+routes R-PODWYZSZONE/R-WYSOKIE through a conditional recommendation.

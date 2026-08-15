@@ -2,8 +2,61 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from enum import Enum
 from itertools import pairwise
 from typing import Any
+
+
+class KnowledgeNodeType(str, Enum):
+    """Layer 3's closed catalog of 13 knowledge-graph node types
+    (ADR-KNOWLEDGE-003, source SS21.1). Adopting the catalog does not make
+    it mandatory here: GraphNode.node_type stays a plain str for backward
+    compatibility, and validate_against_catalog() below reports (never
+    raises) departures, so existing untyped graphs keep working while new
+    code can opt in."""
+
+    CLAIM = "claim"
+    SOURCE = "source"
+    INTERVENTION = "intervention"
+    PROTOCOL = "protocol"
+    OUTCOME = "outcome"
+    MECHANISM = "mechanism"
+    RISK = "risk"
+    CONTRAINDICATION = "contraindication"
+    POPULATION = "population"
+    METRIC = "metric"
+    DOMAIN = "domain"
+    USER_OR_COHORT = "user_or_cohort"
+    VERSION_OR_EDITORIAL_DECISION = "version_or_editorial_decision"
+
+
+class KnowledgeRelationType(str, Enum):
+    """Layer 3's nine named edge relations (ADR-KNOWLEDGE-003, source
+    SS21.2). Same opt-in posture as KnowledgeNodeType. Values keep the
+    source's Polish verbs -- these are the canonical names, matching how
+    hub_entity_registry.HubRelationType keeps the Hub spec's Polish verbs."""
+
+    POPIERA = "popiera"
+    OSLABIA = "osłabia"
+    PRZECZY = "przeczy"
+    WARUNKUJE = "warunkuje"
+    WYJASNIA = "wyjaśnia"
+    RYZYKUJE = "ryzykuje"
+    WCHODZI_W_INTERAKCJE = "wchodzi_w_interakcje"
+    JEST_WERSJA = "jest_wersja"
+    WYNIKA_Z = "wynika_z"
+
+
+@dataclass(frozen=True)
+class CatalogViolation:
+    """One departure from the Layer 3 catalog, reported by
+    validate_against_catalog(). Reporting rather than raising follows the
+    project-wide error contract (schema doc SS10): a conflict is surfaced
+    explicitly, never silently corrected."""
+
+    subject_id: str
+    kind: str  # "node_type" or "relation_type"
+    value: str
 
 
 @dataclass(frozen=True)
@@ -171,6 +224,22 @@ class KnowledgeGraph:
 
     def provenance(self, subject_id: str) -> list[ProvenanceRecord]:
         return list(self._provenance.get(subject_id, []))
+
+    def validate_against_catalog(self) -> list[CatalogViolation]:
+        """Report every node/edge whose type is outside Layer 3's closed
+        catalog (ADR-KNOWLEDGE-003). Purely diagnostic -- an empty list means
+        the graph is catalog-conformant; a non-empty list is information for
+        the caller, not an error."""
+        node_types = {t.value for t in KnowledgeNodeType}
+        relation_types = {t.value for t in KnowledgeRelationType}
+        violations: list[CatalogViolation] = []
+        for node in self._nodes.values():
+            if node.node_type not in node_types:
+                violations.append(CatalogViolation(node.node_id, "node_type", node.node_type))
+        for edge in self._edges.values():
+            if edge.relation_type not in relation_types:
+                violations.append(CatalogViolation(edge.edge_id, "relation_type", edge.relation_type))
+        return violations
 
     def export(self) -> dict[str, Any]:
         return {

@@ -139,6 +139,17 @@ the decision record.
   This is a bounded slice: it does not yet touch `knowledge_graph.py` (a separate, unreconciled
   model — see `docs/RELATION_VOCABULARY_CROSSWALK.md`) and has no Recovery/SAFE MODE integration
   (blocked on a source document not yet available — see Q12 below).
+- **`decision_engine.py`** (added later on 2026-08-15, audit-plan Phase 3) — the first MVP slice of
+  Layer 5's Decision & Recommendation Engine (`ADR-DECISION-001..005`):
+  `DecisionEngine.decide(DecisionRequest) -> DecisionOutcome` runs the nine hard gates G0–G8
+  *before* any ranking (non-commutable: a gate-excluded candidate never re-enters), applies the
+  evidence-asymmetry rule (declared evidence 0–5 vs. `RiskReactionClass`; `R-KRYTYCZNE` is never
+  admissible), and returns abstention (eight named `AbstentionReason`s) and soft/conditional/hard
+  escalation as first-class `DecisionOutcomeKind`s, never exceptions. Two ADR-DECISION-005
+  invariants are enforced by code and dedicated tests: `user_determination` is read by nothing, and
+  `sponsored` is absent from the ranking key. Like the Proof Kernel, it evaluates declared inputs
+  only; DI/IQ/AR scales, the ten-axis §18 profile, and live Knowledge Map integration are not
+  implemented. Not yet wired into `ExecutionLoop` — the two compose at the caller's discretion.
 
 ### ID and schema conventions
 
@@ -151,8 +162,8 @@ the decision record.
   `simulation.py`, `key_rotation.py`, and the newest execution-foundation modules —
   `hos_core.py`'s `HOS-CTX-`/`HOS-EXE-`/`HOS-COR-`/`HOS-CEV-`, `hub_entity_registry.py`'s
   `HOS-ENT-`/`HOS-REL-`/`HOS-MRG-`, `authority.py`'s `HOS-ROL-`, `execution_loop.py`'s
-  `HOS-INT-`/`HOS-REQ-`/`HOS-EVT-`). Match whichever pattern the module you're editing already
-  uses.
+  `HOS-INT-`/`HOS-REQ-`/`HOS-EVT-`, `decision_engine.py`'s `HOS-DEC-`). Match whichever pattern
+  the module you're editing already uses.
 - `schemas/` holds 14 JSON Schema (Draft 2020-12) files. Every concrete entity schema (`action`,
   `human`, `intent`, `flow`, `knowledge`, `relation`, `system`) does
   `allOf: [{ $ref: entity.schema.json }, {...}]` against the shared base in
@@ -224,8 +235,8 @@ beyond `RECOVERY_CUSTODIAN`, genome-registry references, etc.) remain unresolved
 
 Most of `hos_engine/` (`engine.py`, `models.py`, `policy.py`, `event_store.py`, `sqlite_store.py`,
 `flow.py`, `state_machine.py`, `ids.py`, `validation.py`, `knowledge_graph.py`, `graph_store.py`,
-and the newer **`hos_core.py`, `hub_entity_registry.py`, `authority.py`, `execution_loop.py`**) is
-conventionally formatted (4-space indent, one statement per line). A distinct, separate group —
+and the newer **`hos_core.py`, `hub_entity_registry.py`, `authority.py`, `execution_loop.py`,
+`decision_engine.py`**) is conventionally formatted (4-space indent, one statement per line). A distinct, separate group —
 `agent_runtime.py`, `human_model.py`, `consent.py`, `personalization.py`, `security_identity.py`,
 `trust.py`, `security_gateway.py`, `key_rotation.py`, `simulation.py`, `simulation_gate.py`,
 `protocol_security.py`, `replay_guard.py` — uses a dense, semicolon-joined, single-line style
