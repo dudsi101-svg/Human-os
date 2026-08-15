@@ -1,4 +1,4 @@
-.PHONY: install test lint typecheck demo verify
+.PHONY: install test lint typecheck demo run-app verify
 
 install:
 	python -m pip install -e ".[dev]"
@@ -14,5 +14,9 @@ typecheck:
 
 demo:
 	python run_demo.py
+
+run-app:
+	python -m pip install -e ".[app]"
+	FLASK_APP=app.server:create_app python -m flask run
 
 verify: lint typecheck test

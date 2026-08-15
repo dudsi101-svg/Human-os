@@ -57,11 +57,25 @@ python -m pytest -q
 python run_demo.py
 ```
 
+## Graphical console
+
+A small local web UI lets you edit an `action` entity and evaluate it against the
+Proof Kernel interactively, instead of reading `run_demo.py`'s console output.
+
+```bash
+python -m pip install -e ".[app]"
+FLASK_APP=app.server:create_app python -m flask run
+```
+
+Then open <http://127.0.0.1:5000>. It is a thin `Applications`-layer client of
+`hos_engine` (see `ECOSYSTEM.md`) — it holds no policy logic of its own.
+
 ## Project structure
 
 ```text
 human-os/
 ├── hos_engine/
+├── app/
 ├── schemas/
 ├── policies/
 ├── tests/
