@@ -316,6 +316,10 @@ will flag it as an unused import.
   ontology, all appendix field lists, the full 47-section table of contents, and every literal
   prohibition. Read this before extending `ADR-EXP-*` or building anything experiment-related —
   it's more complete than the ADRs alone.
+- `docs/runtime-contract.md` and `docs/simulation-contract.md` predate this session's audit work —
+  short, standalone I/O contracts for `evaluate_action` (inputs/outputs/non-goals) and the
+  simulation engine (`docs/adr/ADR-0006-simulation-laboratory.md`'s scenario/invariant/score-
+  distribution shape) respectively. Check both before changing either code path's public shape.
 
 ## Licensing
 
