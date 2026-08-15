@@ -47,3 +47,12 @@ by an agent, and must not hard-depend on any single external AI provider
 being reachable. No code exists yet that satisfies or violates this — it is
 recorded here so the constraint is not lost between this ADR and eventual
 implementation.
+
+**Update 2026-08-15 (Phase 4):** `hos_engine.recovery` satisfies all three
+guarantees structurally: the kernel exposes no API that mutates policy (the
+policy tables are module-level constants) or the audit log (append-only,
+refusals included), so "agent cannot change Recovery policy or disable
+audit" holds because the operations do not exist; `AGENT`/`SERVICE`/
+`SYSTEM_PROCESS` roles are refused at activation and deactivation alike,
+with the refusal itself logged; and the kernel imports no AI model or
+external service, so an AI outage cannot block manual recovery.

@@ -651,3 +651,50 @@ ADR-DECISION-001/003/005, ADR-KNOWLEDGE-003, ADR-HUMAN-004.
 
 **Weryfikacja:** 89/89 testów (67 + 22 nowe), ruff czysty, mypy bez nowych
 błędów w dotykanych modułach, demo bez zmian.
+
+## Ósma tura — Faza 4: pierwszy wycinek Sovereign Recovery Kernel (15 sierpnia 2026)
+
+Kontynuacja samodzielnej realizacji planu ("Kontynuuj"). SAFE MODE — po
+odblokowaniu decyzyjnym w Piątej turze — dostał pierwszy działający wycinek:
+`hos_engine/recovery.py` (`SovereignRecoveryKernel`, 18 testów, wszystkie
+rozstrzygnięcia z `ADR-RECOVERY-006` przełożone na kod):
+
+- **Siedem trybów awaryjnych** z mapowaniem per tryb na R0–R4 i podziałem
+  wyzwalania: SAFE_MODE/READ_ONLY/FREEZE/DISCONNECT mogą wejść automatycznie
+  (wyłącznie z natychmiastowym powiadomieniem właściciela; cofnięcie przez
+  właściciela bezwarunkowe), ROLLBACK/EXPORT/RECOVERY tylko ręcznie.
+- **Wykluczenie agentów strukturalnie**: role AGENT/SERVICE/SYSTEM_PROCESS
+  nie mogą ani aktywować, ani dezaktywować żadnego trybu — a sama odmowa
+  jest logowana. Kernel nie ma żadnego API zmieniającego politykę ani
+  wyłączającego audyt (tabele polityk to stałe modułowe, log tylko-dopisujący)
+  — gwarancja "Agent nie może zmienić polityki Recovery ani wyłączyć audytu"
+  zachodzi, bo te operacje nie istnieją. Zero zależności od AI — awaria
+  modelu nie blokuje ręcznego odzyskiwania.
+- **Dwukluczowa suwerenność** dla ROLLBACK/RECOVERY: wymagane zatwierdzenie
+  kustosza, kustosz musi być inną tożsamością niż inicjator, a przy wpiętym
+  `RoleGrantRegistry` — posiadać aktywny grant `RECOVERY_CUSTODIAN` w danym
+  zakresie (realizacja mapowania roli z Piątej tury).
+- **Minimalny zakres i ograniczenie czasowe**: aktywacja obejmuje dokładnie
+  nazwany zakres (odzyskanie jednego obszaru nie odblokowuje innych),
+  `expires_at` obowiązkowe, automatyczne wygasanie.
+- **13-polowy rejestr zdarzeń awaryjnych** (ADR-RECOVERY-004) z wersją
+  schematu i opcjonalnym podpisem HMAC-SHA256; odmowy też są zdarzeniami.
+  Opcjonalny zapis trwały do `EventStore`/`SQLiteEventStore` (łańcuch
+  skrótów zweryfikowany testem).
+- **Kontrakt "Freeze Entity / Scope"**: `freeze_entity()` przełącza byt na
+  `HubEntityStatus.SUSPENDED` (rozstrzygnięcie FROZEN=SUSPENDED z Piątej
+  tury), niedestrukcyjnie.
+
+Świadomie NIE zrobione: pozostałe cztery kontrakty Hub (Snapshot, Rollback,
+Disconnect, Export Sovereign Package), infrastruktura kluczy Emergency Root
+(progowe dzielenie sekretu), typy zdarzeń `recovery_*` w `event.types.json`
+(trwałe zdarzenia używają `STATE_OBSERVED` z pełnym rekordem w payload),
+ośmiopoziomowa hierarchia kontroli jako całość, konkretne wartości TTL.
+Podpis HMAC dzieli zastrzeżenie z `security/THREAT_MODEL.md`: mechanizm
+referencyjny, nie produkcyjny.
+
+Zaktualizowane ADR-y: noty "Update" w ADR-RECOVERY-001..004.
+
+**Weryfikacja:** 107/107 testów (89 + 18 nowych z tej fazy), ruff czysty,
+zero błędów mypy w `recovery.py` (66 znanych, wcześniejszych bez zmian),
+demo bez zmian.

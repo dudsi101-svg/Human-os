@@ -81,3 +81,12 @@ any Recovery/SAFE MODE code, resolve the open items in ADR-RECOVERY-005 —
 this is exactly the kind of safety-critical, autonomy/consent-adjacent
 design the project's escalation rules call out for explicit human
 sign-off before implementation, not just documentation.
+
+**Update 2026-08-15 (Phase 4, after ADR-RECOVERY-006's resolutions):** a
+first slice now exists — `hos_engine.recovery.SovereignRecoveryKernel`
+implements all seven `EmergencyMode`s with the per-mode R0–R4 mapping and
+per-mode auto-vs-manual trigger policy from ADR-RECOVERY-006, scope-isolated
+time-bounded activations, and the Freeze Entity/Scope Hub contract (18
+tests, `tests/test_recovery.py`). The eight-level control hierarchy as a
+whole, the remaining five Hub contracts, Emergency Root's key
+infrastructure, and any UI remain unimplemented.
