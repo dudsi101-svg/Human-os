@@ -274,3 +274,24 @@ koncepcji (docelowo: Living Canon, gdy powstanie jako artefakt).
   eksport.
 - **Ostateczna polityka znaków towarowych** — wciąż jawnie otwarta, patrz
   `LICENSE-DECISION.md`.
+
+## Faza 3 — pierwsza zintegrowana pętla wykonania (15 sierpnia 2026)
+
+Zgodnie z dyrektywą kontynuacyjną, sekcja 20: kolejny kamień milowy to nie
+"więcej klas", tylko spójna, audytowalna ścieżka wykonania. Zbudowano:
+
+- `hos_engine/authority.py` — `AuthorityRole`/`RoleGrantRegistry`, jako
+  osobna, nowa oś (AXIS B) obok istniejącego `IdentityType` w
+  `security_identity.py` (AXIS A) — zgodnie z korektą Q9 wyżej, bez
+  dotykania tego drugiego modułu.
+- `hos_engine/execution_loop.py` — `ExecutionLoop`, spinający realnie ze
+  sobą: `IdentityRegistry` → `RoleGrantRegistry` → `ConsentRegistry` →
+  `ContextManager` → `EntityRegistry` → `ProofKernel` → `AgentRuntime` →
+  `EventEngine`/`EventStore`, z odmową jako pełnoprawnym wynikiem na każdej
+  bramce (patrz `docs/adr/ADR-CORE-002-execution-loop-integration.md`).
+
+To ograniczony, celowo wąski wycinek (nie dotyka jeszcze Knowledge Graph,
+`RelationRegistry` Hub-a, ani łańcucha integralności `SQLiteEventStore`) —
+ale pierwszy raz te elementy są przetestowane razem, a nie osobno. 16 nowych
+testów (7 dla `authority.py`, 9 dla `execution_loop.py`), 62/62 w całym
+repo, lint czysty, demo bez zmian.
