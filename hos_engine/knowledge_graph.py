@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from datetime import UTC, datetime
+from itertools import pairwise
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -10,7 +11,7 @@ class GraphNode:
     node_id: str
     node_type: str
     label: str
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -21,7 +22,7 @@ class GraphEdge:
     relation_type: str
     confidence: float = 1.0
     reversible: bool = False
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -30,21 +31,21 @@ class ProvenanceRecord:
     subject_id: str
     source_type: str
     source_ref: str
-    author_id: Optional[str]
+    author_id: str | None
     observed_at: str
     confidence: float
     verification_status: str
     derivation_method: str
-    limitations: Tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
 
 
 class KnowledgeGraph:
     def __init__(self) -> None:
-        self._nodes: Dict[str, GraphNode] = {}
-        self._edges: Dict[str, GraphEdge] = {}
-        self._outgoing: Dict[str, Set[str]] = {}
-        self._incoming: Dict[str, Set[str]] = {}
-        self._provenance: Dict[str, List[ProvenanceRecord]] = {}
+        self._nodes: dict[str, GraphNode] = {}
+        self._edges: dict[str, GraphEdge] = {}
+        self._outgoing: dict[str, set[str]] = {}
+        self._incoming: dict[str, set[str]] = {}
+        self._provenance: dict[str, list[ProvenanceRecord]] = {}
 
     def add_node(self, node: GraphNode) -> None:
         if node.node_id in self._nodes:
@@ -80,19 +81,19 @@ class KnowledgeGraph:
     def neighbours(
         self,
         node_id: str,
-        relation_type: Optional[str] = None,
+        relation_type: str | None = None,
         direction: str = "outgoing",
-    ) -> List[GraphNode]:
+    ) -> list[GraphNode]:
         if direction not in {"outgoing", "incoming", "both"}:
             raise ValueError("direction must be outgoing, incoming or both.")
 
-        edge_ids: Set[str] = set()
+        edge_ids: set[str] = set()
         if direction in {"outgoing", "both"}:
             edge_ids |= self._outgoing[node_id]
         if direction in {"incoming", "both"}:
             edge_ids |= self._incoming[node_id]
 
-        result: Dict[str, GraphNode] = {}
+        result: dict[str, GraphNode] = {}
         for edge_id in edge_ids:
             edge = self._edges[edge_id]
             if relation_type and edge.relation_type != relation_type:
@@ -105,12 +106,12 @@ class KnowledgeGraph:
         self,
         start_id: str,
         end_id: str,
-        relation_types: Optional[Set[str]] = None,
-    ) -> Optional[List[str]]:
+        relation_types: set[str] | None = None,
+    ) -> list[str] | None:
         if start_id == end_id:
             return [start_id]
 
-        queue: List[Tuple[str, List[str]]] = [(start_id, [start_id])]
+        queue: list[tuple[str, list[str]]] = [(start_id, [start_id])]
         visited = {start_id}
 
         while queue:
@@ -127,12 +128,12 @@ class KnowledgeGraph:
                     queue.append((nxt, path + [nxt]))
         return None
 
-    def confidence_of_path(self, node_path: List[str]) -> float:
+    def confidence_of_path(self, node_path: list[str]) -> float:
         if len(node_path) < 2:
             return 1.0
 
         confidence = 1.0
-        for source, target in zip(node_path, node_path[1:]):
+        for source, target in pairwise(node_path):
             candidates = [
                 self._edges[eid]
                 for eid in self._outgoing[source]
@@ -143,15 +144,15 @@ class KnowledgeGraph:
             confidence *= max(edge.confidence for edge in candidates)
         return round(confidence, 6)
 
-    def orphan_nodes(self) -> List[GraphNode]:
+    def orphan_nodes(self) -> list[GraphNode]:
         return [
             node for node_id, node in self._nodes.items()
             if not self._incoming[node_id] and not self._outgoing[node_id]
         ]
 
     def has_directed_cycle(self) -> bool:
-        visiting: Set[str] = set()
-        visited: Set[str] = set()
+        visiting: set[str] = set()
+        visited: set[str] = set()
 
         def visit(node_id: str) -> bool:
             if node_id in visiting:
@@ -168,10 +169,10 @@ class KnowledgeGraph:
 
         return any(visit(node_id) for node_id in self._nodes if node_id not in visited)
 
-    def provenance(self, subject_id: str) -> List[ProvenanceRecord]:
+    def provenance(self, subject_id: str) -> list[ProvenanceRecord]:
         return list(self._provenance.get(subject_id, []))
 
-    def export(self) -> Dict[str, Any]:
+    def export(self) -> dict[str, Any]:
         return {
             "nodes": [
                 {
@@ -215,4 +216,4 @@ class KnowledgeGraph:
 
 
 def now_utc() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()

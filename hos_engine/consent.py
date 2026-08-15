@@ -1,22 +1,23 @@
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Dict, Iterable, Optional, Set
 import uuid
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from enum import Enum
+
+
 class ConsentStatus(str,Enum): ACTIVE='ACTIVE'; REVOKED='REVOKED'
 @dataclass(frozen=True)
 class ConsentGrant:
- consent_id:str; subject_id:str; grantee_id:str; purposes:Set[str]; domains:Set[str]; actions:Set[str]; issued_at:str; expires_at:Optional[str]=None; allow_sensitive:bool=False; status:ConsentStatus=ConsentStatus.ACTIVE
+ consent_id:str; subject_id:str; grantee_id:str; purposes:set[str]; domains:set[str]; actions:set[str]; issued_at:str; expires_at:str | None=None; allow_sensitive:bool=False; status:ConsentStatus=ConsentStatus.ACTIVE
 class ConsentRegistry:
- def __init__(self): self._grants:Dict[str,ConsentGrant]={}
+ def __init__(self): self._grants:dict[str,ConsentGrant]={}
  def grant(self,*,subject_id,grantee_id,purposes,domains,actions,expires_at=None,allow_sensitive=False):
-  g=ConsentGrant('HOS-CNS-'+uuid.uuid4().hex[:12].upper(),subject_id,grantee_id,set(purposes),set(domains),set(actions),datetime.now(timezone.utc).isoformat(),expires_at,allow_sensitive); self._grants[g.consent_id]=g; return g
+  g=ConsentGrant('HOS-CNS-'+uuid.uuid4().hex[:12].upper(),subject_id,grantee_id,set(purposes),set(domains),set(actions),datetime.now(UTC).isoformat(),expires_at,allow_sensitive); self._grants[g.consent_id]=g; return g
  def revoke(self,consent_id,subject_id):
   g=self._grants[consent_id]
   if g.subject_id!=subject_id: raise PermissionError('Only subject may revoke')
   self._grants[consent_id]=ConsentGrant(**{**g.__dict__,'status':ConsentStatus.REVOKED})
  def authorize(self,*,subject_id,grantee_id,purpose,domain,action,sensitive=False,now_iso=None):
-  now=now_iso or datetime.now(timezone.utc).isoformat()
+  now=now_iso or datetime.now(UTC).isoformat()
   for g in self._grants.values():
    if g.status!=ConsentStatus.ACTIVE or g.subject_id!=subject_id or g.grantee_id!=grantee_id: continue
    if g.expires_at and now>=g.expires_at: continue

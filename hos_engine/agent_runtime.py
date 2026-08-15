@@ -1,9 +1,12 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
+
 
 class RiskLevel(str, Enum):
     LOW="LOW"; MEDIUM="MEDIUM"; HIGH="HIGH"; CRITICAL="CRITICAL"
@@ -15,32 +18,32 @@ class ApprovalMode(str, Enum):
 class Capability:
     capability_id:str; action:str; resource_scope:str
     risk_level:RiskLevel; approval_mode:ApprovalMode
-    constraints:Dict[str,Any]=field(default_factory=dict)
+    constraints:dict[str,Any]=field(default_factory=dict)
 
 @dataclass(frozen=True)
 class AgentManifest:
-    agent_id:str; name:str; purpose:str; owner_id:str; capabilities:Set[str]
+    agent_id:str; name:str; purpose:str; owner_id:str; capabilities:set[str]
     may_delegate:bool=False; max_delegation_depth:int=0
 
 @dataclass(frozen=True)
 class Delegation:
     delegation_id:str; delegator_id:str; delegate_id:str
-    capability_ids:Set[str]; depth:int; reason:str; approved_by:Optional[str]=None
+    capability_ids:set[str]; depth:int; reason:str; approved_by:str | None=None
 
 @dataclass
 class InvocationRequest:
     request_id:str; agent_id:str; capability_id:str; action:str
-    resource:str; arguments:Dict[str,Any]
-    human_approval_id:Optional[str]=None
-    delegation_chain:List[str]=field(default_factory=list)
+    resource:str; arguments:dict[str,Any]
+    human_approval_id:str | None=None
+    delegation_chain:list[str]=field(default_factory=list)
 
 @dataclass(frozen=True)
 class ActionReceipt:
     receipt_id:str; request_id:str; agent_id:str; capability_id:str
-    status:str; reason:str; occurred_at:str; result_summary:Optional[str]=None
+    status:str; reason:str; occurred_at:str; result_summary:str | None=None
 
 class CapabilityRegistry:
-    def __init__(self): self._items:Dict[str,Capability]={}
+    def __init__(self): self._items:dict[str,Capability]={}
     def register(self,c:Capability):
         if c.capability_id in self._items: raise ValueError("Capability already exists")
         self._items[c.capability_id]=c
@@ -48,7 +51,7 @@ class CapabilityRegistry:
 
 class AgentRegistry:
     def __init__(self):
-        self._agents:Dict[str,AgentManifest]={}; self._delegations:Dict[str,Delegation]={}
+        self._agents:dict[str,AgentManifest]={}; self._delegations:dict[str,Delegation]={}
     def register(self,a:AgentManifest):
         if a.agent_id in self._agents: raise ValueError("Agent already exists")
         self._agents[a.agent_id]=a
@@ -59,14 +62,14 @@ class AgentRegistry:
         if d.depth>src.max_delegation_depth: raise PermissionError("Delegation depth exceeded")
         if not d.capability_ids.issubset(src.capabilities): raise PermissionError("Capability not owned")
         self._delegations[d.delegation_id]=d
-    def for_delegate(self,aid:str)->List[Delegation]:
+    def for_delegate(self,aid:str)->list[Delegation]:
         return [d for d in self._delegations.values() if d.delegate_id==aid]
 
 class AgentRuntime:
     def __init__(self,capabilities:CapabilityRegistry,agents:AgentRegistry):
         self.capabilities=capabilities; self.agents=agents
-        self._tools:Dict[str,Callable[[Dict[str,Any]],Any]]={}; self._receipts=[]
-    def register_tool(self,cid:str,fn:Callable[[Dict[str,Any]],Any]):
+        self._tools:dict[str,Callable[[dict[str,Any]],Any]]={}; self._receipts=[]
+    def register_tool(self,cid:str,fn:Callable[[dict[str,Any]],Any]):
         self.capabilities.get(cid); self._tools[cid]=fn
     def evaluate(self,r:InvocationRequest)->ActionReceipt:
         agent=self.agents.get(r.agent_id); cap=self.capabilities.get(r.capability_id)
@@ -78,9 +81,9 @@ class AgentRuntime:
             return self._receipt(r,"REQUIRES_HUMAN_APPROVAL","Human approval required")
         if r.capability_id not in self._tools: return self._receipt(r,"DENIED","No tool implementation")
         try: result=self._tools[r.capability_id](r.arguments)
-        except Exception as exc: return self._receipt(r,"FAILED",f"Tool failed: {exc}")
+        except Exception as exc: return self._receipt(r,"FAILED",f"Tool failed: {exc}")  # noqa: BLE001 -- any tool failure must degrade to a FAILED receipt, never propagate
         return self._receipt(r,"EXECUTED","Checks passed",str(result)[:500])
-    def _has_cap(self,a:AgentManifest,cid:str,chain:List[str])->bool:
+    def _has_cap(self,a:AgentManifest,cid:str,chain:list[str])->bool:
         if cid in a.capabilities: return True
         ds={d.delegation_id:d for d in self.agents.for_delegate(a.agent_id)}
         if not chain: return False
@@ -95,6 +98,6 @@ class AgentRuntime:
         return scope=="*" or res==scope or res.startswith(scope.rstrip("/")+"/")
     def _receipt(self,r,status,reason,result_summary=None):
         x=ActionReceipt("HOS-RCP-"+uuid.uuid4().hex[:12].upper(),r.request_id,r.agent_id,
-                        r.capability_id,status,reason,datetime.now(timezone.utc).isoformat(),result_summary)
+                        r.capability_id,status,reason,datetime.now(UTC).isoformat(),result_summary)
         self._receipts.append(x); return x
     def receipts(self): return list(self._receipts)

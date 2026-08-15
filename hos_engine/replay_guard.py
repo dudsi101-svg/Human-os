@@ -1,5 +1,7 @@
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
+
+
 @dataclass(frozen=True)
 class ReplayDecision: accepted:bool; reason:str
 class ReplayGuard:

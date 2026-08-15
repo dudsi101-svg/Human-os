@@ -1,10 +1,12 @@
 from __future__ import annotations
+
+from collections.abc import Iterable
 from copy import deepcopy
-from typing import Any, Dict, Iterable
+from typing import Any
 
 
-def rebuild_entities(events: Iterable[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    entities: Dict[str, Dict[str, Any]] = {}
+def rebuild_entities(events: Iterable[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    entities: dict[str, dict[str, Any]] = {}
     for event in events:
         event_type = event["event_type"]
         payload = event.get("payload", {})
