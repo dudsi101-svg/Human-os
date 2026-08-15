@@ -15,6 +15,7 @@ from .hub_entity_registry import EntityRegistry, HubEntityStatus
 from .models import Decision, Proof
 from .policy import ProofKernel
 from .security_identity import IdentityRegistry, IdentityStatus
+from .sqlite_store import SQLiteEventStore
 
 
 class IntentOutcome(str, Enum):
@@ -82,10 +83,16 @@ class ExecutionLoop:
     persisted, and is returned as an ExecutionResult rather than raised.
 
     This is a bounded slice, not the full Human OS execution model: it does
-    not yet touch the Knowledge Graph, the Hub's RelationRegistry, or
-    SQLiteEventStore's hash-chain integrity layer, and "human approval" here
-    is limited to the human_approval_id identifier hos_engine.agent_runtime
-    already accepts, not a full approval workflow.
+    not yet touch the Knowledge Graph or the Hub's RelationRegistry, and
+    "human approval" here is limited to the human_approval_id identifier
+    hos_engine.agent_runtime already accepts, not a full approval workflow.
+
+    Event persistence and provenance (2026-08-15, second continuation slice):
+    `event_store` accepts either the plain `EventStore` or
+    `SQLiteEventStore`. Passing `SQLiteEventStore` gives every persisted
+    domain event a SHA-256 hash chain (`verify_chain()`), which is the
+    project's existing tamper-evidence mechanism -- prefer it over the plain
+    `EventStore` whenever the caller cares about provenance, not just a log.
     """
 
     def __init__(
@@ -99,7 +106,7 @@ class ExecutionLoop:
         proof_kernel: ProofKernel,
         agent_runtime: AgentRuntime,
         events: EventEngine,
-        event_store: EventStore | None = None,
+        event_store: EventStore | SQLiteEventStore | None = None,
     ) -> None:
         self._identities = identities
         self._roles = roles

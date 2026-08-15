@@ -1,4 +1,6 @@
+import tempfile
 import unittest
+from pathlib import Path
 
 from hos_engine.agent_runtime import (
     AgentManifest,
@@ -17,6 +19,7 @@ from hos_engine.hos_core import ContextManager, EventEngine
 from hos_engine.hub_entity_registry import EntityRegistry, HubEntityStatus, HubEntityType
 from hos_engine.policy import ProofKernel
 from hos_engine.security_identity import IdentityRegistry, IdentityType
+from hos_engine.sqlite_store import SQLiteEventStore
 
 SUBJECT_ID = "HOS-HUM-000001"
 AGENT_ID = "HOS-AGT-000001"
@@ -171,6 +174,77 @@ class ExecutionLoopTests(unittest.TestCase):
         domain_events = [e for e in self.event_store.all() if e["payload"]["intent_id"] == denied.intent_id]
         self.assertEqual(len(domain_events), 1)
         self.assertEqual(domain_events[0]["event_type"], "EXECUTION_DENIED")
+
+
+class ExecutionLoopSQLiteProvenanceTests(unittest.TestCase):
+    """Same loop, but backed by SQLiteEventStore instead of the plain
+    EventStore -- proves ExecutionLoop's event_store port works with the
+    project's actual tamper-evidence mechanism (hash chain), not just an
+    in-memory list. Closes the "event persistence" and "provenance" items
+    from the founder continuation directive's Phase 3 progressive-
+    integration list."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.event_store = SQLiteEventStore(Path(self.tmpdir.name) / "events.db")
+
+        self.identities = IdentityRegistry()
+        self.identities.register_identity(identity_type=IdentityType.HUMAN, display_name="Founder", owner_id=SUBJECT_ID, identity_id=SUBJECT_ID)
+        self.roles = RoleGrantRegistry()
+        self.roles.grant(identity_id=SUBJECT_ID, role=AuthorityRole.OWNER, scope="*", issued_by=SUBJECT_ID)
+        self.consents = ConsentRegistry()
+        self.consents.grant(subject_id=SUBJECT_ID, grantee_id=AGENT_ID, purposes={PURPOSE}, domains={DOMAIN}, actions={ACTION})
+        self.contexts = ContextManager()
+        self.entities = EntityRegistry()
+        self.entity_a = self.entities.register(entity_type=HubEntityType.RESOURCE, working_name="Draft A", responsibility_owner_id=SUBJECT_ID, provenance_source="test")
+        self.entity_b = self.entities.register(entity_type=HubEntityType.RESOURCE, working_name="Draft B", responsibility_owner_id=SUBJECT_ID, provenance_source="test")
+        self.capabilities = CapabilityRegistry()
+        self.capabilities.register(Capability(capability_id=CAPABILITY_ID, action=ACTION, resource_scope="*", risk_level=RiskLevel.LOW, approval_mode=ApprovalMode.AUTOMATIC))
+        self.agents = AgentRegistry()
+        self.agents.register(AgentManifest(agent_id=AGENT_ID, name="Drafting Agent", purpose="drafts documents", owner_id=SUBJECT_ID, capabilities={CAPABILITY_ID}))
+        self.agent_runtime = AgentRuntime(self.capabilities, self.agents)
+        self.agent_runtime.register_tool(CAPABILITY_ID, lambda args: "drafted")
+        self.proof_kernel = ProofKernel()
+        self.events = EventEngine()
+
+        self.loop = ExecutionLoop(
+            identities=self.identities, roles=self.roles, consents=self.consents,
+            contexts=self.contexts, entities=self.entities, proof_kernel=self.proof_kernel,
+            agent_runtime=self.agent_runtime, events=self.events, event_store=self.event_store,
+        )
+
+    def tearDown(self):
+        self.event_store.close()
+        self.tmpdir.cleanup()
+
+    def _intent(self, resource_entity_id):
+        return HumanIntent(
+            subject_id=SUBJECT_ID, agent_id=AGENT_ID, capability_id=CAPABILITY_ID,
+            action=ACTION, resource_entity_id=resource_entity_id,
+            purpose=PURPOSE, domain=DOMAIN, required_role=AuthorityRole.OWNER,
+            predicted_effects={"autonomy": 0.2, "generativity": 0.6, "extraction": 0.05},
+            reversibility=0.9, portability=0.8, exit_cost=0.1,
+        )
+
+    def test_executions_persist_to_sqlite_with_a_verifiable_hash_chain(self):
+        first = self.loop.execute(self._intent(self.entity_a.entity_id))
+        second = self.loop.execute(self._intent(self.entity_b.entity_id))
+
+        self.assertEqual(first.outcome, IntentOutcome.EXECUTED)
+        self.assertEqual(second.outcome, IntentOutcome.EXECUTED)
+
+        stored = self.event_store.all()
+        self.assertEqual(len(stored), 2)
+        self.assertTrue(self.event_store.verify_chain())
+
+        # each event's previous_hash correctly links to the one before it
+        self.assertIsNone(stored[0]["previous_hash"])
+        self.assertEqual(stored[1]["previous_hash"], stored[0]["event_hash"])
+
+    def test_refused_intents_never_reach_the_hash_chain(self):
+        self.loop.execute(self._intent("HOS-ENT-DOESNOTEXIST"))  # REFUSED_ENTITY_NOT_FOUND
+        self.assertEqual(self.event_store.all(), [])
+        self.assertTrue(self.event_store.verify_chain())
 
 
 if __name__ == "__main__":

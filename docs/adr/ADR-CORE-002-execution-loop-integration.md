@@ -53,8 +53,6 @@ This is a bounded slice, not the full Human OS execution model:
 
 - It does not yet touch the Knowledge Graph or the Hub's `RelationRegistry`
   -- entity retrieval is a direct lookup, not a graph traversal.
-- It does not yet use `SQLiteEventStore`'s hash-chain integrity layer --
-  durable events go through the plain `EventStore`.
 - "Human or validly delegated approval" is limited to the
   `human_approval_id` identifier `agent_runtime.InvocationRequest` already
   accepted; there is no approval-workflow UI or notification behind it yet.
@@ -63,10 +61,20 @@ This is a bounded slice, not the full Human OS execution model:
   Decision/Recommendation Engine (Layer 5, ADR still unbuilt) is not
   involved.
 
-Covered by 9 new integration tests (`tests/test_execution_loop.py`) plus 7
-new tests for `authority.py` (`tests/test_authority.py`): the full happy
-path with a complete audit trail, and refusal at every named gate (unknown
-identity, suspended identity, missing authority role, missing consent,
-unknown entity, constitutional violation, a capability that requires human
+**Update, same day:** `event_store` now accepts either `EventStore` or
+`SQLiteEventStore` -- passing the latter gives every persisted domain event
+a verifiable SHA-256 hash chain, closing the "event persistence" and
+"provenance" items from the founder continuation directive's progressive-
+integration list. `EventEngine`'s in-memory execution-lifecycle log is
+unaffected; the two remain separate as originally documented in
+`hos_core.py`.
+
+Covered by 11 integration tests (`tests/test_execution_loop.py`) plus 7
+tests for `authority.py` (`tests/test_authority.py`): the full happy path
+with a complete audit trail, refusal at every named gate (unknown identity,
+suspended identity, missing authority role, missing consent, unknown
+entity, constitutional violation, a capability that requires human
 approval, and an agent-level denial that still produces a durable domain
-event).
+event), and -- against `SQLiteEventStore` specifically -- that executed
+intents chain correctly and `verify_chain()` passes, while refused intents
+never reach the chain at all.
