@@ -308,6 +308,13 @@ will flag it as an unused import.
   `Human OS Reconstruction Audit` — check it before assuming a design question is still open. It
   now spans three rounds of corrections as the founder has supplied more original source files;
   read to the end, not just the initial Q1–Q13 answers.
+- `docs/HOS_ENTITY_RELATION_EVENT_SCHEMA_v0.1.md` — the artifact `ADR-IMPL-001` names as the next
+  mandatory step before further domain-module work: a consolidated index of every entity/relation/
+  event/status/risk-scale vocabulary that exists across the codebase and digested layer specs, with
+  IDs, validation, migration, error-contract, and minimal-API sections. It resolves nothing new —
+  every parallel vocabulary it lists (Hub vs. Formal Entity Model, the five risk/quality scales,
+  the three status vocabularies) stays deliberately unreconciled; read it before assuming any two
+  of them are equivalent.
 - `docs/RELATION_VOCABULARY_CROSSWALK.md` — a provisional, explicitly incomplete mapping between
   the Hub's relation vocabulary (`hub_entity_registry.HubRelationType`, fully sourced) and a
   separate "Formal Entity & Relation Model" vocabulary known only secondhand (source DOCX bytes
