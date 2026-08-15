@@ -390,3 +390,110 @@ mapowania 1:1 na moduły kodu bez dalszej weryfikacji.
 Wciąż w kategorii "POTWIERDZONY, treść niedostępna": Warstwa 2, Warstwa 4,
 Sovereign Recovery Layer, prezentacja `znajomi`. `Formal_Entity_Relation_Model`
 pozostaje w kategorii "treść znana tylko pośrednio".
+
+## Czwarta tura — Sovereign Recovery, Warstwy 2/3/4/5 (15 sierpnia 2026, wieczór)
+
+Founder dostarczył jedenaście kolejnych plików w dwóch turach uploadu: pierwsza
+zawierała `Sovereign_Recovery_Layer_v0_2_1` (dwie identyczne kopie),
+`Warstwa_5_Silnik_Decyzji`, `Warstwa_6` (duplikat już przetworzonego),
+`Warstwa_3_Mapa_Wiedzy`, `Warstwa_2_Model_Czlowieka`; druga zawierała pięć
+kolejnych plików, z czego cztery okazały się **bajt-w-bajt identycznymi
+duplikatami** plików z pierwszej tury (zweryfikowane `diff`), a jeden —
+`Warstwa_4_Model_Uzytkownika_i_Cyfrowy_Profil` — był genuinie nowy. Łącznie
+**pięć unikalnych nowych dokumentów źródłowych** zostało w pełni przeanalizowanych
+(każdy przeczytany od początku do końca przez dedykowanego agenta badawczego,
+zweryfikowany dodatkowymi wyszukiwaniami `grep` po całym pliku) i przełożonych
+na 25 nowych ADR-ów. Wszystkie pięć pełnych rozbiorów zapisano trwale w `docs/`:
+
+| Dokument | Digest | Nowe ADR-y | Status w Q12 po tej turze |
+|---|---|---|---|
+| Sovereign Recovery Layer v0.2.1 | `docs/RECOVERY_LAYER_DIGEST.md` | `ADR-RECOVERY-001..005` | **TREŚĆ OTRZYMANA I PRZEANALIZOWANA** — było jedynym dokumentem blokującym SAFE MODE |
+| Warstwa 5 — Silnik Decyzji i Rekomendacji | `docs/LAYER_5_DECISION_ENGINE_DIGEST.md` | `ADR-DECISION-001..005` | nowy — nie był w rejestrze Q12 |
+| Warstwa 3 — Mapa Wiedzy i Sygnatura Informacji | `docs/LAYER_3_KNOWLEDGE_MAP_DIGEST.md` | `ADR-KNOWLEDGE-001..005` | nowy — nie był w rejestrze Q12 |
+| Warstwa 2 — Model Człowieka | `docs/LAYER_2_HUMAN_MODEL_DIGEST.md` | `ADR-HUMAN-001..005` | **TREŚĆ OTRZYMANA I PRZEANALIZOWANA** |
+| Warstwa 4 — Model Użytkownika i Cyfrowy Profil | `docs/LAYER_4_USER_MODEL_DIGEST.md` | `ADR-USERMODEL-001..005` | **TREŚĆ OTRZYMANA I PRZEANALIZOWANA** |
+
+Po tej turze, z sześciu dokumentów wymienionych w drugiej turze jako
+"POTWIERDZONY, treść niedostępna", pozostają nieotrzymane tylko:
+`Sovereign_Recovery` (teraz otrzymany, usunięty z listy), `Warstwa_2` (teraz
+otrzymany), `Warstwa_4` (teraz otrzymany) — **wszystkie trzy zamknięte**.
+Wciąż nieotrzymane: prezentacja `znajomi` (`.pptx`), pełne archiwum rozmów
+źródłowych. `Formal_Entity_Relation_Model` pozostaje "treść znana tylko
+pośrednio".
+
+### Najważniejsze ustalenie — Sovereign Recovery / SAFE MODE (odblokowane, ale niekompletne)
+
+Dokument źródłowy dla SAFE MODE **wreszcie istnieje w projekcie**, ale sam
+siebie definiuje jako decyzję normatywną/architektoniczną, nie gotową
+specyfikację techniczną (własny nagłówek: "Scalone bez konfliktów
+semantycznych; wymaga implementacji technicznej i testów"). Zdefiniowano
+siedem trybów awaryjnych (SAFE MODE, FREEZE, READ-ONLY, DISCONNECT, ROLLBACK,
+EXPORT, RECOVERY), ośmiopoziomową hierarchię kontroli (Sovereign Recovery
+Kernel jako 3. najwyższe ogniwo po użytkowniku i Konstytucji), Emergency Root,
+dwukluczową suwerenność i 13-polowy kontrakt rejestru zdarzeń awaryjnych —
+pełne szczegóły w `ADR-RECOVERY-001..004`.
+
+**Zgodnie z własnym protokołem tej sesji (nie zgadywać architektury
+bezpieczeństwa), `ADR-RECOVERY-005` jawnie wypisuje dziewięć nierozstrzygniętych
+luk zamiast je wypełniać domysłem** — najważniejsze cztery, blokujące spójną
+implementację: (1) rola `RECOVERY_CUSTODIAN`, która już istnieje w
+`authority.py`, nie jest nigdzie w tym dokumencie zdefiniowana ani uzasadniona;
+(2) brak mapowania trybów awaryjnych na skalę R0–R4 Konstytucji; (3) nie
+rozstrzygnięto, czy tryby awaryjne mogą włączać się automatycznie, czy zawsze
+wymagają jawnej akcji człowieka; (4) niejednoznaczność nazewnicza `FROZEN` vs
+`SUSPENDED` między sekcjami samego dokumentu. **Rekomendacja: żaden kod
+SAFE MODE/Recovery nie powinien powstać, dopóki te cztery punkty nie zostaną
+rozstrzygnięte z founder-em** — to nie jest decyzja podjęta jednostronnie w tej
+turze, tylko wniosek z analizy zgodny z regułą eskalacji tej sesji.
+
+### Drugie ważne ustalenie — Warstwa 4 to NIE źródło ADR-USER-002
+
+Podczas analizy Warstwy 4 potwierdzono (pełne porównanie w
+`docs/LAYER_4_USER_MODEL_DIGEST.md` §9 i `ADR-USERMODEL-005`), że **to nie jest
+ten sam dokument**, który był źródłem istniejącego `ADR-USER-002` ("Human
+Digital Twin"). `ADR-USER-002` cytuje `Rozszerzenie_Architektury_i_Integracja_v0_2_1.docx`
+jako źródło — inny plik. Warstwa 4 nigdzie nie używa terminu "Cyfrowy
+bliźniak"/"Digital Twin"; ma inną dekompozycję architektoniczną (R0–R8 +
+24-obiektowa płaska ontologia, zamiast dziewięciu nazwanych komponentów i
+pięciu trybów działania z ADR-USER-002). Oba dokumenty dzielą fundamentalną
+filozofię ("model to mapa, nie definicja") i prawa
+weryfikacji/kontestacji/korekty/usunięcia, ale **nie powinny być po cichu
+utożsamiane ani scalane** — zgodnie z `02_Source_Truth_Protocol`, to zostaje
+tu odnotowane jako otwarte pytanie governance, nie rozstrzygnięte
+jednostronnie. `ADR-USERMODEL-001..004` opisują wyłącznie treść Warstwy 4;
+`ADR-USER-002` pozostaje niezmieniony.
+
+### Pozostałe ustalenia warte odnotowania
+
+- **Pięć niezależnych, nienakładających się taksonomii ryzyka/jakości** istnieje
+  teraz w projekcie: Konstytucja R0–R4, Warstwa 6 (XP/SE/EC/BL/MQ/PF/DQ/CA/PE),
+  Warstwa 5 (DI/IQ/AR/RV/RC/G/R-poziom), Warstwa 3 (sygnatura 0–5/E0–E5/K1–K4/
+  klasy źródeł), Warstwa 4 (R0–R8/H0–H5/P0–P5/C0–C5/D0–D4). Żadna nie pokrywa
+  się znaczeniowo z pozostałymi mimo współdzielonych liter — to zamierzony
+  wzorzec "różne osie na różnych warstwach" (patrz `CLAUDE.md`,
+  `AuthorityRole` vs `IdentityType`), ale warty jawnego, zbiorczego
+  odnotowania, żeby żadna przyszła sesja nie założyła fałszywej ekwiwalencji.
+- **"Zapora epistemiczna" wobec systemów symbolicznych (Human Design,
+  astrologia) występuje niezależnie w Warstwach 2, 3, 5, 6 i 4** — z niemal
+  identycznym sformułowaniem za każdym razem. To silny dowód na rzeczywisty,
+  ogólnoprojektowy niezmiennik, nie przypadkową zbieżność (patrz
+  `ADR-KNOWLEDGE-005`, gdzie odnotowano to pierwszy raz zbiorczo).
+- **Rozbieżność liczby pól "sygnatury wiedzy"** między `constitution/README.md`
+  (7 pól) a Warstwą 3 (11 wymiarów w pełnej tabeli, ale inny 7-elementowy
+  podzbiór w jej własnym kryterium akceptacji 29.3) — konkretny, sprawdzalny
+  punkt do rozstrzygnięcia przez founder-a, nieopisany dalej w tej turze
+  (patrz `ADR-KNOWLEDGE-001`).
+- Wszystkie pięć nowych dokumentów źródłowych jawnie deklaruje status "Wersja
+  0.1/0.2.1 – model bazowy/przyjęte do rdzenia", "Projekt do iteracji,
+  walidacji i audytu" — deklaratywnie niedojrzałe, spójne z BETA repozytorium
+  kodu. Każdy ma własny załącznik "Otwarte pytania do wersji 0.2"
+  (10–14 pytań) — potencjalny materiał na przyszłe ADR-y, nieuwzględniony w
+  tej turze.
+
+**Wpływ na kod:** żaden. Ta tura jest wyłącznie dokumentacyjna — 25 nowych
+plików ADR + 5 plików digest + rozszerzenie tego dokumentu. Zgodnie z zasadą
+tej sesji ("Reconstruction Audit" najpierw, implementacja dopiero po
+rozstrzygnięciu otwartych pytań), żaden z nowo udokumentowanych komponentów
+(Sovereign Recovery Kernel, Silnik Decyzji, rozszerzona Mapa Wiedzy, Model
+Człowieka, Model Użytkownika R0–R8) nie został zaimplementowany w
+`hos_engine` w tej turze.
