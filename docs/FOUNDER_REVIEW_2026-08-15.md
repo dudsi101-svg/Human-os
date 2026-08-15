@@ -499,3 +499,86 @@ rozstrzygnięciu otwartych pytań), żaden z nowo udokumentowanych komponentów
 (Sovereign Recovery Kernel, Silnik Decyzji, rozszerzona Mapa Wiedzy, Model
 Człowieka, Model Użytkownika R0–R8) nie został zaimplementowany w
 `hos_engine` w tej turze.
+
+## Piąta tura — decyzje po głębokim audycie (15 sierpnia 2026)
+
+Po scaleniu PR #2 (zamknięty jako zastąpiony), PR #4 i PR #5 do `main`,
+wykonano głęboki audyt stanu projektu (60 ADR-ów, 9 z nich zaimplementowanych,
+2281 linii kodu, zero pracy z tego dnia dotąd scalonej — patrz opublikowany
+artefakt audytu). Audyt wskazał pięć pytań wymagających decyzji founder-a.
+Zamiast zostawiać je dalej otwarte, zadano je wprost — odpowiedzi poniżej,
+w formacie zgodnym z resztą tego dokumentu.
+
+### Decyzja — Sovereign Recovery / SAFE MODE (cztery luki z ADR-RECOVERY-005)
+
+1. **Rola `RECOVERY_CUSTODIAN`** → zdefiniowana teraz na bazie ról
+   governance z Konstytucji, nie czekamy na dodatkowe źródło. Zmapowana na
+   **Zespół bezpieczeństwa** (Konstytucja, rozdz. 13) — nigdy na `OWNER`,
+   bo drugi klucz w schemacie dwukluczowym istnieje właśnie po to, by
+   chronić przed nieodwracalnym działaniem samego właściciela pod presją
+   lub przez pomyłkę. Zapisane w `hos_engine/authority.py` (komentarz przy
+   `RECOVERY_CUSTODIAN`) i `ADR-RECOVERY-006`.
+2. **Mapowanie trybów awaryjnych na R0–R4** → każdy tryb osobno, nie jedna
+   wspólna wartość. Zaproponowane i przyjęte mapowanie: SAFE MODE/READ-ONLY
+   = R0, FREEZE/DISCONNECT/EXPORT = R1, ROLLBACK = R2, RECOVERY = R3. Żaden
+   tryb nie sięga R4 — wszystkie są usankcjonowanymi mechanizmami, nie
+   niedopuszczalnymi działaniami. Pełne uzasadnienie w `ADR-RECOVERY-006`.
+3. **Automatyczne czy ręczne wyzwalanie** → zależnie od trybu. SAFE MODE,
+   READ-ONLY, FREEZE i DISCONNECT mogą włączać się automatycznie po
+   wykryciu poważnej anomalii (z natychmiastowym powiadomieniem właściciela
+   i bezwarunkowym prawem cofnięcia); ROLLBACK, EXPORT i RECOVERY zawsze
+   wymagają jawnej akcji człowieka.
+4. **`FROZEN` vs `SUSPENDED`** → to ten sam stan. Kontrakt „Freeze Entity /
+   Scope” z Recovery używa istniejącego `HubEntityStatus.SUSPENDED` —
+   żaden nowy stan encji nie jest dodawany do `state_machine.py` ani
+   `hub_entity_registry.py`.
+
+Wszystkie cztery decyzje zapisane szczegółowo w `ADR-RECOVERY-006` — nie
+implementują same w sobie kodu SAFE MODE, ale usuwają blokery, które
+wcześniej uniemożliwiały rozpoczęcie tej implementacji. Pozostałe punkty z
+`ADR-RECOVERY-005` (2, 4, 6, 8, 9) pozostają otwarte, nieporuszone w tej
+turze.
+
+### Decyzja — Warstwa 4 i ADR-USER-002
+
+**Scalone.** Warstwa 4 (R0–R8, 24-obiektowa ontologia) staje się kanoniczną
+strukturą; dziewięć nazwanych komponentów z ADR-USER-002 i pięć trybów
+działania zostają zachowane jako nazwane widoki nad tą strukturą, nie
+osobny schemat. Rozstrzygnięto oba wcześniej niezmapowane komponenty
+(Capability Model, Decision Style) i zaproponowano mapowanie pięciu trybów
+na wiersze R0–R8. „Cyfrowy bliźniak”/„Human Digital Twin” przestaje być
+nazwą główną modelu — kanoniczna nazwa to „Model Użytkownika i Cyfrowy
+Profil Rozwojowy”. Pełny zapis: `ADR-USERMODEL-006`; `ADR-USER-002` pozostaje
+nienaruszony jako zapis historyczny, ze zaktualizowanym statusem wskazującym
+na scalenie.
+
+### Decyzja — Sygnatura wiedzy (7 pól czy 11 wymiarów)
+
+**Oba obowiązują, w różnych rolach.** 7 pól z Konstytucji to twarda,
+wszędzie obowiązująca podłoga; 11 wymiarów z Warstwy 3 to pełna, zalecana
+forma stosowana tam, gdzie to możliwe. `constitution/README.md` rozdz. 5
+zaktualizowany, żeby to stwierdzić wprost. `ADR-KNOWLEDGE-001` zaktualizowany
+o notę rozstrzygającą. Wewnętrzna niespójność w samej Warstwie 3 (jej
+kryterium akceptacji 29.3 wymienia jeszcze inny, trzeci 7-elementowy
+podzbiór) pozostaje nierozwiązana — to osobna usterka redakcyjna źródła, nie
+objęta tą decyzją.
+
+### Decyzja — polityka znaków towarowych
+
+**Ustalona teraz, robocza.** Nazwa i znaki „Human OS” identyfikują
+oficjalny projekt; licencje Apache-2.0/CC BY 4.0 nie obejmują nazwy/marki
+(zgodnie z klauzulą 6 Apache-2.0). Forki dozwolone, ale nie mogą przedstawiać
+się jako „Human OS” bez zgody founder-a; opisowe odniesienia („zgodny z
+Human OS”) pozostają dozwolone. Jawnie oznaczona jako polityka robocza, nie
+formalna opinia prawna — pełna analiza prawna nazwy/marki wciąż otwarta.
+Pełny zapis: `LICENSE-DECISION.md`.
+
+### Decyzja — priorytet brakujących części White Paper
+
+**Niski priorytet.** Części A i B Rozdziału III pozostają oczekiwane, ale
+bez pośpiechu — nie blokują żadnej pracy nad kodem, ADR-ami ani Konstytucją.
+Brak zmian w `docs/white_paper/`.
+
+**Wpływ na kod:** `hos_engine/authority.py` — jeden komentarz dokumentujący
+mapowanie `RECOVERY_CUSTODIAN`. Żadna inna zmiana kodu. Reszta tej tury to
+wyłącznie ADR-y, Konstytucja i `LICENSE-DECISION.md`.

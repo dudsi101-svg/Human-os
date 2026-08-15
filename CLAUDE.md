@@ -209,14 +209,16 @@ docs or comments.
 an older/different shape from `hos_engine.protocol_security.secure_envelope` (`HOSP/0.2`) — two
 overlapping envelope representations exist; check which one a given call site expects.
 
-**Not implemented, source now available but implementation still blocked:** SAFE MODE and the
-Sovereign Recovery Kernel (the owner's inalienable "stop the system" rights) have zero code. The
-source document (`Human_OS_Sovereign_Recovery_Layer_i_Rejestr_Scalenia_v0_2_1.docx`) was received
-2026-08-15 and is fully digested (`docs/RECOVERY_LAYER_DIGEST.md`, `ADR-RECOVERY-001..005`), but
-the source itself is a normative/architectural decision document, not a finished technical spec,
-and leaves several load-bearing gaps unresolved (see `ADR-RECOVERY-005`) — do not design or
-implement Recovery/SAFE MODE code until those gaps are resolved with the founder, per
-`docs/FOUNDER_REVIEW_2026-08-15.md`'s "Czwarta tura" section.
+**Not implemented, design gaps now resolved:** SAFE MODE and the Sovereign Recovery Kernel (the
+owner's inalienable "stop the system" rights) have zero code. The source document
+(`Human_OS_Sovereign_Recovery_Layer_i_Rejestr_Scalenia_v0_2_1.docx`) was received 2026-08-15 and is
+fully digested (`docs/RECOVERY_LAYER_DIGEST.md`, `ADR-RECOVERY-001..005`); the four highest-severity
+gaps the source left unresolved (`RECOVERY_CUSTODIAN` role justification, mapping emergency modes
+to R0–R4, auto-vs-manual triggering per mode, `FROZEN`/`SUSPENDED` naming) were put to the founder
+directly the same day and resolved — see `ADR-RECOVERY-006`. Implementation may now proceed against
+`ADR-RECOVERY-001..004` plus `ADR-RECOVERY-006`'s resolutions; it simply hasn't been built yet.
+Lower-severity open items from `ADR-RECOVERY-005` (concrete TTL values, governance-role mapping
+beyond `RECOVERY_CUSTODIAN`, genome-registry references, etc.) remain unresolved and non-blocking.
 
 ### Module style split
 
@@ -273,20 +275,25 @@ will flag it as an unused import.
     6 defines its own risk/safety scales (XP0–XP8, SE0–SE4, and others) — **do not confuse these
     with the Constitution's R0–R4** (different taxonomy, different layer). No code implements any
     of Layer 6 yet; `hub_entity_registry.HubEntityType.EXPERIMENT` is only a bare label.
-  - `ADR-RECOVERY-001..005`, `ADR-DECISION-001..005`, `ADR-KNOWLEDGE-001..005`,
-    `ADR-HUMAN-001..005`, `ADR-USERMODEL-001..005` — formulated 2026-08-15 from five more
+  - `ADR-RECOVERY-001..006`, `ADR-DECISION-001..005`, `ADR-KNOWLEDGE-001..005`,
+    `ADR-HUMAN-001..005`, `ADR-USERMODEL-001..006` — formulated 2026-08-15 from five more
     founder-provided source docs, none with their own ADR numbering: the **Sovereign Recovery
     Layer** (the long-blocked source for SAFE MODE — see below), **Layer 5** (Decision &
     Recommendation Engine, upstream of Layer 6), **Layer 3** (Knowledge Map & Information
     Signature), **Layer 2** (Human Model), and **Layer 4** (User Model & Digital Profile). Each has
     a full structural digest: `docs/RECOVERY_LAYER_DIGEST.md`,
     `docs/LAYER_5_DECISION_ENGINE_DIGEST.md`, `docs/LAYER_3_KNOWLEDGE_MAP_DIGEST.md`,
-    `docs/LAYER_2_HUMAN_MODEL_DIGEST.md`, `docs/LAYER_4_USER_MODEL_DIGEST.md`. **Layer 4 is a
-    different source document from the one behind `ADR-USER-002`** — see `ADR-USERMODEL-005`
-    before assuming the two describe the same "User Model"/"Digital Twin" concept; they are
-    sibling specifications with overlapping but non-identical structure, not duplicates. Each layer
-    defines its own coded risk/quality scale, all mutually distinct and distinct from the
-    Constitution's R0–R4 — five independent taxonomies now exist across the digested layers; never
+    `docs/LAYER_2_HUMAN_MODEL_DIGEST.md`, `docs/LAYER_4_USER_MODEL_DIGEST.md`. **Layer 4 was
+    originally a different source document from the one behind `ADR-USER-002`**, flagged in
+    `ADR-USERMODEL-005` as a sibling-not-duplicate specification — founder decision the same day
+    (`ADR-USERMODEL-006`) merged the two: Layer 4's R0–R8/24-object structure is now canonical,
+    `ADR-USER-002`'s nine components survive as a named view over it (mapping table in
+    `ADR-USERMODEL-006`), and "Human Digital Twin" is retired as the model's primary name in favor
+    of Layer 4's own "Model Użytkownika i Cyfrowy Profil Rozwojowy". Similarly, `ADR-RECOVERY-006`
+    records founder resolutions for the four gaps `ADR-RECOVERY-005` originally left blocking (see
+    "Not implemented" note below). Each layer defines its own coded risk/quality scale, all
+    mutually distinct and distinct from the Constitution's R0–R4 — five independent taxonomies now
+    exist across the digested layers; never
     assume a shared meaning across scales that merely share a letter.
   - `docs/FOUNDER_REVIEW_2026-08-15.md`'s "Czwarta tura" section (Sovereign Recovery) is the
     canonical place to check before writing any SAFE MODE / Recovery code: `ADR-RECOVERY-005`
@@ -324,8 +331,10 @@ will flag it as an unused import.
 ## Licensing
 
 Code is Apache-2.0 (`LICENSE`); documentation/specifications are CC BY 4.0 (`LICENSE-DOCS`). The
-Human OS name/marks have no published trademark policy yet — this is explicitly unresolved, see
-`LICENSE-DECISION.md`.
+"Human OS" name/marks have a simple working trademark policy as of 2026-08-15 (name/marks identify
+the official project and its governance, separate from the code/docs licenses per Apache-2.0's own
+trademark clause; forks are fine but shouldn't present themselves as "Human OS") — it is explicitly
+not a formal legal opinion, see `LICENSE-DECISION.md`.
 
 ## Contribution conventions
 

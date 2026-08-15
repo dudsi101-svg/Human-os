@@ -22,6 +22,15 @@ class AuthorityRole(str, Enum):
     OWNER = "OWNER"
     OPERATOR = "OPERATOR"
     TRUSTED_DELEGATE = "TRUSTED_DELEGATE"
+    # Holder of the independent recovery key in Sovereign Recovery's dual-key
+    # sovereignty scheme (docs/adr/ADR-RECOVERY-003) -- never the OWNER
+    # themself, since the second key exists specifically to guard against an
+    # irreversible action taken by the owner under coercion or by mistake.
+    # The role name appears in this enum with no justification in its own
+    # source document; founder decision 2026-08-15 maps it onto the
+    # Constitution's Security Team governance role (constitution/README.md
+    # Ch.13, "Zespol bezpieczenstwa") rather than inventing a new governance
+    # role -- see docs/FOUNDER_REVIEW_2026-08-15.md, "Piata tura".
     RECOVERY_CUSTODIAN = "RECOVERY_CUSTODIAN"
     AGENT = "AGENT"
     SERVICE = "SERVICE"
