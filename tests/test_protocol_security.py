@@ -1,5 +1,8 @@
 import unittest
+
 from hos_engine.protocol_security import *
+
+
 class ProtocolSecurityTests(unittest.TestCase):
     def test_signature_and_tamper(self):
         s=HMACSigner("K1",b"secret")

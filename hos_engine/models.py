@@ -1,8 +1,9 @@
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 
 class Decision(str, Enum):
@@ -26,7 +27,7 @@ class ProofTest:
     test_id: str
     name: str
     result: TestResult
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
     confidence: float = 1.0
 
 
@@ -34,12 +35,12 @@ class ProofTest:
 class Proof:
     proof_id: str
     subject_id: str
-    tests: List[ProofTest]
+    tests: list[ProofTest]
     final_status: Decision
     human_review_required: bool
-    limitations: List[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.proof_id,
             "subject_id": self.subject_id,

@@ -1,4 +1,6 @@
-from hos_engine.protocol_security import HMACSigner,secure_envelope
+from hos_engine.protocol_security import HMACSigner, secure_envelope
+
+
 class SecureEnvelopeBuilder:
     def __init__(self,*,sender_id,key_id,secret):
         self.sender_id=sender_id;self.signer=HMACSigner(key_id,secret)

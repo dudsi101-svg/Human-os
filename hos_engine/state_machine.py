@@ -1,9 +1,7 @@
 
 from __future__ import annotations
-from typing import Dict, Set
 
-
-ALLOWED_TRANSITIONS: Dict[str, Set[str]] = {
+ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "draft": {"active", "archived", "revoked"},
     "active": {"paused", "completed", "archived", "revoked"},
     "paused": {"active", "completed", "archived", "revoked"},

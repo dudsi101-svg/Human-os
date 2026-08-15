@@ -1,6 +1,10 @@
-import time,unittest
+import time
+import unittest
+
 from hos_engine.protocol_security import secure_envelope
 from hos_engine.replay_guard import ReplayGuard
+
+
 class ReplayTests(unittest.TestCase):
     def test_replay_and_expiry(self):
         g=ReplayGuard()

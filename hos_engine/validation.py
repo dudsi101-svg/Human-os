@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from jsonschema import Draft202012Validator, RefResolver
 
@@ -9,12 +10,12 @@ from jsonschema import Draft202012Validator, RefResolver
 class SchemaRegistry:
     def __init__(self, schema_dir: str | Path) -> None:
         self.schema_dir = Path(schema_dir)
-        self.schemas: Dict[str, Dict[str, Any]] = {}
+        self.schemas: dict[str, dict[str, Any]] = {}
         for path in self.schema_dir.glob("*.json"):
             schema = json.loads(path.read_text(encoding="utf-8"))
             self.schemas[path.name] = schema
 
-    def validate(self, schema_name: str, instance: Dict[str, Any]) -> None:
+    def validate(self, schema_name: str, instance: dict[str, Any]) -> None:
         schema = self.schemas[schema_name]
         resolver = RefResolver(
             base_uri=self.schema_dir.resolve().as_uri() + "/",

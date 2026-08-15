@@ -1,5 +1,7 @@
 import unittest
+
 from hos_engine.simulation import *
+
 
 class SimulationTests(unittest.TestCase):
     def setUp(self):

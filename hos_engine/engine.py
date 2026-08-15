@@ -1,7 +1,8 @@
 
 from __future__ import annotations
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+
+from datetime import UTC, datetime
+from typing import Any
 
 from .event_store import EventStore
 from .flow import generative_flow_score
@@ -15,9 +16,9 @@ class HumanOSEngine:
         self.ids = IdGenerator()
         self.events = EventStore(event_store_path)
         self.proof_kernel = ProofKernel()
-        self.entities: Dict[str, Dict[str, Any]] = {}
+        self.entities: dict[str, dict[str, Any]] = {}
 
-    def register_entity(self, entity: Dict[str, Any], actor_id: str) -> Dict[str, Any]:
+    def register_entity(self, entity: dict[str, Any], actor_id: str) -> dict[str, Any]:
         entity_id = entity["id"]
         if entity_id in self.entities:
             raise ValueError(f"Entity already exists: {entity_id}")
@@ -25,7 +26,7 @@ class HumanOSEngine:
         self._emit("ENTITY_CREATED", actor_id, [entity_id], {"entity_type": entity.get("entity_type")})
         return self.entities[entity_id]
 
-    def change_state(self, entity_id: str, target: str, actor_id: str) -> Dict[str, Any]:
+    def change_state(self, entity_id: str, target: str, actor_id: str) -> dict[str, Any]:
         entity = self.entities[entity_id]
         current = entity["status"]
         entity["status"] = transition(current, target)
@@ -33,13 +34,13 @@ class HumanOSEngine:
         self._emit("ENTITY_UPDATED", actor_id, [entity_id], {"from": current, "to": target})
         return entity
 
-    def evaluate_action(self, action: Dict[str, Any], actor_id: str) -> Dict[str, Any]:
+    def evaluate_action(self, action: dict[str, Any], actor_id: str) -> dict[str, Any]:
         proof_id = self.ids.next("PRF")
         proof = self.proof_kernel.evaluate(action, proof_id)
         self._emit("PROOF_COMPLETED", actor_id, [action.get("id", "UNKNOWN")], proof.to_dict())
         return proof.to_dict()
 
-    def record_flow(self, flow: Dict[str, Any], actor_id: str) -> Dict[str, Any]:
+    def record_flow(self, flow: dict[str, Any], actor_id: str) -> dict[str, Any]:
         flow = dict(flow)
         flow["generative_flow_score"] = generative_flow_score(flow)
         self.register_entity(flow, actor_id)
@@ -49,7 +50,7 @@ class HumanOSEngine:
     def disclose_limitation(self, subject_id: str, limitation: str, actor_id: str) -> None:
         self._emit("LIMITATION_DISCLOSED", actor_id, [subject_id], {"limitation": limitation})
 
-    def _emit(self, event_type: str, actor_id: str, subject_ids: list[str], payload: Dict[str, Any]) -> None:
+    def _emit(self, event_type: str, actor_id: str, subject_ids: list[str], payload: dict[str, Any]) -> None:
         self.events.append({
             "id": self.ids.next("EVT"),
             "event_type": event_type,
@@ -63,4 +64,4 @@ class HumanOSEngine:
 
     @staticmethod
     def _now() -> str:
-        return datetime.now(timezone.utc).isoformat()
+        return datetime.now(UTC).isoformat()

@@ -1,10 +1,12 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List
-from .human_model import HumanModel, HumanRecord
-from .consent import ConsentRegistry
+from typing import Any
+
+from .human_model import HumanRecord
+
+
 @dataclass(frozen=True)
 class PersonalizationContext:
- subject_id:str; grantee_id:str; purpose:str; records:List[HumanRecord]; projection:Dict[str,Any]
+ subject_id:str; grantee_id:str; purpose:str; records:list[HumanRecord]; projection:dict[str,Any]
 class ConsentAwarePersonalizer:
  def __init__(self,model,consents): self.model=model; self.consents=consents
  def build_context(self,*,subject_id,grantee_id,purpose,domain):

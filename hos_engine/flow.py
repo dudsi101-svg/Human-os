@@ -1,9 +1,8 @@
 
 from __future__ import annotations
-from typing import Dict
 
 
-def generative_flow_score(flow: Dict[str, float]) -> float:
+def generative_flow_score(flow: dict[str, float]) -> float:
     positive = (
         flow.get("gain", 0.0)
         * flow.get("reciprocity", 0.0)
