@@ -1,0 +1,15 @@
+Human OS documentation, specifications, and constitutional texts are licensed
+under the Creative Commons Attribution 4.0 International License (CC BY 4.0).
+
+Full legal text: https://creativecommons.org/licenses/by/4.0/legalcode
+Human-readable summary: https://creativecommons.org/licenses/by/4.0/
+
+This applies to prose documentation and specifications, including but not
+limited to: the Constitution (constitution/), the ecosystem and layer
+specifications (spec/, protocol/, hub/, security/*.md), architecture decision
+records (docs/), and governance documents (GOVERNANCE.md, CONTRIBUTING.md,
+CODE_OF_CONDUCT.md, ROADMAP.md).
+
+It does not apply to source code, which is licensed under Apache-2.0 (see
+LICENSE), nor to the Human OS name and marks, which are governed by a
+separate trademark policy not yet published — see LICENSE-DECISION.md.
