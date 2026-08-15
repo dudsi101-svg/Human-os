@@ -39,6 +39,7 @@ from .knowledge_graph import (
 )
 from .personalization import *
 from .protocol_security import *
+from .recovery import *
 from .replay_guard import *
 from .security_gateway import *
 from .security_identity import *

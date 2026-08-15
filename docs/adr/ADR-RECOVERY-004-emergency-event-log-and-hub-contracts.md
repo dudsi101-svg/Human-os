@@ -41,8 +41,23 @@ structurally mandatory, which is why all thirteen fields carry the same
 non-negotiable requirement rather than a mix of required/optional.
 
 ## Consequences
-None of this is implemented. Two open, source-flagged items matter for any
-future implementation:
+**Update 2026-08-15 (Phase 4):** partially implemented in
+`hos_engine.recovery` — every activation, deactivation, *and refusal*
+produces the full 13-field `EmergencyEvent` (plus a schema version and an
+optional HMAC-SHA256 signature over the canonical JSON, sharing
+`security/THREAT_MODEL.md`'s local-reference-only caveat), kept in an
+append-only in-kernel log with optional durable append to
+`EventStore`/`SQLiteEventStore` (hash-chained, `verify_chain()`-covered by
+test). Of the six Hub contracts, only **Freeze Entity / Scope** exists
+(`freeze_entity()`, transitioning to `SUSPENDED` per ADR-RECOVERY-006 §4,
+non-destructively); Register Recovery Event is implicit in the log; the
+other four (Snapshot, Rollback, Disconnect, Export Sovereign Package)
+remain unimplemented. Dedicated `recovery_*` event types are still not
+added to `event.types.json` — durable events use `STATE_OBSERVED` with the
+full 13-field record in the payload until that vocabulary decision is made.
+
+Originally none of this was implemented. Two open, source-flagged items
+matter for any future implementation:
 1. The source itself (§12) states `FROZEN` must be added to the
    Entity/Event schemas — `hos_engine.state_machine.ALLOWED_TRANSITIONS`
    (`draft, active, paused, completed, archived, revoked`) has no `FROZEN`

@@ -49,3 +49,15 @@ verified or designed — it is a candidate, not a decision. No TTL values,
 key-splitting library, or authentication-strength requirement is specified
 by the source; per ADR-RECOVERY-005, these are open implementation items,
 not gaps to be silently filled by this ADR.
+
+**Update 2026-08-15 (Phase 4):** `hos_engine.recovery` implements dual-key
+sovereignty for `ROLLBACK`/`RECOVERY` (custodian approval required, the
+custodian must be a different identity than the initiator, and — when a
+`RoleGrantRegistry` is wired in — must hold an active `RECOVERY_CUSTODIAN`
+grant in scope, exactly the candidate integration this ADR predicted).
+Scope isolation is enforced: `is_active(mode, scope)` is per-scope, so
+recovering one area never unlocks another. Every activation is
+time-bounded (`expires_at` mandatory, auto-expiry on check). Threshold
+key-*splitting* (e.g. 2-of-3 secret sharing) and real key infrastructure
+remain unimplemented — the current custodian check is role-based, a
+reference mechanism in the same sense as the project's HMAC signing.
