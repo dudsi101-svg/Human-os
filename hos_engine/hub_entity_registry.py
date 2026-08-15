@@ -7,7 +7,18 @@ from enum import Enum
 
 
 class HubEntityType(str, Enum):
-    """The six MVP entity types from the Hub Entity-First spec, §9.1."""
+    """MVP_IMPLEMENTED_SUBSET -- the six MVP entity types from the Hub
+    Entity-First spec, §9.1. This is NOT the canonical Human OS entity
+    ontology: the later Formal Entity & Relation Model (found 2026-08-15,
+    source integrity correction pass) describes a much broader type set
+    (IDENTITY, PROFILE, PROJECT, OUTCOME, TASK, WORKFLOW, ASSET, LOCATION,
+    DOCUMENT, KNOWLEDGE_ITEM, SOURCE, RISK, METRIC, EVENT, POLICY,
+    PERMISSION_GRANT, CONSENT, RELATION, REPRESENTATION, VERSION, AGENT,
+    AUTOMATION, INTERACTION, COMMITMENT, CAPABILITY, and more). Do not treat
+    these six values as complete, and do not map them onto the formal model's
+    names (e.g. PERSON -> IDENTITY) by convenience -- that mapping needs its
+    own source-grounded analysis before it is made.
+    """
 
     PERSON = "PERSON"
     GOAL = "GOAL"
@@ -30,7 +41,17 @@ class HubEntityStatus(str, Enum):
 
 
 class HubRelationType(str, Enum):
-    """The relation verbs named in the Hub Entity-First spec, §4."""
+    """The relation verbs named in the Hub Entity-First spec, §4.
+
+    This is the HUB_ENTITY_FIRST_RELATION_VOCAB_v0.1. A later, more formal
+    vocabulary (FORMAL_ENTITY_RELATION_VOCAB_v0.1, from the Formal Entity &
+    Relation Model found 2026-08-15) uses different English verb names
+    (IS_A, PART_OF, CONTAINS, OWNS, CONTROLS, DEPENDS_ON, ...) with richer
+    first-class metadata (directionality, status, provenance, created_by,
+    validity, constraints, schema_version). The two vocabularies are not yet
+    reconciled -- see docs/RELATION_VOCABULARY_CROSSWALK.md. Do not assume
+    a 1:1 mapping between them without checking that document.
+    """
 
     JEST_TYPEM = "jest_typem"
     NALEZY_DO = "należy_do"
@@ -48,6 +69,7 @@ class HubRelationType(str, Enum):
     REALIZUJE = "realizuje"
     ZOSTAL_ZATWIERDZONY_PRZEZ = "został_zatwierdzony_przez"
     JEST_PRZECHOWYWANY_W = "jest_przechowywany_w"
+    JEST_WIDOKIEM = "jest_widokiem"
 
 
 @dataclass(frozen=True)
@@ -61,6 +83,23 @@ class HubEntity:
     schema_version: str = "0.1"
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+
+
+@dataclass(frozen=True)
+class MergeRecord:
+    """Provenance for a manual entity merge -- who approved it, on what
+    evidence, and why. Added 2026-08-15 (source integrity correction pass)
+    so that "Entity A was merged into Entity B by X at T based on evidence E"
+    can always be reconstructed; the merge itself never physically erases
+    the retired entity or its history (see EntityRegistry.merge)."""
+
+    merge_id: str
+    keep_entity_id: str
+    retire_entity_id: str
+    reason: str
+    evidence: str
+    approved_by: str
+    occurred_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass(frozen=True)
@@ -86,6 +125,7 @@ class EntityRegistry:
     def __init__(self) -> None:
         self._entities: dict[str, HubEntity] = {}
         self._possible_duplicates: dict[str, set[str]] = {}
+        self._merges: dict[str, MergeRecord] = {}
 
     def register(
         self,
@@ -123,16 +163,40 @@ class EntityRegistry:
     def possible_duplicates_of(self, entity_id: str) -> set[str]:
         return set(self._possible_duplicates.get(entity_id, set()))
 
-    def merge(self, *, keep_entity_id: str, retire_entity_id: str) -> HubEntity:
-        """Manually approved merge: retire_entity_id becomes SUPERSEDED by keep_entity_id."""
+    def merge(
+        self,
+        *,
+        keep_entity_id: str,
+        retire_entity_id: str,
+        reason: str,
+        evidence: str,
+        approved_by: str,
+    ) -> HubEntity:
+        """Manually approved merge: retire_entity_id becomes SUPERSEDED by
+        keep_entity_id. Requires reason/evidence/approved_by so the merge is
+        always reconstructable later, per ADR-HUB-005 -- retired entities are
+        never physically erased, and the merge itself is a recorded,
+        attributed decision, not a silent status flip."""
         if keep_entity_id == retire_entity_id:
             raise ValueError("Cannot merge an entity into itself")
         self._entities[keep_entity_id]
         self.transition(retire_entity_id, HubEntityStatus.SUPERSEDED)
+        record = MergeRecord(
+            merge_id="HOS-MRG-" + uuid.uuid4().hex[:12].upper(),
+            keep_entity_id=keep_entity_id,
+            retire_entity_id=retire_entity_id,
+            reason=reason,
+            evidence=evidence,
+            approved_by=approved_by,
+        )
+        self._merges[retire_entity_id] = record
         self._possible_duplicates.pop(retire_entity_id, None)
         for others in self._possible_duplicates.values():
             others.discard(retire_entity_id)
         return self._entities[keep_entity_id]
+
+    def merge_record_for(self, retired_entity_id: str) -> MergeRecord | None:
+        return self._merges.get(retired_entity_id)
 
     def by_type(self, entity_type: HubEntityType) -> list[HubEntity]:
         return [e for e in self._entities.values() if e.entity_type == entity_type]

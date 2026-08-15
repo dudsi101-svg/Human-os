@@ -26,6 +26,17 @@ class ContextManagerTests(unittest.TestCase):
         self.assertEqual(len(manager.history("HOS-HUM-000001")), 1)
         self.assertEqual(len(manager.history("HOS-HUM-000002")), 1)
 
+    def test_snapshot_data_is_genuinely_immutable(self):
+        manager = ContextManager()
+        source = {"goal": "explore"}
+        package = manager.snapshot("HOS-HUM-000001", source)
+
+        source["goal"] = "mutated after snapshot"
+        self.assertEqual(package.data["goal"], "explore")
+
+        with self.assertRaises(TypeError):
+            package.data["goal"] = "direct write"
+
 
 class EventEngineTests(unittest.TestCase):
     def setUp(self):
