@@ -22,8 +22,13 @@ precedensów).
 docelowo trafić do wersji wiążącej. 15-punktowa wersja w `constitution/README.md`
 przestaje być traktowana jako kompletna — jest punktem wyjścia do rozbudowy, nie
 ostateczną formą.
-**Status:** Przyjęte jako kierunek. Pełne wdrożenie (przepisanie
-`constitution/README.md`) to osobne zadanie, nie wykonane w tej sesji.
+**Status:** **Wykonane.** Zapytany wprost przy przeglądzie Fazy 3 (dyrektywa
+zawiera jawną regułę eskalacji: „a constitutional rule would change”),
+founder potwierdził rozpisanie pełnej wersji. `constitution/README.md`
+zastąpiony rozszerzoną, 21-rozdziałową + 4-załącznikową strukturą, z jawną
+notą o pochodzeniu (rekonstrukcja z audytu, nie dosłowny przedruk DOCX — do
+zweryfikowania gdy oryginalne bajty będą dostępne) i mapowaniem poprzednich
+15 punktów na nowe rozdziały, żeby nic nie zniknęło po cichu.
 
 ### Q2 — Kanoniczny Rozdział I White Paper
 **Decyzja:** Rozdziałem I jest długa wersja „Dlaczego Human OS?” (PDF, 12 sekcji).
