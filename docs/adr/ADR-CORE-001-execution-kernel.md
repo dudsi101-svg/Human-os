@@ -2,8 +2,13 @@
 
 ## Status
 Accepted for implementation and further specification. Imported 2026-08-15
-per founder review Q6/Q11. Source: *Rozszerzenie Architektury i Integracja
-v0.2* (20 July 2026), §1–§2.
+per founder review Q6/Q11, **verified against the original source docx bytes
+2026-08-15** (`Human_OS_Rozszerzenie_Architektury_i_Integracja_v0_2_1.docx`,
+founder-provided). Source: *Rozszerzenie Architektury i Integracja v0.2*
+(20 July 2026, internal version field; the filename carries a `v0_2_1` suffix
+not reflected in the document's own header — noted, not resolved), §1–§2. The
+original secondhand reconstruction matched the source text closely; no
+content corrections were required.
 
 ## Decision
 HOS Core is adopted as the system's technical kernel. It operates below the

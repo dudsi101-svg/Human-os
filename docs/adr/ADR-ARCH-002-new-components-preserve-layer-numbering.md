@@ -4,8 +4,12 @@
 Accepted for implementation and further specification. Imported 2026-08-15
 per founder review Q11 (flagged during extraction, not originally named in
 the founder's list of 14 — included because it directly resolves a
-numbering question raised in the Reconstruction Audit's Conflict Map, §6).
-Source: *Rozszerzenie Architektury i Integracja v0.2*, §0.
+numbering question raised in the Reconstruction Audit's Conflict Map, §6),
+**verified against the original source docx bytes 2026-08-15**
+(`Human_OS_Rozszerzenie_Architektury_i_Integracja_v0_2_1.docx`,
+founder-provided; filename carries a `v0_2_1` suffix not reflected in the
+document's own "0.2" version header). Source: *Rozszerzenie Architektury i
+Integracja v0.2*, §0. No content corrections were required.
 
 ## Decision
 Layers 5, 6, and 7 (Decision Engine, Experiment Engine, Collective

@@ -243,22 +243,54 @@ will flag it as an unused import.
   code slice of *part* of this (entity/relation registries only) — it is not the whole Hub.
 - `sdk/python/human_os_sdk/` directly imports from `hos_engine` — it is a thin convenience
   wrapper, not a decoupled client library.
-- `docs/adr/` contains architecture decision records. Two populations exist:
+- `docs/adr/` contains architecture decision records. Three populations exist:
   - `ADR-0002` through `ADR-0008` — original engine ADRs, each backing an implemented, tested
-    component.
+    component. Note `ADR-0006-simulation-laboratory.md` documents the code-level what-if scenario
+    engine in `hos_engine/simulation.py` — a **different concept** from "Human OS Lab" below
+    despite the shared word "lab"/"laboratorium"; do not conflate the two.
   - `ADR-HUB-001..006`, `ADR-CORE-001/002`, `ADR-GRAPH-002`, `ADR-AGENT-001/002`, `ADR-WORLD-001`,
     `ADR-USER-002`, `ADR-PRED-001`, `ADR-AUDIT-001`, `ADR-IMPL-001`, `ADR-ARCH-002` — imported
-    2026-08-15 from DOCX specifications (see `docs/FOUNDER_REVIEW_2026-08-15.md` Q11). Most are
+    2026-08-15 from DOCX specifications (see `docs/FOUNDER_REVIEW_2026-08-15.md` Q11), and later
+    the same day **verified sentence-by-sentence against the original source docx bytes**
+    (`Human_OS_Rozszerzenie_Architektury_i_Integracja_v0_2_1.docx`) once the founder supplied them
+    — the secondhand reconstruction matched closely, no content corrections were needed. Most are
     "accepted direction, not yet implemented"; `ADR-CORE-001`/`ADR-CORE-002` back the
     execution-foundation modules above and are implemented.
+  - `ADR-LAB-001..006` — imported 2026-08-15 from `Human_OS_Lab_Specyfikacja_i_Interface_v0_1.docx`,
+    describing **Human OS Lab**: a tester-facing sandbox product (Lab Shell, Experiment Engine,
+    Sandbox Data, Agent Arena, Trace & Audit, Feedback Loop, Promotion Gate) with a v0.1 clickable
+    UX-only prototype (no backend, no auth, `localStorage`-only demo data). No code implements this
+    yet. Distinct from `ADR-0006`'s simulation laboratory (see above).
+  - `ADR-EXP-001..005` — formulated 2026-08-15 from `Human_OS_Warstwa_6_Silnik_Eksperymentow...docx`
+    (Layer 6, the personal N-of-1 experiment engine — hypothesis, protocol, baseline, safety
+    monitoring, analysis, and opt-in anonymized community contribution). Unlike the ADRs above,
+    this source contains **no ADR numbering of its own** — these five were newly written from its
+    axioms/reference-architecture/acceptance-criteria sections, not extracted verbatim; see
+    `docs/LAYER_6_EXPERIMENT_ENGINE_DIGEST.md` for the full structural digest this drew from. Layer
+    6 defines its own risk/safety scales (XP0–XP8, SE0–SE4, and others) — **do not confuse these
+    with the Constitution's R0–R4** (different taxonomy, different layer). No code implements any
+    of Layer 6 yet; `hub_entity_registry.HubEntityType.EXPERIMENT` is only a bare label.
   Check these before making architectural changes, and add a new ADR for any decision of similar
   weight.
 - `docs/FOUNDER_REVIEW_2026-08-15.md` is the live decision record for open questions raised by the
-  `Human OS Reconstruction Audit` — check it before assuming a design question is still open.
+  `Human OS Reconstruction Audit` — check it before assuming a design question is still open. It
+  now spans three rounds of corrections as the founder has supplied more original source files;
+  read to the end, not just the initial Q1–Q13 answers.
 - `docs/RELATION_VOCABULARY_CROSSWALK.md` — a provisional, explicitly incomplete mapping between
   the Hub's relation vocabulary (`hub_entity_registry.HubRelationType`, fully sourced) and a
   separate "Formal Entity & Relation Model" vocabulary known only secondhand (source DOCX bytes
   not yet available). Don't assume a 1:1 mapping between the two without checking this document.
+- `docs/white_paper/` — the first White Paper content committed to this repo (2026-08-15): a 1:1
+  transcription of two received PDFs covering Chapter III ("Technologia, która pamięta, komu ma
+  służyć") — the main/overview text and Part C ("AI jako partner poznawczy"). Per
+  `docs/FOUNDER_REVIEW_2026-08-15.md` Q3, the target is four parts (A–D); Parts A, B, D are not yet
+  received — treat this directory as partial, not canon-complete, and check its `README.md` before
+  assuming the chapter is whole.
+- `docs/LAYER_6_EXPERIMENT_ENGINE_DIGEST.md` — a full structural digest (Polish, matching the
+  source language) of Layer 6's source docx: metadata, all coded scales, the 15-object experiment
+  ontology, all appendix field lists, the full 47-section table of contents, and every literal
+  prohibition. Read this before extending `ADR-EXP-*` or building anything experiment-related —
+  it's more complete than the ADRs alone.
 
 ## Licensing
 

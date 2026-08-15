@@ -300,3 +300,93 @@ To ograniczony, celowo wąski wycinek (nie dotyka jeszcze Knowledge Graph,
 ale pierwszy raz te elementy są przetestowane razem, a nie osobno. 16 nowych
 testów (7 dla `authority.py`, 9 dla `execution_loop.py`), 62/62 w całym
 repo, lint czysty, demo bez zmian.
+
+**Update, ta sama sesja (SQLite provenance + graf):** dodatkowe testy dla
+`SQLiteEventStore` (łańcuch skrótów) i `RelationRegistry` (`REALIZUJE`)
+podniosły łączną liczbę testów execution-loop do 14 (patrz
+`ADR-CORE-002-execution-loop-integration.md`, sekcja Consequences,
+zaktualizowana o oba wątki), a `CLAUDE.md` zostało przepisane, by opisywać
+`hos_core`, `hub_entity_registry`, `authority`, `execution_loop`,
+rozszerzoną Konstytucję i granicę EventEngine/EventStore. 67/67 testów,
+lint czysty, demo bez zmian.
+
+## Trzecia tura — nowe pliki źródłowe (15 sierpnia 2026, po południu)
+
+Founder dostarczył pięć nowych oryginalnych plików (trzy `.docx`, dwa `.pdf`),
+odzyskane niezależnie od dwóch wcześniejszych paczek archiwalnych. Zgodnie z
+`02_Source_Truth_Protocol`, każdy plik jest tu odnotowany z jawnym statusem
+przyjęcia, zamiast milcząco wchłonięty.
+
+### Otrzymane pliki
+
+| Plik | Dotyczy | Status po tej turze |
+|---|---|---|
+| `Human_OS_Lab_Specyfikacja_i_Interface_v0_1.docx` | Human OS Lab (środowisko testowe, osobne od symulacji w kodzie) | **NOWY** — brak wcześniejszej reprezentacji w repo. Dodano `docs/adr/ADR-LAB-001`…`006`. |
+| `Human_OS_Rozszerzenie_Architektury_i_Integracja_v0_2_1.docx` | Źródło już wcześniej użyte pośrednio (audyt) do ADR-CORE-001, ADR-CORE-002 (częściowo), ADR-GRAPH-002, ADR-AGENT-001/002, ADR-WORLD-001, ADR-USER-002, ADR-PRED-001, ADR-AUDIT-001, ADR-IMPL-001, ADR-ARCH-002 | **ZWERYFIKOWANY** — treść tych 10 ADR-ów porównana zdanie po zdaniu z oryginalnymi bajtami. Rekonstrukcja pośrednia okazała się wierna źródłu; nie wymagała korekt merytorycznych. Każdy z tych ADR-ów ma teraz jawną notę "verified against the original source docx bytes 2026-08-15". Jedyna rozbieżność: nazwa pliku niesie sufiks `v0_2_1`, którego nagłówek dokumentu ("Wersja: 0.2") nie odzwierciedla — odnotowane, nierozstrzygnięte. |
+| `Human_OS_Warstwa_6_Silnik_Eksperymentow_Monitorowania_i_Postepu_v0_1_2.docx` | Q12 — jeden z sześciu dokumentów wcześniej oznaczonych jako "POTWIERDZONY w File Library, treść niedostępna" | **TREŚĆ OTRZYMANA** (3585 linii po konwersji). Pełny rozbiór i wnioski architektoniczne — patrz kolejna aktualizacja tego dokumentu po zakończeniu analizy. |
+| `Human_OS_White_Paper_Rozdzial_III_v1.0.pdf` | Q3 — kanoniczna wersja Rozdziału III | **CZĘŚCIOWO OTRZYMANE** — wersja główna (przeglądowa, sekcje 3.1–3.7). Dodano do `docs/white_paper/`. |
+| `Human_OS_White_Paper_Rozdzial_III_Czesc_C_v1.0.pdf` | Q3 — Część C z czteroczęściowej wersji A–D | **CZĘŚCIOWO OTRZYMANE** — Część C (sekcje 3C.1–3C.7). Części A, B, D wciąż brakuje. Dodano do `docs/white_paper/`. |
+
+### KOREKTA — Q3 (Rozdział III White Paper)
+
+**Poprzedni stan:** "Fizyczna podmiana pliku nie wykonana w tej sesji" —
+całkowity brak reprezentacji w repo.
+
+**Nowy dowód:** dwa z czterech planowanych plików (wersja główna + Część C)
+dostarczone jako PDF.
+
+**Skorygowany stan:** `docs/white_paper/` zawiera teraz transkrypcję 1:1
+wersji głównej i Części C. Części A, B, D pozostają nieotrzymane — status
+rozdziału to **CZĘŚCIOWY**, nie kompletny. Nie zgadywano treści brakujących
+części.
+
+**Wpływ:** żaden — to czysto addytywna zmiana dokumentacyjna, brak wpływu na
+kod ani testy.
+
+### Aktualizacja Q12 (Warstwa 6)
+
+Wiersz dla `Human_OS_Warstwa_6_Silnik_Eksperymentow_Monitorowania_i_Postepu_v0_1.docx`
+w tabeli "Rejestr niezweryfikowanych artefaktów formalnych" (druga tura,
+wyżej) zmienia status z "POTWIERDZONY w File Library, treść niedostępna" na
+**"TREŚĆ OTRZYMANA I PRZEANALIZOWANA"**.
+
+Dokument (3585 linii po konwersji z DOCX, wersja "0.1 – model bazowy",
+jawnie oznaczony jako "Projekt do iteracji, pilotażu, walidacji
+metodologicznej i audytu bezpieczeństwa") nie zawiera własnej numeracji ADR
+— w przeciwieństwie do `Rozszerzenie Architektury i Integracja v0.2.1`, nie
+było tu nic do wiernego wyodrębnienia, tylko materiał do sformułowania
+nowych decyzji. Na tej podstawie dodano pięć nowych ADR-ów w tej turze:
+
+- `ADR-EXP-001` — własna taksonomia ryzyka Warstwy 6 (XP0–XP8, SE0–SE4,
+  EC/BL/MQ/PF/DQ/CA/PE, kody wyniku) i obowiązkowa "test nadrzędny" brama
+  przed startem eksperymentu — jawnie **odrębna** od skali R0–R4 Konstytucji.
+- `ADR-EXP-002` — zasada nierównoważności rzędów: bezpieczeństwo, jakość
+  punktu odniesienia i zgoda nie są wzajemnie zastępowalne.
+- `ADR-EXP-003` — obiekty eksperymentalne (15 typów) są niezależnie
+  wersjonowane i nigdy nie scalane po cichu — ten sam wzorzec provenance co
+  `EntityRegistry.merge()`.
+- `ADR-EXP-004` — granice roli AI w Silniku Eksperymentów: lista zakazanych
+  działań autonomicznych (§37.2) oraz bezwzględny zakaz automatycznego
+  zwiększania ekspozycji na ścieżce wysokiego ryzyka (§34), niezależny od
+  determinacji użytkownika.
+- `ADR-EXP-005` — eksperymenty refleksyjne/symboliczne (Human Design,
+  astrologia) za "zaporą epistemiczną": dopuszczalny przedmiot eksperymentu
+  behawioralnego, ale nigdy podstawa wniosku medycznego/przyczynowego w
+  Mapie Wiedzy.
+
+Pełny, ustrukturyzowany rozbiór dokumentu (metadane, wszystkie skale,
+15-obiektowa ontologia, 12 pól Załączników A–K, pełny spis treści 47 sekcji
++ Załączniki A–V, wszystkie dosłowne zakazy) zapisany trwale w
+`docs/LAYER_6_EXPERIMENT_ENGINE_DIGEST.md` — ten wpis streszcza tylko
+decyzje przełożone na ADR-y. Załącznik U źródła zawiera 12 nierozstrzygniętych
+pytań metodologicznych/etycznych do wersji 0.2 — potencjalny materiał na
+przyszłe ADR-y, nieuwzględniony w tej turze.
+
+**Ważne rozróżnienie potwierdzone podczas analizy:** nazwy "Hub", "Digital
+Twin", "Knowledge Graph" (używane w kodzie repozytorium) **nie występują** w
+tym dokumencie — odnosi się on do "Mapy Wiedzy" (Warstwa 3). Nie zakładać
+mapowania 1:1 na moduły kodu bez dalszej weryfikacji.
+
+Wciąż w kategorii "POTWIERDZONY, treść niedostępna": Warstwa 2, Warstwa 4,
+Sovereign Recovery Layer, prezentacja `znajomi`. `Formal_Entity_Relation_Model`
+pozostaje w kategorii "treść znana tylko pośrednio".

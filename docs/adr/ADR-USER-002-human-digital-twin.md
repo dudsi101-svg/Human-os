@@ -2,8 +2,11 @@
 
 ## Status
 Accepted for implementation and further specification. Imported 2026-08-15
-per founder review Q11. Source: *Rozszerzenie Architektury i Integracja
-v0.2*, §6.
+per founder review Q11, **verified against the original source docx bytes
+2026-08-15** (`Human_OS_Rozszerzenie_Architektury_i_Integracja_v0_2_1.docx`,
+founder-provided; filename carries a `v0_2_1` suffix not reflected in the
+document's own "0.2" version header). Source: *Rozszerzenie Architektury i
+Integracja v0.2*, §6. No content corrections were required.
 
 ## Decision
 The Digital Twin ("Cyfrowy bliźniak") is an operational, temporal
