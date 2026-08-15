@@ -417,9 +417,11 @@ Po tej turze, z sześciu dokumentów wymienionych w drugiej turze jako
 "POTWIERDZONY, treść niedostępna", pozostają nieotrzymane tylko:
 `Sovereign_Recovery` (teraz otrzymany, usunięty z listy), `Warstwa_2` (teraz
 otrzymany), `Warstwa_4` (teraz otrzymany) — **wszystkie trzy zamknięte**.
-Wciąż nieotrzymane: prezentacja `znajomi` (`.pptx`), pełne archiwum rozmów
-źródłowych. `Formal_Entity_Relation_Model` pozostaje "treść znana tylko
-pośrednio".
+`Human_OS_prezentacja_znajomi_v0_1.pptx` — founder zdecydował, że ten plik
+**nie jest potrzebny**; zdjęty z listy poszukiwań, nie jako utracony, tylko
+jako świadomie odrzucony (decyzja z 15 sierpnia 2026, ta sama sesja). Wciąż
+nieotrzymane: pełne archiwum rozmów źródłowych. `Formal_Entity_Relation_Model`
+pozostaje "treść znana tylko pośrednio".
 
 ### Najważniejsze ustalenie — Sovereign Recovery / SAFE MODE (odblokowane, ale niekompletne)
 
