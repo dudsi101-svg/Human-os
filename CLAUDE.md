@@ -313,11 +313,10 @@ will flag it as an unused import.
   separate "Formal Entity & Relation Model" vocabulary known only secondhand (source DOCX bytes
   not yet available). Don't assume a 1:1 mapping between the two without checking this document.
 - `docs/white_paper/` — the first White Paper content committed to this repo (2026-08-15): a 1:1
-  transcription of two received PDFs covering Chapter III ("Technologia, która pamięta, komu ma
-  służyć") — the main/overview text and Part C ("AI jako partner poznawczy"). Per
-  `docs/FOUNDER_REVIEW_2026-08-15.md` Q3, the target is four parts (A–D); Parts A, B, D are not yet
-  received — treat this directory as partial, not canon-complete, and check its `README.md` before
-  assuming the chapter is whole.
+  transcription of Chapter III ("Technologia, która pamięta, komu ma służyć"), now **complete** —
+  main/overview text plus all four parts (A–D), each its own file, plus `rozdzial-III-pelny.md`
+  concatenating all five for continuous reading (a convenience, not a separate edit — the per-part
+  files remain the source of truth). See its `README.md` for provenance per file.
 - `docs/LAYER_6_EXPERIMENT_ENGINE_DIGEST.md` — a full structural digest (Polish, matching the
   source language) of Layer 6's source docx: metadata, all coded scales, the 15-object experiment
   ontology, all appendix field lists, the full 47-section table of contents, and every literal

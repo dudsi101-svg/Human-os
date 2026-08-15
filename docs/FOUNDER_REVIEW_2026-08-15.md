@@ -41,8 +41,9 @@ Paper w tej sesji.
 **Decyzja:** Główny plik Rozdziału III ma zostać zastąpiony pełną wersją
 czterech części (A–D), zgodnie z własną zasadą projektu, że limit rozmiaru
 dzieli dokument, a nie go kompresuje.
-**Status:** Przyjęte jako rozstrzygnięcie. Fizyczna podmiana pliku nie wykonana
-w tej sesji.
+**Status:** **Wykonane** (15 sierpnia 2026, później tego samego dnia — patrz
+kolejna korekta niżej i sekcja "Szósta tura"). Wersja główna oraz Części
+A–D dostarczone i przetranskrybowane w całości do `docs/white_paper/`.
 
 ### Q4 — Human Atlas
 **Decyzja:** Human Atlas to odrębny, wciąż niezbudowany filar — nie jest
@@ -582,3 +583,31 @@ Brak zmian w `docs/white_paper/`.
 **Wpływ na kod:** `hos_engine/authority.py` — jeden komentarz dokumentujący
 mapowanie `RECOVERY_CUSTODIAN`. Żadna inna zmiana kodu. Reszta tej tury to
 wyłącznie ADR-y, Konstytucja i `LICENSE-DECISION.md`.
+
+## Szósta tura — Rozdział III White Paper kompletny (15 sierpnia 2026)
+
+Tego samego dnia, wkrótce po "Piątej turze" (gdzie priorytet uzupełnienia
+Części A i B ustalono jako niski), founder dostarczył wszystkie trzy
+brakujące pliki naraz: Część A, Część B i Część D (Część C przesłana
+ponownie — potwierdzona jako bajt-identyczna z już posiadaną wersją, patrz
+`diff`).
+
+### KOREKTA — Q3 (Rozdział III White Paper), druga korekta
+
+**Poprzedni stan (druga tura):** "CZĘŚCIOWY — wersja główna i Część C
+dostarczone; Części A, B, D nieotrzymane."
+
+**Nowy dowód:** Części A, B, D dostarczone jako PDF 15 sierpnia 2026, po
+południu (ta sama sesja, po zamknięciu Piątej tury).
+
+**Skorygowany stan:** Rozdział III jest **KOMPLETNY**. `docs/white_paper/`
+zawiera teraz wszystkie pięć segmentów (wersja główna + A + B + C + D) jako
+osobne pliki 1:1 transkrypcji, plus jeden plik złączony
+(`rozdzial-III-pelny.md`) dla wygody lektury ciągłej — założyciel wybrał tę
+opcję wprost (osobne pliki jako źródło prawdy + dodatkowy plik złączony,
+zamiast tylko jednego lub tylko drugiego).
+
+**Wpływ:** żaden na kod — zmiana wyłącznie w `docs/white_paper/` i tym
+dokumencie. Zgodnie z decyzją założyciela z tej samej tury pytań, zmiana
+scalona bezpośrednio do `main` bez osobnej rundy przeglądu (transkrypcja
+1:1, bez interpretacji).
