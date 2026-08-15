@@ -16,7 +16,13 @@ from hos_engine.consent import ConsentRegistry
 from hos_engine.event_store import EventStore
 from hos_engine.execution_loop import ExecutionLoop, HumanIntent, IntentOutcome
 from hos_engine.hos_core import ContextManager, EventEngine
-from hos_engine.hub_entity_registry import EntityRegistry, HubEntityStatus, HubEntityType
+from hos_engine.hub_entity_registry import (
+    EntityRegistry,
+    HubEntityStatus,
+    HubEntityType,
+    HubRelationType,
+    RelationRegistry,
+)
 from hos_engine.policy import ProofKernel
 from hos_engine.security_identity import IdentityRegistry, IdentityType
 from hos_engine.sqlite_store import SQLiteEventStore
@@ -50,6 +56,11 @@ class ExecutionLoopTests(unittest.TestCase):
             entity_type=HubEntityType.RESOURCE, working_name="Draft report",
             responsibility_owner_id=SUBJECT_ID, provenance_source="test",
         )
+        self.goal = self.entities.register(
+            entity_type=HubEntityType.GOAL, working_name="Ship the founder review",
+            responsibility_owner_id=SUBJECT_ID, provenance_source="test",
+        )
+        self.relations = RelationRegistry(self.entities)
 
         self.capabilities = CapabilityRegistry()
         self.capabilities.register(Capability(
@@ -72,6 +83,7 @@ class ExecutionLoopTests(unittest.TestCase):
             identities=self.identities, roles=self.roles, consents=self.consents,
             contexts=self.contexts, entities=self.entities, proof_kernel=self.proof_kernel,
             agent_runtime=self.agent_runtime, events=self.events, event_store=self.event_store,
+            relations=self.relations,
         )
 
     def _intent(self, **overrides):
@@ -101,6 +113,34 @@ class ExecutionLoopTests(unittest.TestCase):
         domain_events = self.event_store.by_subject(self.entity.entity_id)
         self.assertEqual(len(domain_events), 1)
         self.assertEqual(domain_events[0]["event_type"], "EXECUTION_COMPLETED")
+
+    def test_no_relation_recorded_when_fulfills_entity_not_named(self):
+        result = self.loop.execute(self._intent())
+        self.assertIsNone(result.relation)
+        self.assertEqual(self.relations.outgoing(self.entity.entity_id), [])
+
+    def test_successful_execution_records_realizuje_relation_to_goal(self):
+        result = self.loop.execute(self._intent(fulfills_entity_id=self.goal.entity_id))
+
+        self.assertEqual(result.outcome, IntentOutcome.EXECUTED)
+        self.assertIsNotNone(result.relation)
+        self.assertEqual(result.relation.relation_type, HubRelationType.REALIZUJE)
+        self.assertEqual(result.relation.source_entity_id, self.entity.entity_id)
+        self.assertEqual(result.relation.target_entity_id, self.goal.entity_id)
+        self.assertEqual(result.relation.asserted_by, SUBJECT_ID)
+
+        outgoing = self.relations.outgoing(self.entity.entity_id)
+        self.assertEqual(len(outgoing), 1)
+        self.assertEqual(outgoing[0].relation_id, result.relation.relation_id)
+
+    def test_refuses_unknown_fulfills_entity_before_anything_executes(self):
+        result = self.loop.execute(self._intent(fulfills_entity_id="HOS-ENT-DOESNOTEXIST"))
+
+        self.assertEqual(result.outcome, IntentOutcome.REFUSED_ENTITY_NOT_FOUND)
+        # nothing downstream happened: no state change, no relation, no receipt
+        self.assertEqual(self.entities.get(self.entity.entity_id).status, HubEntityStatus.PROPOSED)
+        self.assertIsNone(result.receipt)
+        self.assertEqual(self.relations.outgoing(self.entity.entity_id), [])
 
     def test_refuses_unknown_identity(self):
         result = self.loop.execute(self._intent(subject_id="HOS-HUM-999999"))

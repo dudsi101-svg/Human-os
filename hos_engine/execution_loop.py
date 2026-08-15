@@ -11,7 +11,13 @@ from .authority import AuthorityRole, RoleGrantRegistry
 from .consent import ConsentRegistry
 from .event_store import EventStore
 from .hos_core import ContextManager, ContextPackage, EventEngine, ExecutionEvent, ExecutionStatus
-from .hub_entity_registry import EntityRegistry, HubEntityStatus
+from .hub_entity_registry import (
+    EntityRegistry,
+    HubEntityStatus,
+    HubRelation,
+    HubRelationType,
+    RelationRegistry,
+)
 from .models import Decision, Proof
 from .policy import ProofKernel
 from .security_identity import IdentityRegistry, IdentityStatus
@@ -55,6 +61,7 @@ class HumanIntent:
     exit_cost: float = 0.0
     limitations: tuple[str, ...] = ()
     human_approval_id: str | None = None
+    fulfills_entity_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -70,6 +77,7 @@ class ExecutionResult:
     proof: Proof | None = None
     receipt: ActionReceipt | None = None
     audit_events: tuple[ExecutionEvent, ...] = ()
+    relation: HubRelation | None = None
 
 
 class ExecutionLoop:
@@ -83,9 +91,10 @@ class ExecutionLoop:
     persisted, and is returned as an ExecutionResult rather than raised.
 
     This is a bounded slice, not the full Human OS execution model: it does
-    not yet touch the Knowledge Graph or the Hub's RelationRegistry, and
-    "human approval" here is limited to the human_approval_id identifier
-    hos_engine.agent_runtime already accepts, not a full approval workflow.
+    not yet touch the Knowledge Graph (a separate, unreconciled model -- see
+    docs/RELATION_VOCABULARY_CROSSWALK.md), and "human approval" here is
+    limited to the human_approval_id identifier hos_engine.agent_runtime
+    already accepts, not a full approval workflow.
 
     Event persistence and provenance (2026-08-15, second continuation slice):
     `event_store` accepts either the plain `EventStore` or
@@ -93,6 +102,17 @@ class ExecutionLoop:
     domain event a SHA-256 hash chain (`verify_chain()`), which is the
     project's existing tamper-evidence mechanism -- prefer it over the plain
     `EventStore` whenever the caller cares about provenance, not just a log.
+
+    Graph integration (2026-08-15, third continuation slice): passing
+    `relations` (a `hos_engine.hub_entity_registry.RelationRegistry`) lets a
+    `HumanIntent` optionally name a `fulfills_entity_id` -- another Hub
+    entity (typically a GOAL) that the resource entity fulfills once the
+    action succeeds. The target entity is resolved during ENTITY RETRIEVAL
+    (so a bad reference refuses the whole intent before anything executes,
+    same as the primary resource entity), and the `REALIZUJE` relation is
+    only recorded after a successful STATE UPDATE. This still does not touch
+    the Knowledge Graph (hos_engine.knowledge_graph) -- that remains a
+    separate, unreconciled model, per docs/RELATION_VOCABULARY_CROSSWALK.md.
     """
 
     def __init__(
@@ -107,6 +127,7 @@ class ExecutionLoop:
         agent_runtime: AgentRuntime,
         events: EventEngine,
         event_store: EventStore | SQLiteEventStore | None = None,
+        relations: RelationRegistry | None = None,
     ) -> None:
         self._identities = identities
         self._roles = roles
@@ -117,6 +138,7 @@ class ExecutionLoop:
         self._agent_runtime = agent_runtime
         self._events = events
         self._event_store = event_store
+        self._relations = relations
 
     def execute(self, intent: HumanIntent) -> ExecutionResult:
         intent_id = "HOS-INT-" + uuid.uuid4().hex[:12].upper()
@@ -170,6 +192,15 @@ class ExecutionLoop:
                 f"Unknown Hub entity: {intent.resource_entity_id}",
                 context=context,
             )
+        if intent.fulfills_entity_id is not None:
+            try:
+                self._entities.get(intent.fulfills_entity_id)
+            except KeyError:
+                return self._refuse(
+                    intent_id, IntentOutcome.REFUSED_ENTITY_NOT_FOUND,
+                    f"Unknown Hub entity (fulfills_entity_id): {intent.fulfills_entity_id}",
+                    context=context,
+                )
 
         # CONSTITUTIONAL / SAFETY CHECK
         proof_subject = {
@@ -232,6 +263,17 @@ class ExecutionLoop:
         # STATE UPDATE
         self._entities.transition(entity.entity_id, HubEntityStatus.ACTIVE)
 
+        # GRAPH -- record that the resource fulfills the named goal/entity,
+        # only now that the action has actually succeeded.
+        relation: HubRelation | None = None
+        if intent.fulfills_entity_id is not None and self._relations is not None:
+            relation = self._relations.link(
+                relation_type=HubRelationType.REALIZUJE,
+                source_entity_id=entity.entity_id,
+                target_entity_id=intent.fulfills_entity_id,
+                asserted_by=intent.subject_id,
+            )
+
         # EVENT
         self._events.transition(contract.execution_id, ExecutionStatus.COMPLETED)
         self._record_domain_event(intent_id, "EXECUTION_COMPLETED", intent, receipt)
@@ -242,6 +284,7 @@ class ExecutionLoop:
             intent_id, IntentOutcome.EXECUTED, "Executed",
             context=context, proof=proof, receipt=receipt,
             audit_events=tuple(self._events.log(contract.execution_id)),
+            relation=relation,
         )
 
     def _refuse(

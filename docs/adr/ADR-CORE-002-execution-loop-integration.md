@@ -51,8 +51,10 @@ independently-revocable axes, joined only by `identity_id`.
 ## Consequences
 This is a bounded slice, not the full Human OS execution model:
 
-- It does not yet touch the Knowledge Graph or the Hub's `RelationRegistry`
-  -- entity retrieval is a direct lookup, not a graph traversal.
+- It does not yet touch `hos_engine.knowledge_graph` -- that remains a
+  separate, unreconciled model (see
+  `docs/RELATION_VOCABULARY_CROSSWALK.md`). Entity retrieval against the
+  Hub's `EntityRegistry` is a direct lookup, not a graph traversal.
 - "Human or validly delegated approval" is limited to the
   `human_approval_id` identifier `agent_runtime.InvocationRequest` already
   accepted; there is no approval-workflow UI or notification behind it yet.
@@ -61,20 +63,32 @@ This is a bounded slice, not the full Human OS execution model:
   Decision/Recommendation Engine (Layer 5, ADR still unbuilt) is not
   involved.
 
-**Update, same day:** `event_store` now accepts either `EventStore` or
-`SQLiteEventStore` -- passing the latter gives every persisted domain event
-a verifiable SHA-256 hash chain, closing the "event persistence" and
-"provenance" items from the founder continuation directive's progressive-
-integration list. `EventEngine`'s in-memory execution-lifecycle log is
-unaffected; the two remain separate as originally documented in
-`hos_core.py`.
+**Update, same day (event persistence):** `event_store` now accepts either
+`EventStore` or `SQLiteEventStore` -- passing the latter gives every
+persisted domain event a verifiable SHA-256 hash chain, closing the "event
+persistence" and "provenance" items from the founder continuation
+directive's progressive-integration list. `EventEngine`'s in-memory
+execution-lifecycle log is unaffected; the two remain separate as
+originally documented in `hos_core.py`.
 
-Covered by 11 integration tests (`tests/test_execution_loop.py`) plus 7
+**Update, same day (graph):** `ExecutionLoop` now optionally accepts a
+`relations: RelationRegistry`. A `HumanIntent` may name a
+`fulfills_entity_id` (typically a GOAL entity); it is resolved during
+ENTITY RETRIEVAL -- an unknown reference refuses the whole intent before
+anything executes -- and a `REALIZUJE` relation from the resource entity to
+it is recorded only after a successful STATE UPDATE. This closes the
+"graph" item from the same list. It still does not touch
+`hos_engine.knowledge_graph`, which remains a separate, unreconciled model.
+
+Covered by 14 integration tests (`tests/test_execution_loop.py`) plus 7
 tests for `authority.py` (`tests/test_authority.py`): the full happy path
 with a complete audit trail, refusal at every named gate (unknown identity,
 suspended identity, missing authority role, missing consent, unknown
-entity, constitutional violation, a capability that requires human
-approval, and an agent-level denial that still produces a durable domain
-event), and -- against `SQLiteEventStore` specifically -- that executed
-intents chain correctly and `verify_chain()` passes, while refused intents
-never reach the chain at all.
+entity, unknown `fulfills_entity_id`, constitutional violation, a
+capability that requires human approval, and an agent-level denial that
+still produces a durable domain event); against `SQLiteEventStore`
+specifically, that executed intents chain correctly and `verify_chain()`
+passes while refused intents never reach the chain; and against
+`RelationRegistry`, that a successful execution with `fulfills_entity_id`
+set records exactly one `REALIZUJE` relation while an execution without it
+records none.
