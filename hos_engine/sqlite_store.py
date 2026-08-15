@@ -4,10 +4,10 @@ import hashlib
 import json
 import sqlite3
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
-def canonical_json(data: Dict[str, Any]) -> str:
+def canonical_json(data: dict[str, Any]) -> str:
     return json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
@@ -51,7 +51,7 @@ class SQLiteEventStore:
         )
         self.connection.commit()
 
-    def append(self, event: Dict[str, Any]) -> str:
+    def append(self, event: dict[str, Any]) -> str:
         if event.get("immutable") is not True:
             raise ValueError("Event must declare immutable=true.")
 
@@ -83,20 +83,20 @@ class SQLiteEventStore:
         self.connection.commit()
         return event_hash
 
-    def latest_hash(self) -> Optional[str]:
+    def latest_hash(self) -> str | None:
         row = self.connection.execute(
             "SELECT event_hash FROM events ORDER BY sequence DESC LIMIT 1"
         ).fetchone()
         return None if row is None else str(row["event_hash"])
 
-    def all(self) -> List[Dict[str, Any]]:
+    def all(self) -> list[dict[str, Any]]:
         rows = self.connection.execute(
             "SELECT * FROM events ORDER BY sequence"
         ).fetchall()
         return [self._decode(row) for row in rows]
 
     def verify_chain(self) -> bool:
-        previous_hash: Optional[str] = None
+        previous_hash: str | None = None
         for event in self.all():
             stored_hash = event.pop("event_hash")
             stored_previous = event.pop("previous_hash")
@@ -124,7 +124,7 @@ class SQLiteEventStore:
         return True
 
     @staticmethod
-    def _decode(row: sqlite3.Row) -> Dict[str, Any]:
+    def _decode(row: sqlite3.Row) -> dict[str, Any]:
         subjects = json.loads(row["subject_ids"])["values"]
         return {
             "id": row["event_id"],

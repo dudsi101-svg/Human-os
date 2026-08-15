@@ -1,7 +1,9 @@
 import unittest
+
 from hos_engine.agent_runtime import InvocationRequest
 from hos_engine.simulation import *
 from hos_engine.simulation_gate import SimulationGate
+
 
 class GateTests(unittest.TestCase):
     def test_block(self):

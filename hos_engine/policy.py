@@ -1,8 +1,9 @@
 
 from __future__ import annotations
-from typing import Any, Dict, List
-from .models import Decision, Proof, ProofTest, TestResult
 
+from typing import Any
+
+from .models import Decision, Proof, ProofTest, TestResult
 
 SEVERITY = {
     Decision.APPROVED: 0,
@@ -15,8 +16,8 @@ SEVERITY = {
 
 
 class ProofKernel:
-    def evaluate(self, subject: Dict[str, Any], proof_id: str) -> Proof:
-        tests: List[ProofTest] = []
+    def evaluate(self, subject: dict[str, Any], proof_id: str) -> Proof:
+        tests: list[ProofTest] = []
 
         author_id = subject.get("responsibility_owner_id") or subject.get("author_id")
         if author_id:
@@ -105,7 +106,7 @@ class ProofKernel:
             ],
         )
 
-    def _aggregate(self, tests: List[ProofTest]) -> Decision:
+    def _aggregate(self, tests: list[ProofTest]) -> Decision:
         by_id = {t.test_id: t for t in tests}
 
         if by_id["PROOF-004"].result == TestResult.FAIL:

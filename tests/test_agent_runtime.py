@@ -1,6 +1,8 @@
 import unittest
+
 from hos_engine.agent_policy import constitutional_capability
 from hos_engine.agent_runtime import *
+
 
 class AgentRuntimeTests(unittest.TestCase):
     def setUp(self):

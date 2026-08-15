@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
-from typing import Any, Dict, List
 
 from .knowledge_graph import GraphEdge, GraphNode, ProvenanceRecord
 
@@ -106,7 +105,7 @@ class SQLiteGraphStore:
         )
         self.connection.commit()
 
-    def counts(self) -> Dict[str, int]:
+    def counts(self) -> dict[str, int]:
         result = {}
         for table in ["graph_nodes", "graph_edges", "provenance_records"]:
             row = self.connection.execute(f"SELECT COUNT(*) AS total FROM {table}").fetchone()

@@ -1,7 +1,16 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
+
 from .agent_runtime import InvocationRequest
-from .simulation import Scenario, Intervention, Invariant, SimulationEngine, SimulationStatus, SimulationSummary
+from .simulation import (
+    Intervention,
+    Invariant,
+    Scenario,
+    SimulationEngine,
+    SimulationStatus,
+    SimulationSummary,
+)
+
 
 @dataclass(frozen=True)
 class GateDecision:

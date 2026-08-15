@@ -1,5 +1,6 @@
 
 import json
+
 from hos_engine import HumanOSEngine
 
 engine = HumanOSEngine(event_store_path="data/events.jsonl")

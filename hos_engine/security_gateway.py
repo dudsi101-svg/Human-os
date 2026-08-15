@@ -1,5 +1,8 @@
 from dataclasses import dataclass
+
 from .security_identity import IdentityStatus
+
+
 @dataclass(frozen=True)
 class SecurityDecision: accepted:bool; status:str; reason:str
 class SecurityGateway:
