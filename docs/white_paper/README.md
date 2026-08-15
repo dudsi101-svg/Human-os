@@ -3,33 +3,32 @@
 To repozytorium jest silnikiem referencyjnym, nie całością Inicjatywy Human OS
 (zob. `CLAUDE.md`, sekcja "What this project is"). White Paper — narracyjny
 artefakt publiczny — historycznie nie miał tu żadnej reprezentacji. Ten
-katalog zaczyna to zmieniać, w miarę jak founder dostarcza kolejne oryginalne
-pliki.
+katalog zaczął to zmieniać 15 sierpnia 2026, w miarę jak founder dostarczał
+kolejne oryginalne pliki.
 
-## Rozdział III — stan na 2026-08-15
+## Rozdział III — KOMPLETNY (od 15 sierpnia 2026)
 
 Zgodnie z decyzją **Q3** w `docs/FOUNDER_REVIEW_2026-08-15.md`: docelowy
-Rozdział III ma składać się z czterech części (A–D), zgodnie z zasadą
-projektu, że limit rozmiaru dzieli dokument, a nie go kompresuje.
-
-Otrzymane dotychczas pliki źródłowe (PDF, transkrybowane tutaj do Markdown
-1:1, bez redakcji):
+Rozdział III ma składać się z czterech części (A–D) plus wersji głównej,
+zgodnie z zasadą projektu, że limit rozmiaru dzieli dokument, a nie go
+kompresuje. Wszystkie pięć segmentów zostało dostarczonych i dodanych tego
+samego dnia.
 
 | Plik | Zawartość | Status |
 |---|---|---|
 | `rozdzial-III-technologia-ktora-pamieta.md` | Rozdział III — wersja główna/przeglądowa ("Technologia, która pamięta, komu ma służyć"), sekcje 3.1–3.7 | OTRZYMANE |
+| `rozdzial-III-czesc-A-od-narzedzia-do-srodowiska.md` | Część A ("Od narzędzia do środowiska"), sekcje 3A.1–3A.5 | OTRZYMANE |
+| `rozdzial-III-czesc-B-technologia-jako-srodowisko-poznawcze.md` | Część B ("Technologia jako środowisko poznawcze"), sekcje 3B.1–3B.6 | OTRZYMANE |
 | `rozdzial-III-czesc-C-ai-jako-partner-poznawczy.md` | Część C ("AI jako partner poznawczy"), sekcje 3C.1–3C.7 | OTRZYMANE |
-| Część A | — | **BRAK** — nie dostarczona |
-| Część B | — | **BRAK** — nie dostarczona |
-| Część D | — | **BRAK** — nie dostarczona |
+| `rozdzial-III-czesc-D-nowy-kontrakt-czlowieka-z-technologia.md` | Część D ("Nowy kontrakt człowieka z technologią"), sekcje 3D.1–3D.7 | OTRZYMANE |
+| `rozdzial-III-pelny.md` | Wszystkie pięć segmentów złączone w jeden plik do ciągłej lektury | ZŁĄCZONE (wygoda, nie osobna redakcja) |
 
-**Skorygowany stan Q3:** decyzja o pełnej, czteroczęściowej wersji pozostaje
-przyjęta jako kierunek, ale jej fizyczne wdrożenie w tej sesji jest
-**częściowe** — dysponujemy wersją główną i Częścią C, nie całością A–D.
-Traktuj ten katalog jako rosnący, niekompletny zbiór, nie jako zamknięty
-kanon rozdziału. Gdy części A, B, D zostaną dostarczone, dodaj je tu i
-zaktualizuj tę tabelę oraz `docs/FOUNDER_REVIEW_2026-08-15.md`, zamiast
-zgadywać ich treść.
+**Skorygowany stan Q3:** Rozdział III jest teraz kompletny — wszystkie
+zadeklarowane części zostały dostarczone i przetranskrybowane 1:1. Osobne
+pliki per część pozostają źródłem prawdy; `rozdzial-III-pelny.md` jest
+wyłącznie wygodnym złączeniem dla czytelnika, nie osobną redakcją treści —
+w razie jakiejkolwiek rozbieżności rozstrzygają pliki źródłowe per część
+(i, ostatecznie, oryginalne PDF-y u founder-a).
 
 ## Zasada źródłowa
 
