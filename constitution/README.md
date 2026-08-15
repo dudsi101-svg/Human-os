@@ -129,7 +129,17 @@ komercyjna.
 
 **Sygnatura wiedzy** — minimum siedem pól towarzyszących każdemu
 istotnemu twierdzeniu: pochodzenie, siła podstaw, zakres, niepewność,
-ryzyko i odwracalność, aktualność, konflikt interesów.
+ryzyko i odwracalność, aktualność, konflikt interesów. To jest **twarde,
+obowiązujące wszędzie minimum** — nie pełna specyfikacja. Warstwa 3 (Mapa
+Wiedzy i Sygnatura Informacji, `docs/LAYER_3_KNOWLEDGE_MAP_DIGEST.md`)
+rozwija ten sam pomysł do pełnej, zalecanej 11-wymiarowej wersji (Pochodzenie,
+Jakość metod, Bezpośredniość, Spójność, Niezależność, Skala i precyzja,
+Transparentność, Aktualność, Zakres zastosowania, Niepewność, Ryzyko błędu)
+— stosowanej tam, gdzie to możliwe. Rozstrzygnięcie founder-a (15 sierpnia
+2026, `docs/FOUNDER_REVIEW_2026-08-15.md`, "Piąta tura"): obie wersje
+obowiązują jednocześnie, każda w swojej roli — 7 pól jako podłoga, 11
+wymiarów jako pełna forma; patrz `docs/adr/ADR-KNOWLEDGE-001` po
+uzasadnienie.
 
 **Procedura korekty wiedzy** — sześć kroków: zgłoszenie wątpliwości →
 ocena źródła → oznaczenie jako kwestionowane → weryfikacja → korekta lub

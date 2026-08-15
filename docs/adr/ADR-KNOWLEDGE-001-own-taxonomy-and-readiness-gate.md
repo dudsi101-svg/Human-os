@@ -63,3 +63,12 @@ of a minimum 7 fields, while this document's §7 defines 11 dimensions (and
 its own §29.3 acceptance criterion cites yet another 7-item subset that
 doesn't exactly match either list) — this is a concrete, checkable item for
 founder resolution, not something this ADR resolves by picking one.
+
+**Resolved 2026-08-15** (founder decision, `docs/FOUNDER_REVIEW_2026-08-15.md`,
+"Piąta tura"): both versions stand, in different roles. The Constitution's 7
+fields are the hard, everywhere-mandatory floor; this document's 11
+dimensions are the full, recommended form used wherever practical. Neither
+is "wrong" and neither is dropped — `constitution/README.md` Ch.5 has been
+updated to state this explicitly. §29.3's own third, non-matching 7-item
+subset remains an internal editorial inconsistency in the source document,
+not addressed by this resolution.

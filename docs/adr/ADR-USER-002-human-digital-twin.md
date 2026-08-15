@@ -8,6 +8,14 @@ founder-provided; filename carries a `v0_2_1` suffix not reflected in the
 document's own "0.2" version header). Source: *Rozszerzenie Architektury i
 Integracja v0.2*, §6. No content corrections were required.
 
+**Merged 2026-08-15** into the Warstwa 4 user-model specification per
+explicit founder decision — see `ADR-USERMODEL-006` for the merge and the
+component-mapping table. This document's Decision/Rationale/Consequences
+below are left intact as the historical record of this source; new work
+should build against `ADR-USERMODEL-001`'s R0–R8 structure via
+`ADR-USERMODEL-006`'s mapping, not against this ADR's nine components
+directly.
+
 ## Decision
 The Digital Twin ("Cyfrowy bliźniak") is an operational, temporal
 representation of the user. It is not the user's definition, diagnosis, or a
