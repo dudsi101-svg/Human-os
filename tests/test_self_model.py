@@ -263,6 +263,67 @@ class DecisionFeedTests(unittest.TestCase):
         self.assertNotIn(record, feed["declared"])
 
 
+class DecisionContextAsymmetryTests(unittest.TestCase):
+    """A weak AI hypothesis must never reach gate-grade inputs
+    (ADR-DECISION-002/-005 asymmetry, enforced structurally at the bridge)."""
+
+    def test_hypothesis_is_advisory_until_confirmed(self):
+        svc = service()
+        it = start_chat(svc)
+        m = svc.interactions.append(it.interaction_id, author=MessageAuthor.USER,
+                                    text="Chyba nie mogę trenować wieczorami.")
+        hyp = svc.hypothesize(subject_id=SUBJECT, domain="constraints",
+                              key="schedule_constraint", value="wieczory zajęte",
+                              confidence=0.5, supported_by=[m.message_id])
+        ctx = svc.decision_context(SUBJECT)
+        self.assertEqual(ctx["constraints"], [])  # not gate-grade
+        self.assertEqual([a["record"].record_id for a in ctx["advisory_hypotheses"]],
+                         [hyp.record_id])
+        m2 = svc.interactions.append(it.interaction_id, author=MessageAuthor.USER,
+                                     text="Tak, wieczory odpadają.")
+        confirmed = svc.confirm(hyp.record_id, subject_id=SUBJECT,
+                                message_id=m2.message_id)
+        ctx = svc.decision_context(SUBJECT)
+        self.assertEqual([r.record_id for r in ctx["constraints"]],
+                         [confirmed.record_id])  # now gate-grade
+        self.assertEqual(ctx["advisory_hypotheses"], [])
+
+    def test_declared_goal_is_gate_grade_immediately(self):
+        svc = service()
+        it = start_chat(svc)
+        m = svc.interactions.append(it.interaction_id, author=MessageAuthor.USER,
+                                    text="Chcę mieć energię po pracy.")
+        rec = svc.declare(subject_id=SUBJECT, domain="goals", key="goal_candidate",
+                          value="energia po pracy", message_id=m.message_id)
+        ctx = svc.decision_context(SUBJECT)
+        self.assertEqual([r.record_id for r in ctx["goals"]], [rec.record_id])
+
+
+class DurableAuditTests(unittest.TestCase):
+    def test_lifecycle_events_chain_in_sqlite(self):
+        import tempfile
+        from pathlib import Path
+
+        from hos_engine.sqlite_store import SQLiteEventStore
+        with tempfile.TemporaryDirectory() as tmp:
+            store = SQLiteEventStore(str(Path(tmp) / "self_model.db"))
+            svc = SelfModelService(event_store=store)
+            it = svc.interactions.start(subject_id=SUBJECT)
+            m1 = svc.interactions.append(it.interaction_id,
+                                         author=MessageAuthor.USER, text="a")
+            m2 = svc.interactions.append(it.interaction_id,
+                                         author=MessageAuthor.USER, text="b")
+            hyp = svc.hypothesize(subject_id=SUBJECT, domain="values", key="k",
+                                  value="autonomia", confidence=0.7,
+                                  supported_by=[m1.message_id, m2.message_id])
+            svc.confirm(hyp.record_id, subject_id=SUBJECT, message_id=m2.message_id)
+            svc.declare(subject_id=SUBJECT, domain="goals", key="g", value="x",
+                        message_id=m1.message_id)
+            self.assertTrue(store.verify_chain())
+            kinds = [e["payload"]["self_model"] for e in store.all()]
+            self.assertEqual(kinds, ["hypothesized", "confirmed_by_user", "declared"])
+
+
 class ConfidenceBandTests(unittest.TestCase):
     def test_bands_are_coarse_not_falsely_precise(self):
         self.assertEqual(confidence_band(0.1), "LOW")
