@@ -16,7 +16,7 @@ class ConsentRegistry:
   g=self._grants[consent_id]
   if g.subject_id!=subject_id: raise PermissionError('Only subject may revoke')
   self._grants[consent_id]=ConsentGrant(**{**g.__dict__,'status':ConsentStatus.REVOKED})
- def authorize(self,*,subject_id,grantee_id,purpose,domain,action,sensitive=False,now_iso=None):
+ def authorize(self,*,subject_id:str,grantee_id:str,purpose:str,domain:str,action:str,sensitive:bool=False,now_iso:str | None=None)->bool:
   now=now_iso or datetime.now(UTC).isoformat()
   for g in self._grants.values():
    if g.status!=ConsentStatus.ACTIVE or g.subject_id!=subject_id or g.grantee_id!=grantee_id: continue

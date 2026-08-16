@@ -8,12 +8,21 @@ __all__ = [
     "GraphEdge",
     "GraphNode",
     "HumanOSEngine",
+    "Interaction",
+    "InteractionLog",
+    "InteractionMessage",
+    "InteractionMode",
     "KnowledgeGraph",
     "KnowledgeNodeType",
     "KnowledgeRelationType",
+    "MessageAuthor",
     "ProvenanceRecord",
     "SQLiteGraphStore",
+    "SelfModelService",
     "SimulationGate",
+    "Tension",
+    "TensionStatus",
+    "confidence_band",
     "constitutional_capability",
 ]
 
@@ -43,6 +52,17 @@ from .recovery import *
 from .replay_guard import *
 from .security_gateway import *
 from .security_identity import *
+from .self_model import (
+    Interaction,
+    InteractionLog,
+    InteractionMessage,
+    InteractionMode,
+    MessageAuthor,
+    SelfModelService,
+    Tension,
+    TensionStatus,
+    confidence_band,
+)
 from .simulation import *
 from .simulation_gate import GateDecision, SimulationGate
 from .trust import *
