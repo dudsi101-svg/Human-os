@@ -165,6 +165,24 @@ the decision record.
   only; DI/IQ/AR scales, the ten-axis §18 profile, and live Knowledge Map integration are not
   implemented. Not yet wired into `ExecutionLoop` — the two compose at the caller's discretion.
 
+- **`self_model.py`** (added 2026-08-16, founder implementation directive "Conversational About
+  Me / Living Self Model", `ADR-SELFMODEL-001`) — the conversational-self-model slice, built **on
+  top of `human_model.py`** (which already had the epistemic core: `EvidenceType`, confidence,
+  provenance, `supersedes` versioning, `CONTESTED`) rather than as a parallel ontology.
+  `InteractionLog` (`HOS-CNV-`/`HOS-MSG-`, three `InteractionMode`s) keeps conversations strictly
+  separate from the model — appending a message never creates a record. `SelfModelService` adds
+  the lifecycle: `declare`/`observe`/`hypothesize` (hypothesis requires evidence refs), user-only
+  `confirm`/`reject`/`correct`/`mark_outdated` (always via the supersedes chain — history is never
+  rewritten; reject = CONTESTED, never delete), `Tension` (contradictions are signal, only the
+  subject resolves), `living_view` (epistemically split sections, sensitive hidden by default),
+  `why()` (full provenance: quotes, creator, band, history), `decision_inputs()` (split feed —
+  a hypothesis is never presented as a declaration), optional `ConsentRegistry` gate (no consent →
+  utterance stays interaction-only). `confidence_band()` gives UI LOW/MEDIUM/HIGH — never raw
+  numbers. NO NLP/extraction in the engine — candidate identification is an app/agent concern.
+  `HumanRecord` gained optional `valid_from`/`valid_to`/`last_confirmed_at`/`evidence_refs` (same
+  compatibility pattern as ADR-HUMAN-004). See the ADR for deliberately-unreconciled conflicts
+  (HYPOTHESIS vs AI_INFERENCE convention; third status vocabulary; knowledge-graph overlap).
+
 ### ID and schema conventions
 
 - All object IDs follow `HOS-<PREFIX>-######` (e.g. `HOS-HUM-000001`, `HOS-ACT-000002`), enforced
