@@ -22,17 +22,17 @@ class ComponentIdentity:
     created_at:str=field(default_factory=lambda:datetime.now(UTC).isoformat())
 
 class IdentityRegistry:
-    def __init__(self): self._ids:dict[str,ComponentIdentity]={}; self._keys:dict[str,KeyDescriptor]={}
-    def register_identity(self,*,identity_type,display_name,owner_id,identity_id=None):
+    def __init__(self)->None: self._ids:dict[str,ComponentIdentity]={}; self._keys:dict[str,KeyDescriptor]={}
+    def register_identity(self,*,identity_type:IdentityType,display_name:str,owner_id:str,identity_id:str | None=None)->ComponentIdentity:
         x=ComponentIdentity(identity_id or "HOS-ID-"+uuid.uuid4().hex[:12].upper(),identity_type,display_name,owner_id)
         if x.identity_id in self._ids: raise ValueError("Identity already exists")
         self._ids[x.identity_id]=x; return x
-    def attach_key(self,identity_id,key):
+    def attach_key(self,identity_id:str,key:KeyDescriptor)->None:
         x=self._ids[identity_id]
         if key.key_id in self._keys: raise ValueError("Key already exists")
         self._keys[key.key_id]=key
         self._ids[identity_id]=replace(x,key_ids=set(x.key_ids)|{key.key_id})
-    def revoke(self,identity_id): self._ids[identity_id]=replace(self._ids[identity_id],status=IdentityStatus.REVOKED)
-    def suspend(self,identity_id): self._ids[identity_id]=replace(self._ids[identity_id],status=IdentityStatus.SUSPENDED)
-    def get_identity(self,identity_id): return self._ids[identity_id]
-    def get_key(self,key_id): return self._keys[key_id]
+    def revoke(self,identity_id:str)->None: self._ids[identity_id]=replace(self._ids[identity_id],status=IdentityStatus.REVOKED)
+    def suspend(self,identity_id:str)->None: self._ids[identity_id]=replace(self._ids[identity_id],status=IdentityStatus.SUSPENDED)
+    def get_identity(self,identity_id:str)->ComponentIdentity: return self._ids[identity_id]
+    def get_key(self,key_id:str)->KeyDescriptor: return self._keys[key_id]

@@ -1,12 +1,13 @@
 import time
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
 class ReplayDecision: accepted:bool; reason:str
 class ReplayGuard:
-    def __init__(self): self.ids=set(); self.nonces=set()
-    def check(self,envelope,now_epoch=None):
+    def __init__(self)->None: self.ids:set[str]=set(); self.nonces:set[str]=set()
+    def check(self,envelope:dict[str,Any],now_epoch:float | None=None)->ReplayDecision:
         now=time.time() if now_epoch is None else now_epoch
         mid=str(envelope.get("message_id","")); nonce=str(envelope.get("nonce",""))
         if not mid or not nonce:return ReplayDecision(False,"Missing identifier")

@@ -29,6 +29,8 @@ class EventStore:
         return [e for e in self._events if subject_id in e.get("subject_ids", [])]
 
     def _load(self) -> None:
+        if self.path is None:
+            return
         with self.path.open("r", encoding="utf-8") as f:
             for line in f:
                 if line.strip():

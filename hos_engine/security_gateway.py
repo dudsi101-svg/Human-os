@@ -1,14 +1,17 @@
 from dataclasses import dataclass
 
-from .security_identity import IdentityStatus
+from .protocol_security import HMACSigner, SignedEnvelope
+from .replay_guard import ReplayGuard
+from .security_identity import IdentityRegistry, IdentityStatus
+from .trust import TrustRegistry
 
 
 @dataclass(frozen=True)
 class SecurityDecision: accepted:bool; status:str; reason:str
 class SecurityGateway:
-    def __init__(self,identities,trust,replay_guard,verifiers):
+    def __init__(self,identities:IdentityRegistry,trust:TrustRegistry,replay_guard:ReplayGuard,verifiers:dict[str,HMACSigner])->None:
         self.identities=identities;self.trust=trust;self.replay_guard=replay_guard;self.verifiers=verifiers
-    def evaluate(self,signed,now_epoch=None):
+    def evaluate(self,signed:SignedEnvelope,now_epoch:float | None=None)->SecurityDecision:
         e=signed.envelope; sender=str(e.get("sender_id","")); key=signed.signature.key_id
         try:i=self.identities.get_identity(sender)
         except KeyError:return SecurityDecision(False,"DENIED","Unknown sender")
