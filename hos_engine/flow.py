@@ -2,22 +2,23 @@
 from __future__ import annotations
 
 
-def generative_flow_score(flow: dict[str, float]) -> float:
+def generative_flow_score(flow: dict[str, object]) -> float:
+    def num(key: str) -> float:
+        value = flow.get(key, 0.0)
+        return float(value) if isinstance(value, (int, float)) else 0.0
+
+    def ext(key: str) -> float:
+        externalities = flow.get("externalities", {})
+        if not isinstance(externalities, dict):
+            return 0.0
+        value = externalities.get(key, 0.0)
+        return float(value) if isinstance(value, (int, float)) else 0.0
+
     positive = (
-        flow.get("gain", 0.0)
-        * flow.get("reciprocity", 0.0)
-        * flow.get("consent", 0.0)
-        * flow.get("durability", 0.0)
-        * flow.get("generativity", 0.0)
+        num("gain") * num("reciprocity") * num("consent")
+        * num("durability") * num("generativity")
     )
-    penalties = (
-        flow.get("extraction", 0.0)
-        + max(flow.get("dependency_effect", 0.0), 0.0)
-        + flow.get("externalities", {}).get("negative", 0.0)
-    )
-    bonus = (
-        max(-flow.get("dependency_effect", 0.0), 0.0)
-        + flow.get("externalities", {}).get("positive", 0.0)
-    ) * 0.25
+    penalties = num("extraction") + max(num("dependency_effect"), 0.0) + ext("negative")
+    bonus = (max(-num("dependency_effect"), 0.0) + ext("positive")) * 0.25
     raw = positive + bonus - penalties
     return round(max(-1.0, min(1.0, raw)), 4)

@@ -4,7 +4,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from jsonschema import Draft202012Validator, RefResolver
+# jsonschema publishes no type stubs -- the ignore below is scoped to that.
+from jsonschema import (  # type: ignore[import-untyped]
+    Draft202012Validator,
+    RefResolver,
+)
 
 
 class SchemaRegistry:

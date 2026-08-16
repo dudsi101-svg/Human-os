@@ -21,7 +21,7 @@ class HumanRecord:
  # conversational self model); optional for the same compatibility reason.
  record_id:str; subject_id:str; domain:str; key:str; value:Any; evidence_type:EvidenceType; confidence:float; source_id:str; created_at:str; status:RecordStatus=RecordStatus.ACTIVE; supersedes:str | None=None; sensitive:bool=False; tags:set[str]=field(default_factory=set); context:str | None=None; unit:str | None=None; quality:str | None=None; consent_scope:str | None=None; valid_from:str | None=None; valid_to:str | None=None; last_confirmed_at:str | None=None; evidence_refs:tuple[str,...]=()
 class HumanModel:
- def __init__(self): self._records:dict[str,HumanRecord]={}
+ def __init__(self)->None: self._records:dict[str,HumanRecord]={}
  def add(self,*,subject_id:str,domain:str,key:str,value:Any,evidence_type:EvidenceType,confidence:float,source_id:str,sensitive:bool=False,tags:set[str] | None=None,supersedes:str | None=None,context:str | None=None,unit:str | None=None,quality:str | None=None,consent_scope:str | None=None,valid_from:str | None=None,valid_to:str | None=None,last_confirmed_at:str | None=None,evidence_refs:tuple[str,...]=())->HumanRecord:
   if not 0<=confidence<=1: raise ValueError('confidence must be between 0 and 1')
   if supersedes and supersedes not in self._records: raise KeyError('superseded record does not exist')

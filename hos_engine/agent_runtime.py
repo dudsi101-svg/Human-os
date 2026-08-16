@@ -43,20 +43,20 @@ class ActionReceipt:
     status:str; reason:str; occurred_at:str; result_summary:str | None=None
 
 class CapabilityRegistry:
-    def __init__(self): self._items:dict[str,Capability]={}
-    def register(self,c:Capability):
+    def __init__(self)->None: self._items:dict[str,Capability]={}
+    def register(self,c:Capability)->None:
         if c.capability_id in self._items: raise ValueError("Capability already exists")
         self._items[c.capability_id]=c
     def get(self,cid:str)->Capability: return self._items[cid]
 
 class AgentRegistry:
-    def __init__(self):
+    def __init__(self)->None:
         self._agents:dict[str,AgentManifest]={}; self._delegations:dict[str,Delegation]={}
-    def register(self,a:AgentManifest):
+    def register(self,a:AgentManifest)->None:
         if a.agent_id in self._agents: raise ValueError("Agent already exists")
         self._agents[a.agent_id]=a
     def get(self,aid:str)->AgentManifest: return self._agents[aid]
-    def delegate(self,d:Delegation):
+    def delegate(self,d:Delegation)->None:
         src=self.get(d.delegator_id); self.get(d.delegate_id)
         if not src.may_delegate: raise PermissionError("Delegation forbidden")
         if d.depth>src.max_delegation_depth: raise PermissionError("Delegation depth exceeded")
@@ -66,10 +66,10 @@ class AgentRegistry:
         return [d for d in self._delegations.values() if d.delegate_id==aid]
 
 class AgentRuntime:
-    def __init__(self,capabilities:CapabilityRegistry,agents:AgentRegistry):
+    def __init__(self,capabilities:CapabilityRegistry,agents:AgentRegistry)->None:
         self.capabilities=capabilities; self.agents=agents
-        self._tools:dict[str,Callable[[dict[str,Any]],Any]]={}; self._receipts=[]
-    def register_tool(self,cid:str,fn:Callable[[dict[str,Any]],Any]):
+        self._tools:dict[str,Callable[[dict[str,Any]],Any]]={}; self._receipts:list[ActionReceipt]=[]
+    def register_tool(self,cid:str,fn:Callable[[dict[str,Any]],Any])->None:
         self.capabilities.get(cid); self._tools[cid]=fn
     def evaluate(self,r:InvocationRequest)->ActionReceipt:
         agent=self.agents.get(r.agent_id); cap=self.capabilities.get(r.capability_id)
@@ -96,8 +96,8 @@ class AgentRuntime:
     @staticmethod
     def _scope(scope:str,res:str)->bool:
         return scope=="*" or res==scope or res.startswith(scope.rstrip("/")+"/")
-    def _receipt(self,r,status,reason,result_summary=None):
+    def _receipt(self,r:InvocationRequest,status:str,reason:str,result_summary:str | None=None)->ActionReceipt:
         x=ActionReceipt("HOS-RCP-"+uuid.uuid4().hex[:12].upper(),r.request_id,r.agent_id,
                         r.capability_id,status,reason,datetime.now(UTC).isoformat(),result_summary)
         self._receipts.append(x); return x
-    def receipts(self): return list(self._receipts)
+    def receipts(self)->list[ActionReceipt]: return list(self._receipts)

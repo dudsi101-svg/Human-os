@@ -9,10 +9,10 @@ class ConsentStatus(str,Enum): ACTIVE='ACTIVE'; REVOKED='REVOKED'
 class ConsentGrant:
  consent_id:str; subject_id:str; grantee_id:str; purposes:set[str]; domains:set[str]; actions:set[str]; issued_at:str; expires_at:str | None=None; allow_sensitive:bool=False; status:ConsentStatus=ConsentStatus.ACTIVE
 class ConsentRegistry:
- def __init__(self): self._grants:dict[str,ConsentGrant]={}
- def grant(self,*,subject_id,grantee_id,purposes,domains,actions,expires_at=None,allow_sensitive=False):
+ def __init__(self)->None: self._grants:dict[str,ConsentGrant]={}
+ def grant(self,*,subject_id:str,grantee_id:str,purposes:set[str],domains:set[str],actions:set[str],expires_at:str | None=None,allow_sensitive:bool=False)->ConsentGrant:
   g=ConsentGrant('HOS-CNS-'+uuid.uuid4().hex[:12].upper(),subject_id,grantee_id,set(purposes),set(domains),set(actions),datetime.now(UTC).isoformat(),expires_at,allow_sensitive); self._grants[g.consent_id]=g; return g
- def revoke(self,consent_id,subject_id):
+ def revoke(self,consent_id:str,subject_id:str)->None:
   g=self._grants[consent_id]
   if g.subject_id!=subject_id: raise PermissionError('Only subject may revoke')
   self._grants[consent_id]=ConsentGrant(**{**g.__dict__,'status':ConsentStatus.REVOKED})

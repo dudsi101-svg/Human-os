@@ -79,10 +79,10 @@ pytest.
 
 `pip install -e ".[dev]"` and `ruff check .` were both previously broken (missing
 `[tool.setuptools.packages.find]` config; hundreds of stale lint findings) — both are now fixed
-and clean as of the "Fix pip install failure" and lint-cleanup commits. `mypy hos_engine` still has
-pre-existing, uncorrected debt (~64 errors, mostly in the dense-style security/agent modules) —
-don't assume `make verify` starts from a clean baseline on that front; when touching a file, check
-that your diff doesn't introduce *new* mypy errors rather than expecting the full run to be green.
+and clean as of the "Fix pip install failure" and lint-cleanup commits. `mypy hos_engine` is
+**clean (0 errors) as of 2026-08-16** (the historical ~64-error debt in the dense-style
+security/agent modules was annotated away without reformatting them) — keep it at zero; adding
+mypy as a CI gate is queued as DD-001 in `docs/DEFERRED_DECISIONS.md`.
 
 ## Architecture
 
