@@ -165,7 +165,26 @@ class SelfModelService:
     consent: ConsentRegistry | None = None
     grantee_id: str | None = None
     created_by: str = "ProfileInterpreter v0.1"
+    event_store: Any = None  # EventStore | SQLiteEventStore (same append(dict) shape)
     _tensions: dict[str, Tension] = field(default_factory=dict)
+
+    def _emit(self, event_type: str, subject_id: str, payload: dict[str, Any],
+              correlation_id: str) -> None:
+        """Durable audit trail (optional). Uses STATE_OBSERVED like the other
+        execution-foundation modules until dedicated event types land
+        (docs/DEFERRED_DECISIONS.md DD-003)."""
+        if self.event_store is None:
+            return
+        self.event_store.append({
+            "id": _new_id("EVT"),
+            "event_type": "STATE_OBSERVED",
+            "occurred_at": _now(),
+            "actor_id": subject_id,
+            "subject_ids": [subject_id],
+            "payload": {"self_model": event_type, **payload},
+            "correlation_id": correlation_id,
+            "immutable": True,
+        })
 
     # ---------------- consent gate ----------------
 
@@ -190,11 +209,14 @@ class SelfModelService:
         high but not absolute (the mapping utterance->structure can be wrong)."""
         self._authorize_write(subject_id=subject_id, domain=domain,
                               sensitive=sensitive, purpose=purpose)
-        return self.model.add(
+        rec = self.model.add(
             subject_id=subject_id, domain=domain, key=key, value=value,
             evidence_type=EvidenceType.USER_DECLARATION, confidence=0.9,
             source_id=message_id, sensitive=sensitive, consent_scope=consent_scope,
             supersedes=supersedes, valid_from=_now(), evidence_refs=(message_id,))
+        self._emit("declared", subject_id, {"record_id": rec.record_id,
+                   "domain": domain, "key": key}, rec.record_id)
+        return rec
 
     def observe(self, *, subject_id: str, domain: str, key: str, value: Any,
                 message_id: str, sensitive: bool = False,
@@ -202,11 +224,14 @@ class SelfModelService:
         """A concrete record without interpretation attached."""
         self._authorize_write(subject_id=subject_id, domain=domain,
                               sensitive=sensitive, purpose=purpose)
-        return self.model.add(
+        rec = self.model.add(
             subject_id=subject_id, domain=domain, key=key, value=value,
             evidence_type=EvidenceType.OBSERVATION, confidence=0.9,
             source_id=message_id, sensitive=sensitive,
             valid_from=_now(), evidence_refs=(message_id,))
+        self._emit("observed", subject_id, {"record_id": rec.record_id,
+                   "domain": domain, "key": key}, rec.record_id)
+        return rec
 
     def hypothesize(self, *, subject_id: str, domain: str, key: str, value: Any,
                     confidence: float, supported_by: list[str],
@@ -220,11 +245,15 @@ class SelfModelService:
                               sensitive=sensitive, purpose=purpose)
         tags = {f"alt:{a}" for a in (alternatives or [])}
         tags.add(f"created_by:{self.created_by}")
-        return self.model.add(
+        rec = self.model.add(
             subject_id=subject_id, domain=domain, key=key, value=value,
             evidence_type=EvidenceType.HYPOTHESIS, confidence=confidence,
             source_id=supported_by[0], sensitive=sensitive, tags=tags,
             valid_from=_now(), evidence_refs=tuple(supported_by))
+        self._emit("hypothesized", subject_id, {"record_id": rec.record_id,
+                   "domain": domain, "key": key, "confidence": confidence},
+                   rec.record_id)
+        return rec
 
     # ---------------- lifecycle: user-controlled transitions ----------------
 
@@ -234,17 +263,23 @@ class SelfModelService:
         old = self.model.get(record_id)
         if old.subject_id != subject_id:
             raise PermissionError("only the subject may confirm")
-        return self.model.add(
+        rec = self.model.add(
             subject_id=subject_id, domain=old.domain, key=old.key, value=old.value,
             evidence_type=EvidenceType.USER_DECLARATION, confidence=0.95,
             source_id=message_id, sensitive=old.sensitive,
             consent_scope=old.consent_scope, supersedes=record_id,
             valid_from=old.valid_from or _now(), last_confirmed_at=_now(),
             evidence_refs=(*old.evidence_refs, message_id))
+        self._emit("confirmed_by_user", subject_id,
+                   {"record_id": rec.record_id, "supersedes": record_id},
+                   record_id)
+        return rec
 
     def reject(self, record_id: str, *, subject_id: str) -> HumanRecord:
         """User rejects a hypothesis: it becomes CONTESTED, never deleted."""
         self.model.contest(record_id, subject_id=subject_id)
+        self._emit("rejected_by_user", subject_id, {"record_id": record_id},
+                   record_id)
         return self.model.get(record_id)
 
     def correct(self, record_id: str, *, subject_id: str, value: Any,
@@ -253,13 +288,17 @@ class SelfModelService:
         old = self.model.get(record_id)
         if old.subject_id != subject_id:
             raise PermissionError("only the subject may correct")
-        return self.model.add(
+        rec = self.model.add(
             subject_id=subject_id, domain=old.domain, key=old.key, value=value,
             evidence_type=EvidenceType.USER_DECLARATION, confidence=0.9,
             source_id=message_id, sensitive=old.sensitive,
             consent_scope=old.consent_scope, supersedes=record_id,
             valid_from=_now(), last_confirmed_at=_now(),
             evidence_refs=(message_id,))
+        self._emit("corrected_by_user", subject_id,
+                   {"record_id": rec.record_id, "supersedes": record_id},
+                   record_id)
+        return rec
 
     def mark_outdated(self, record_id: str, *, subject_id: str) -> HumanRecord:
         """The information no longer describes the person: the record is
@@ -267,13 +306,17 @@ class SelfModelService:
         old = self.model.get(record_id)
         if old.subject_id != subject_id:
             raise PermissionError("only the subject may mark outdated")
-        return self.model.add(
+        rec = self.model.add(
             subject_id=subject_id, domain=old.domain, key=old.key, value=old.value,
             evidence_type=old.evidence_type, confidence=old.confidence,
             source_id=old.source_id, sensitive=old.sensitive,
             consent_scope=old.consent_scope, supersedes=record_id,
             valid_from=old.valid_from, valid_to=_now(),
             evidence_refs=old.evidence_refs)
+        self._emit("marked_outdated", subject_id,
+                   {"record_id": rec.record_id, "supersedes": record_id},
+                   record_id)
+        return rec
 
     # ---------------- tensions ----------------
 
@@ -285,6 +328,9 @@ class SelfModelService:
         t = Tension(_new_id("TNS"), subject_id, record_a, record_b, note,
                     TensionStatus.OPEN, _now())
         self._tensions[t.tension_id] = t
+        self._emit("tension_recorded", subject_id,
+                   {"tension_id": t.tension_id, "record_a": record_a,
+                    "record_b": record_b}, t.tension_id)
         return t
 
     def resolve_tension(self, tension_id: str, *, subject_id: str,
@@ -297,6 +343,9 @@ class SelfModelService:
                       old.note, TensionStatus.RESOLVED_BY_USER, old.created_at,
                       resolution=resolution)
         self._tensions[tension_id] = new
+        self._emit("tension_resolved_by_user", subject_id,
+                   {"tension_id": tension_id, "resolution": resolution},
+                   tension_id)
         return new
 
     def open_tensions(self, subject_id: str) -> list[Tension]:
@@ -393,4 +442,27 @@ class SelfModelService:
                            for r in view["hypotheses"]],
             "tensions": view["tensions"],
             "missing_critical_information": [],
+        }
+
+    def decision_context(self, subject_id: str) -> dict[str, Any]:
+        """Gate-grade context for composing a ``DecisionRequest``.
+
+        The evidence-asymmetry rule (ADR-DECISION-002/-005) starts here,
+        structurally: only what the user said, confirmed, or what was
+        concretely observed is *gate-grade* (may shape goals/constraints a
+        caller feeds into the Decision Engine's hard gates). Hypotheses are
+        returned in a separate, advisory-only list and MUST NOT be mapped
+        onto gate inputs — a weak AI hypothesis never carries the authority
+        of a confirmed declaration.
+        """
+        view = self.living_view(subject_id, include_sensitive=True)
+        gate_grade = view["confirmed"] + view["declared"] + view["observations"]
+        return {
+            "goals": [r for r in gate_grade if r.domain == "goals"],
+            "constraints": [r for r in gate_grade if r.domain == "constraints"],
+            "values": [r for r in gate_grade if r.domain == "values"],
+            "advisory_hypotheses": [
+                {"record": r, "confidence_band": confidence_band(r.confidence)}
+                for r in view["hypotheses"]],
+            "open_tensions": view["tensions"],
         }
