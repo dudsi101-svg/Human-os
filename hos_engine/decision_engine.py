@@ -1,8 +1,17 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from collections.abc import Mapping
+from dataclasses import dataclass, field, replace
 from enum import Enum
+
+from .decision_scales import (
+    InterpretationOutcome,
+    InterpretationOutcomeKind,
+    ScaleInterpreter,
+    ScaleKind,
+    ScaleMeasurement,
+)
 
 """First MVP slice of Layer 5, the Decision & Recommendation Engine.
 
@@ -156,6 +165,9 @@ class DecisionRequest:
     consent_granted: bool = True
     red_flags: tuple[str, ...] = ()
     user_determination: bool = False  # must never lower any gate (ADR-DECISION-005)
+    # Declared DI/IQ/AR measurements. Shadow-phase only (policy file mode
+    # "SHADOW"): they are interpreted and reported, never acted on.
+    measurements: tuple[ScaleMeasurement, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -179,6 +191,9 @@ class DecisionOutcome:
     reason: str = ""
     gate_results: tuple[GateResult, ...] = ()
     excluded: tuple[str, ...] = field(default_factory=tuple)
+    # Shadow-phase DI/IQ/AR readings. Purely observational: attached after
+    # the decision is fully computed, so they cannot have influenced it.
+    shadow_interpretations: tuple[InterpretationOutcome, ...] = ()
 
 
 def _new_id(prefix: str) -> str:
@@ -193,9 +208,48 @@ class DecisionEngine:
     is out for good -- nothing in the ranking stage can readmit it. The
     ranking key is (risk ascending, evidence descending, burden ascending);
     `sponsored` is deliberately absent from that key.
+
+    Shadow-phase scales: `shadow_interpreters` optionally maps a ScaleKind
+    to a ScaleInterpreter carrying a signed policy (see
+    policies/scale.interpretation.policies.json, mode "SHADOW"). Declared
+    measurements on the request are interpreted only *after* the decision
+    is fully computed and attached to the outcome for the record -- by
+    construction they cannot change gates, ranking or outcome kind.
+    Promotion from shadow to operational mode is a separate founder
+    decision (DD-006), not a code path that exists here.
     """
 
+    def __init__(
+        self,
+        shadow_interpreters: Mapping[ScaleKind, ScaleInterpreter] | None = None,
+    ) -> None:
+        self._shadow_interpreters = dict(shadow_interpreters or {})
+
     def decide(self, request: DecisionRequest) -> DecisionOutcome:
+        outcome = self._decide(request)
+        if not request.measurements:
+            return outcome
+        return replace(
+            outcome,
+            shadow_interpretations=tuple(
+                self._interpret_shadow(m) for m in request.measurements
+            ),
+        )
+
+    def _interpret_shadow(self, measurement: ScaleMeasurement) -> InterpretationOutcome:
+        interpreter = self._shadow_interpreters.get(measurement.scale)
+        if interpreter is None:
+            return InterpretationOutcome(
+                kind=InterpretationOutcomeKind.CONFIGURATION_REQUIRED,
+                measurement_id=measurement.measurement_id,
+                reason=(
+                    "no shadow interpreter configured for scale"
+                    f" {measurement.scale.value}; readings are never guessed"
+                ),
+            )
+        return interpreter.interpret(measurement)
+
+    def _decide(self, request: DecisionRequest) -> DecisionOutcome:
         gate_results: list[GateResult] = []
 
         # Request-level gates -- checked before any candidate is looked at.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -173,6 +174,38 @@ class InterpretationOutcome:
     result: str | None = None
     policy_id: str | None = None
     policy_version: str | None = None
+
+
+def load_policies_json(path: str) -> Mapping[ScaleKind, InterpretationPolicy]:
+    """Build the active per-scale policies from a signed policy file.
+
+    Reads only the ``policies`` section (the ``superseded`` history is kept
+    for provenance, never loaded for use). Every entry must carry its own
+    version; the approver comes from the file's top-level ``approved_by``
+    field — an unattributed file refuses to load, matching the no-defaults
+    rule of DD-006.
+    """
+    with open(path, encoding="utf-8") as handle:
+        data = json.load(handle)
+    approved_by = str(data.get("approved_by", "")).strip()
+    if not approved_by:
+        raise ValueError(f"policy file {path} names no approver (approved_by)")
+    loaded: dict[ScaleKind, InterpretationPolicy] = {}
+    for entry in data.get("policies", []):
+        policy = InterpretationPolicy(
+            policy_id=entry["policy_id"],
+            version=entry["version"],
+            approved_by=approved_by,
+            scale=ScaleKind(entry["scale"]),
+            rules=entry["rules"],
+        )
+        if policy.scale in loaded:
+            raise ValueError(
+                f"policy file {path} declares two active policies for scale"
+                f" {policy.scale.value}"
+            )
+        loaded[policy.scale] = policy
+    return MappingProxyType(loaded)
 
 
 class ScaleInterpreter:

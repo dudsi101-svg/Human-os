@@ -444,6 +444,15 @@
   <div class="brand"><span class="mark">Human OS</span><span class="sub">silnik referencyjny · tryb użytkownika</span></div>
 
   <div id="ob1">
+    <div class="card" id="protoGate" style="border:2px solid #b3541e;background:rgba(179,84,30,.07);margin-bottom:18px;padding:16px 18px">
+      <div style="font-weight:700;letter-spacing:.4px;color:#b3541e;margin-bottom:6px">⚠ PROTOTYP — WERSJA DEMONSTRACYJNA</div>
+      <p style="font-size:14px;margin-bottom:8px">To jest <b>prototyp badawczy bez zaplecza produkcyjnego</b>: brak kont, brak szyfrowania, brak kopii zapasowych — wszystko żyje wyłącznie w pamięci tej przeglądarki i może zniknąć bez ostrzeżenia.</p>
+      <p style="font-size:14px;margin-bottom:8px"><b>Nie wprowadzaj prawdziwych danych zdrowotnych ani innych danych wrażliwych.</b> Używaj danych przybliżonych lub fikcyjnych. Aplikacja nie jest wyrobem medycznym i nie udziela porad zdrowotnych.</p>
+      <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer;margin-top:10px">
+        <input type="checkbox" id="obProtoAck" style="margin-top:3px;width:18px;height:18px;flex:none">
+        <span>Rozumiem, że to prototyp — <b>nie będę wprowadzać prawdziwych danych zdrowotnych ani wrażliwych</b>.</span>
+      </label>
+    </div>
     <div class="covenant">
       <h1>Kontrakt</h1>
       <p class="epigraph">„Zaufanie wynika z przewidywalności wartości, a nie wyłącznie z możliwości systemu."</p>
@@ -456,7 +465,7 @@
         <li><strong>Miarą sukcesu</strong> nie jest czas spędzony w systemie, lecz wzrost Twojej samodzielności — także zdolność odejścia.</li>
       </ul>
       <div class="sig-row">
-        <button class="btn primary" onclick="obStep(2)">Przyjmuję ten kontrakt</button>
+        <button class="btn primary" onclick="obAcceptContract()">Przyjmuję ten kontrakt</button>
         <span class="note">Możesz go wypowiedzieć w każdej chwili — patrz „Konstytucja".</span>
       </div>
       <p class="note" style="margin-top:14px"><button class="btn small ghost" onclick="showImport('obImportHost')">Wracasz? Wczytaj swój eksport ↩</button></p>
@@ -1181,6 +1190,18 @@ try{
 
 /* ---------- onboarding ---------- */
 function obStep(n){ for(let i=1;i<=3;i++) $("ob"+i).style.display = i===n?"":"none"; window.scrollTo(0,0); }
+/* Twarda bramka prototypu (AR-006 / audyt 2026-08-17): bez świadomego
+   potwierdzenia "żadnych prawdziwych danych zdrowotnych" nie da się wejść. */
+function obAcceptContract(){
+  if(!$("obProtoAck").checked){
+    const g=$("protoGate");
+    g.style.boxShadow="0 0 0 3px rgba(179,84,30,.45)";
+    g.scrollIntoView({behavior:"smooth",block:"center"});
+    toast("Zaznacz potwierdzenie: to prototyp — bez prawdziwych danych zdrowotnych.");
+    return;
+  }
+  obStep(2);
+}
 function buildOnboarding(){
   const sl=$("obSliders");
   sl.innerHTML = DOMAINS.map(d=>`
@@ -1207,6 +1228,7 @@ function finishOnboarding(){
   S.consents.C2 = $("cC2").checked;
   S.consents.C4 = $("cC4").checked;
   logEvent("SYSTEM","KONTRAKT","Kontrakt przyjęty; zgody: C0"+(S.consents.C1?", C1":"")+(S.consents.C2?", C2":""));
+  logEvent("SYSTEM","PROTOTYP_ACK","Użytkownik potwierdził: prototyp bez zaplecza produkcyjnego, bez prawdziwych danych zdrowotnych/wrażliwych");
   save();
   enterApp();
 }

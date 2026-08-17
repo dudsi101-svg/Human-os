@@ -201,3 +201,72 @@ class EvidenceScaleAndCriticalTests(unittest.TestCase):
         self.assertNotEqual(out.kind, DecisionOutcomeKind.RECOMMENDATION)
         self.assertIsNone(out.chosen)
         self.assertIn("C", out.excluded)
+
+
+class ShadowScaleTests(unittest.TestCase):
+    """DD-006 shadow phase: DI/IQ/AR measurements on a request are
+    interpreted under the signed policies and attached to the outcome,
+    and can never change the decision itself."""
+
+    POLICY_FILE = "policies/scale.interpretation.policies.json"
+
+    def setUp(self):
+        from hos_engine.decision_scales import (
+            ScaleInterpreter,
+            load_policies_json,
+        )
+        self.interpreters = {
+            kind: ScaleInterpreter(policy)
+            for kind, policy in load_policies_json(self.POLICY_FILE).items()
+        }
+
+    def _measurements(self):
+        from hos_engine.decision_scales import ScaleKind, ScaleMeasurement
+        basis = "syntetyczna deklaracja testowa -- nie wartosc zalecana"
+        return (
+            ScaleMeasurement(scale=ScaleKind.INPUT_QUALITY, code="IQ0",
+                             declared_by="HOS-HUM-000001", basis=basis),
+            ScaleMeasurement(scale=ScaleKind.ACTION_READINESS, code="AR0",
+                             declared_by="HOS-HUM-000001", basis=basis),
+            ScaleMeasurement(scale=ScaleKind.DECISION_INTENT, code="DI-8",
+                             declared_by="HOS-HUM-000001", basis=basis),
+        )
+
+    def test_shadow_readings_are_attached_under_signed_policy(self):
+        from hos_engine.decision_scales import InterpretationOutcomeKind
+        engine = DecisionEngine(shadow_interpreters=self.interpreters)
+        outcome = engine.decide(request(measurements=self._measurements()))
+        self.assertEqual(len(outcome.shadow_interpretations), 3)
+        for reading in outcome.shadow_interpretations:
+            self.assertEqual(reading.kind, InterpretationOutcomeKind.INTERPRETED)
+            self.assertEqual(reading.policy_version, "0.2.0")
+
+    def test_worst_case_measurements_never_change_the_decision(self):
+        # IQ0/AR0/DI-8 are the most alarming codes on each scale; in the
+        # shadow phase they still must not move the outcome at all.
+        plain = DecisionEngine().decide(request())
+        shadowed = DecisionEngine(shadow_interpreters=self.interpreters).decide(
+            request(measurements=self._measurements()),
+        )
+        for field_name in (
+            "kind", "recommendation_class", "abstention_reason",
+            "escalation", "excluded", "gate_results", "reason",
+        ):
+            self.assertEqual(
+                getattr(plain, field_name), getattr(shadowed, field_name),
+            )
+        self.assertEqual(plain.chosen.candidate_id, shadowed.chosen.candidate_id)
+
+    def test_missing_interpreter_yields_configuration_required(self):
+        from hos_engine.decision_scales import InterpretationOutcomeKind
+        engine = DecisionEngine()  # no shadow interpreters configured
+        outcome = engine.decide(request(measurements=self._measurements()))
+        self.assertEqual(len(outcome.shadow_interpretations), 3)
+        for reading in outcome.shadow_interpretations:
+            self.assertEqual(
+                reading.kind, InterpretationOutcomeKind.CONFIGURATION_REQUIRED,
+            )
+
+    def test_no_measurements_means_no_shadow_section(self):
+        outcome = DecisionEngine(shadow_interpreters=self.interpreters).decide(request())
+        self.assertEqual(outcome.shadow_interpretations, ())

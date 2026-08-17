@@ -172,7 +172,7 @@ uczestniczących w rozwoju — ta granica jest zapisana jako ryzyko
 zaakceptowane, a powrót do przeglądu zewnętrznego pozostaje możliwy
 w przyszłości bez zmiany protokołu.
 
-## DD-009 · Zdarzenia `commons_*` w kanonicznym słowniku + fundament moderacji (OPEN)
+## DD-009 · Zdarzenia `commons_*` w kanonicznym słowniku + fundament moderacji (CZĘŚCIOWO ROZSTRZYGNIĘTE 2026-08-17)
 Dyrektywa „Wspólnie" (ADR-COMMONS-001/002, digest
 `docs/COMMONS_MODULE_DIGEST.md`) wymienia 16 zdarzeń współpracy
 (challenge_created … moderation_case_resolved). Dodanie ich do
@@ -185,6 +185,13 @@ i mapowaniem na R0–R4 dla ryzyka wyzwań publicznych; ModerationCase jako
 druga, osobna zmiana po decyzji o rolach.
 **Tymczasowo:** demo aplikacji loguje te zdarzenia lokalnie w rejestrze
 klienta; silnik nie emituje żadnych `commons_*`.
+**Rozstrzygnięcie częściowe (2026-08-17):** founder zatwierdził wdrożenie
+części 1 rekomendacji („Tak, należy wdrożyć te rozszerzenia" + wybór
+„Commons: 16 zdarzeń") — komplet typów wchodzi do kanonicznego słownika
+z ADR, schematem i mapowaniem ryzyka wyzwań publicznych na R0–R4.
+Część 2 (ModerationCase i model ról moderacyjnych) pozostaje OTWARTA —
+founder świadomie jej nie wybrał; propozycja modelu ról powstanie przed
+jakimkolwiek kodem moderacji.
 
 ## DD-010 · Wzorzec HOSId w schemacie vs identyfikatory silnika (RESOLVED 2026-08-17)
 Wykryte 2026-08-17 podczas wdrażania DD-003, przez pierwszą próbę
@@ -316,3 +323,31 @@ rozliczenia, klucze Przewodnika i Web Push; do tego czasu powiadomienia
 lokalne + poranna odprawa wystarczają dla wiernego użycia dziennego.
 **Tymczasowo:** Notification API bez backendu; kopia w aplikacji mówi to
 wprost.
+
+## DD-015 · Status publicznego deployu prototypu (GitHub Pages) (RESOLVED 2026-08-17)
+**Zgłoszone:** 2026-08-17 (audyt „Audyt Human OS II", priorytet 0).
+**Kontekst:** `.github/workflows/pages.yml` publikuje `apps/user-demo/`
+pod publicznym adresem GitHub Pages. Aplikacja przyjmuje samoopisowe dane
+o zdrowiu/energii/śnie i — za zgodą C5, na kluczu własnym użytkownika —
+wywołuje zewnętrzne API (OpenAI/Anthropic). AR-002/AR-004 podpisano przy
+założeniu „brak danych produkcyjnych"; publiczny link to założenie
+osłabia (realna osoba, realne dane, niezabezpieczony prototyp).
+**Wdrożone niezależnie od decyzji (2026-08-17):** twarda bramka
+onboardingu — bez potwierdzenia „to prototyp, żadnych prawdziwych danych
+zdrowotnych" nie da się wejść; wpis AR-006 w rejestrze ryzyk
+(PROPONOWANE, czeka na podpis).
+**Do decyzji foundera (jedno z trzech):**
+(a) utrzymać publiczny deploy z bramką — wtedy podpis AR-006 i przegląd
+    prawny przed jakąkolwiek promocją linku;
+(b) ograniczyć widoczność (wyłączyć workflow Pages lub przenieść na
+    prywatny podgląd) do czasu przeglądu prawnego;
+(c) utrzymać deploy wyłącznie jako demo z danymi syntetycznymi
+    (tryb bez możliwości wpisywania własnych danych).
+**Blokuje:** promocję linku poza krąg testerów; nie blokuje prac nad
+silnikiem.
+**Rozstrzygnięcie (2026-08-17):** founder wybrał wprost **wariant (a)** —
+deploy pozostaje publiczny z twardą bramką onboardingu; AR-006 podpisane
+(`docs/security-reviews/ACCEPTED_RISKS.md`); przegląd prawny odbywa się
+**przed jakąkolwiek promocją linku** poza krąg testerów (szkic pakietu:
+`docs/LEGAL_REVIEW_PACKAGE.md`). Zapis zgody: „Tak, należy wdrożyć te
+rozszerzenia" + wybór „(a) Utrzymać z bramką" w sesji roboczej.

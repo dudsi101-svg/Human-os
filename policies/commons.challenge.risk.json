@@ -1,0 +1,48 @@
+{
+  "config": "Human OS Commons Challenge Risk Mapping",
+  "version": "0.1.0",
+  "status": "SZKIC — struktura zatwierdzona z DD-009 cz. 1 (2026-08-17); granice klas zaproponowane przez wykonawcę i wymagają potwierdzenia foundera przed pierwszym użyciem operacyjnym. Do tego czasu artefakt jest wyłącznie dokumentacyjny — nic go nie interpretuje (precedens: policies/constitutional.policies.json).",
+  "source": "docs/COMMONS_MODULE_DIGEST.md §7 (klasyfikacja ryzyka wyzwań publicznych) + Konstytucja R0–R4",
+  "source_constraints_verbatim": [
+    "Publiczne wyzwania zdrowotne/finansowe/psychologiczne: klasyfikacja ryzyka.",
+    "Działania typu ekstremalne głodówki lub niebezpieczne rywalizacje treningowe nie są publikowane bez dodatkowej kontroli."
+  ],
+  "classes": [
+    {
+      "risk": "R0",
+      "label": "prywatne / neutralne",
+      "description": "Kręgi na zaproszenie i wyzwania prywatne bez tematyki wrażliwej.",
+      "publication": "allowed",
+      "events": ["CHALLENGE_CREATED", "CHALLENGE_JOINED", "CHECKIN_RECORDED"]
+    },
+    {
+      "risk": "R1",
+      "label": "publiczne neutralne",
+      "description": "Publiczne wyzwania nawykowe poza domenami zdrowia, finansów i psychiki.",
+      "publication": "allowed",
+      "events": ["CHALLENGE_PUBLISHED"]
+    },
+    {
+      "risk": "R2",
+      "label": "wrażliwe łagodne",
+      "description": "Publiczne wyzwania w domenach zdrowotnej/finansowej/psychologicznej o łagodnej intensywności.",
+      "publication": "requires_risk_classification",
+      "events": ["CHALLENGE_PUBLISHED"]
+    },
+    {
+      "risk": "R3",
+      "label": "wrażliwe intensywne",
+      "description": "Intensywne interwencje w domenach wrażliwych.",
+      "publication": "requires_risk_classification_and_additional_control",
+      "events": ["CHALLENGE_PUBLISHED"]
+    },
+    {
+      "risk": "R4",
+      "label": "ekstremalne",
+      "description": "Działania typu ekstremalne głodówki lub niebezpieczne rywalizacje treningowe.",
+      "publication": "never_published_without_additional_control",
+      "events": ["CHALLENGE_PUBLISHED"]
+    }
+  ],
+  "operational_note": "„Dodatkowa kontrola\" oznacza moderację, która nie istnieje (DD-009 cz. 2 otwarta). Do jej powstania publikacja klas R4 oraz kontrolna część R3 jest strukturalnie niedostępna — to stwierdzenie stanu, nie nowa polityka."
+}

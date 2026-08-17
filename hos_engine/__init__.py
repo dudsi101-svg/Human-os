@@ -31,6 +31,7 @@ __all__ = [
 from .agent_policy import constitutional_capability
 from .agent_runtime import *
 from .authority import *
+from .call_authorization import *
 from .consent import *
 from .decision_engine import *
 from .decision_scales import *
