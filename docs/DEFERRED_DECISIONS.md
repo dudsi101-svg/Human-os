@@ -279,3 +279,20 @@ modelu). Otwarte decyzje foundera:
    rozmowy „O mnie" (dziś: nigdy) — wymagałoby to rozszerzenia C5.
 4. **Przegląd prawny** kopii zgody C5 (dane zdrowotne wychodzą do API).
 **Tymczasowo:** mechanizm referencyjny BYO-key, funkcja premium.
+
+## DD-014 · Powiadomienia push w tle (OPEN)
+Dyrektywa foundera (2026-08-17): zewnętrzne powiadomienia + podsumowanie
+ustaleń (wyzwania, rytuały, postanowienia) z odhaczaniem i godzinami.
+Wdrożone: sekcja „Ustalenia dnia" w Planie (checklista wyzwań Wspólnie,
+rytuałów i postanowień z odhaczaniem, cofaniem, godzinami per pozycja,
+audytem) + powiadomienia systemowe (Notification API): opt-in, jedno
+powiadomienie o ustawionej porze dla niezrobionych pozycji, bez duplikatów,
+znikają po odhaczeniu; działają przy uruchomionej/zainstalowanej aplikacji
+(PWA). Otwarte: **push przy całkiem zamkniętej aplikacji** wymaga Web Push
+(backend z kluczami VAPID, subskrypcje push, retencja endpointów) — wiąże
+się z DD-013 (backend Przewodnika) i DD-011 (wydanie sklepowe).
+**Rekomendacja:** jeden wspólny backend etapu sklepowego obsługujący
+rozliczenia, klucze Przewodnika i Web Push; do tego czasu powiadomienia
+lokalne + poranna odprawa wystarczają dla wiernego użycia dziennego.
+**Tymczasowo:** Notification API bez backendu; kopia w aplikacji mówi to
+wprost.

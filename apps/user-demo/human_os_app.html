@@ -1039,6 +1039,7 @@ function freshState(name, domains, goal){
     domains, history:hist,
     consents:{ C0:true, C1:true, C2:true, C4:false, C5:false },
     goal, goals:[goal], activeGoal:0,
+    rituals:[], notify:{ enabled:false, notified:{} },
     decisions:[], experiments:[], pastExperiments:[],
     modes:{ SAFE_MODE:false, READ_ONLY:false },
     log:[],
@@ -1082,6 +1083,8 @@ function migrateState(s){
   if(!Array.isArray(s.goals)) s.goals = s.goal ? [s.goal] : [];
   if(typeof s.activeGoal!=="number" || s.activeGoal<0 || s.activeGoal>=s.goals.length) s.activeGoal=0;
   if(s.goals.length) s.goal = s.goals[s.activeGoal];
+  if(!Array.isArray(s.rituals)) s.rituals=[];
+  if(!s.notify) s.notify={ enabled:false, notified:{} };
   if(!s.community) s.community={ pid:"P-"+Math.random().toString(36).slice(2,8), pseudonym:"", challenges:[], experiences:[] };
   if(!s.community.circles) s.community.circles=[];
   if(!s.community.help) s.community.help=[];
@@ -2416,11 +2419,6 @@ function renderPlan(){
   const host=$("planHost"); if(!host) return;
   if(!isPremium()){ host.innerHTML=paywallCard("Plan i przypomnienia"); return; }
   const run=runningExps();
-  if(!run.length){
-    host.innerHTML=`<div class="quiet">Nie ma czego planować — żaden eksperyment nie biegnie.
-      <div style="margin-top:10px"><button class="btn primary" onclick="showView('decyzje')">Poproś o rekomendację</button></div></div>`;
-    return;
-  }
   const today=planToday();
   const todays=run.filter(expPlannedToday).sort((a,b)=>(a.planTime||"").localeCompare(b.planTime||""));
   const editor=run.map(e=>`<div class="card" style="margin-bottom:12px">
@@ -2450,8 +2448,136 @@ function renderPlan(){
       : `<p class="note">Na dziś nic nie zaplanowano godzinowo. Eksperymenty i tak biegną — plan tylko pomaga pamiętać.</p>`}
     <p class="note" style="margin-top:8px">Przypomnienia trafiają do porannej odprawy na Pulpicie. Pominięcie zaplanowanej godziny to dana, nie przewinienie.</p>
   </div>`;
-  host.innerHTML=todayCard+week+`<h3 style="font-size:15px;margin:16px 0 10px">Ustawienia</h3>`+editor;
+  const expSection = run.length
+    ? todayCard+week+`<h3 style="font-size:15px;margin:16px 0 10px">Ustawienia eksperymentów</h3>`+editor
+    : `<div class="quiet" style="margin-bottom:14px">Żaden eksperyment nie biegnie — plan obejmie go automatycznie po starcie.
+        <div style="margin-top:10px"><button class="btn small" onclick="showView('decyzje')">Poproś o rekomendację</button></div></div>`;
+  host.innerHTML = renderNotifyCard() + renderAgreements() + expSection;
 }
+
+/* ---------- ustalenia dnia: wyzwania, rytuały, postanowienia ---------- */
+function ritualDoneToday(r){ return (r.doneDays||[]).includes(S.day); }
+function renderAgreements(){
+  const chs=(S.community&&S.community.challenges||[]).filter(c=>c.active);
+  const rows=[];
+  chs.forEach(ch=>{
+    const me=commSelf(ch)||{doneDays:[]};
+    const done=me.doneDays.includes(S.day);
+    rows.push(`<div class="rights-row">
+      <div style="display:flex;gap:10px;align-items:center;min-width:0">
+        <input type="checkbox" ${done?"checked disabled":""} onchange="markDoneToday('${ch.id}');renderPlan()" style="width:18px;height:18px;flex:none">
+        <div style="min-width:0"><b style="font-size:14px">${esc(ch.commitment||ch.step)}</b>
+          <div class="note">wspólne wyzwanie „${esc(ch.title)}” · ${ch.participants.length} os.</div></div></div>
+      ${done?'<span class="pill good">dziś ✓</span>':''}</div>`);
+  });
+  S.rituals.forEach(r=>{
+    const done=ritualDoneToday(r);
+    rows.push(`<div class="rights-row">
+      <div style="display:flex;gap:10px;align-items:center;min-width:0">
+        <input type="checkbox" ${done?"checked":""} onchange="toggleRitualDone('${r.id}')" style="width:18px;height:18px;flex:none">
+        <div style="min-width:0"><b style="font-size:14px">${esc(r.text)}</b>
+          <div class="note">${r.kind==="postanowienie"?"postanowienie":"rytuał"}${r.time?"":" · bez godziny"}</div></div></div>
+      <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="time" value="${r.time||""}" onchange="setRitualTime('${r.id}',this.value)" title="Godzina przypomnienia">
+        ${done?'<span class="pill good">dziś ✓</span>':''}
+        <button class="btn small ghost" onclick="removeRitual('${r.id}')" title="Usuń">✕</button></span></div>`);
+  });
+  return `<div class="card" style="margin-bottom:14px">
+    <h3 style="font-size:15px;margin-bottom:6px">Ustalenia dnia</h3>
+    <p class="note" style="margin-bottom:8px">Twoje wyzwania, rytuały i postanowienia w jednym miejscu — odhaczasz tu albo w odprawie. Pominięcie to dana, nie przewinienie.</p>
+    ${rows.join("")||`<p class="note">Jeszcze pusto — dodaj pierwszy rytuał albo postanowienie poniżej.</p>`}
+    <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+        <div style="flex:1;min-width:200px"><label for="rtText">Nowy rytuał / postanowienie</label>
+          <input type="text" id="rtText" placeholder="np. 10 min czytania przed snem"></div>
+        <div><label for="rtKind">Rodzaj</label><select id="rtKind"><option value="rytual">rytuał</option><option value="postanowienie">postanowienie</option></select></div>
+        <div><label for="rtTime">Godzina <span class="note">(opcjonalnie)</span></label><br><input type="time" id="rtTime"></div>
+        <button class="btn primary" onclick="addRitual()">Dodaj</button>
+      </div></div></div>`;
+}
+function addRitual(){
+  const text=($("rtText").value||"").trim();
+  if(!text){ toast("Napisz, co chcesz robić."); return; }
+  const kind=$("rtKind").value==="postanowienie"?"postanowienie":"rytual";
+  const r={ id:"rt-"+Date.now().toString(36), text:text.slice(0,120), kind,
+    time:$("rtTime").value||null, doneDays:[], createdDay:S.day };
+  S.rituals.push(r);
+  logEvent("PLAN","NOWE-USTALENIE",`${kind==="postanowienie"?"Postanowienie":"Rytuał"}: „${r.text}”${r.time?" · przypomnienie "+r.time:""}`);
+  toast("Dodane do ustaleń dnia.");
+  save(); renderPlan();
+}
+function toggleRitualDone(id){
+  const r=S.rituals.find(x=>x.id===id); if(!r) return;
+  r.doneDays=r.doneDays||[];
+  const i=r.doneDays.indexOf(S.day);
+  if(i>=0){ r.doneDays.splice(i,1); logEvent("PLAN","ODHACZENIE-COFNIĘTE",`„${r.text}” (dzień ${S.day})`); }
+  else { r.doneDays.push(S.day); logEvent("PLAN","ODHACZONE",`„${r.text}” wykonane (dzień ${S.day})`); }
+  save(); renderPlan();
+}
+function setRitualTime(id,val){
+  const r=S.rituals.find(x=>x.id===id); if(!r) return;
+  r.time=val||null;
+  logEvent("PLAN","GODZINA-USTALENIA",`„${r.text}” → ${r.time||"bez godziny"}`);
+  save(); renderPlan();
+}
+function removeRitual(id){
+  const r=S.rituals.find(x=>x.id===id); if(!r) return;
+  S.rituals=S.rituals.filter(x=>x.id!==id);
+  logEvent("PLAN","USTALENIE-USUNIĘTE",`„${r.text}” usunięte przez użytkownika`);
+  save(); renderPlan();
+}
+
+/* ---------- powiadomienia zewnętrzne (systemowe) ---------- */
+function renderNotifyCard(){
+  const sup=("Notification" in window);
+  const on=S.notify.enabled && sup && Notification.permission==="granted";
+  return `<div class="card" style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <h3 style="font-size:15px">Powiadomienia zewnętrzne</h3>
+      ${on?'<span class="pill verd">włączone</span>':'<span class="pill neutral">wyłączone</span>'}</div>
+    <p class="note" style="margin:6px 0 8px">Systemowe przypomnienia o zaplanowanych godzinach rytuałów, postanowień i eksperymentów. Bez dźwięków paniki i czerwonych kropek — jedno powiadomienie o swojej porze, znika po odhaczeniu.</p>
+    ${sup? (on?`<button class="btn small ghost" onclick="disableNotifications()">Wyłącz</button>`
+              :`<button class="btn primary small" onclick="requestNotifications()">Włącz powiadomienia systemowe</button>`)
+        : `<p class="note">Ta przeglądarka nie wspiera powiadomień.</p>`}
+    <p class="note" style="margin-top:8px">Działają, gdy aplikacja jest uruchomiona lub zainstalowana jako PWA. Powiadomienia push przy całkiem zamkniętej aplikacji wymagają backendu — to decyzja etapu sklepowego (DD-014).</p></div>`;
+}
+function requestNotifications(){
+  if(!("Notification" in window)){ toast("Ta przeglądarka nie wspiera powiadomień."); return; }
+  Notification.requestPermission().then(p=>{
+    S.notify.enabled=(p==="granted");
+    logEvent("PLAN", S.notify.enabled?"POWIADOMIENIA-WŁĄCZONE":"POWIADOMIENIA-ODMOWA",
+      S.notify.enabled?"Powiadomienia systemowe włączone przez użytkownika":"Użytkownik lub przeglądarka odmówiły powiadomień");
+    if(!S.notify.enabled) toast("Przeglądarka nie wydała zgody na powiadomienia.");
+    save(); renderPlan();
+  });
+}
+function disableNotifications(){
+  S.notify.enabled=false;
+  logEvent("PLAN","POWIADOMIENIA-WYŁĄCZONE","Powiadomienia systemowe wyłączone przez użytkownika");
+  save(); renderPlan();
+}
+function notifTick(){
+  if(!S||!S.notify||!S.notify.enabled) return;
+  if(!("Notification" in window)||Notification.permission!=="granted") return;
+  const now=new Date();
+  const hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  const fire=(id,title,body)=>{
+    const k=id+"@"+S.day;
+    if(S.notify.notified[k]) return;
+    S.notify.notified[k]=true;
+    try{ new Notification(title,{ body, icon:"icons/icon-192.png", tag:"hos-"+id }); }catch(e){}
+    logEvent("PLAN","POWIADOMIENIE",`${title}: ${body}`); save();
+  };
+  S.rituals.forEach(r=>{ if(r.time===hm && !ritualDoneToday(r))
+    fire(r.id, r.kind==="postanowienie"?"Human OS — postanowienie":"Human OS — rytuał", r.text); });
+  runningExps().forEach(e=>{ if(e.planTime===hm && expPlannedToday(e) && !e.checkinDone)
+    fire(e.id, "Human OS — eksperyment", e.name); });
+  if(Object.keys(S.notify.notified).length>200){
+    Object.keys(S.notify.notified).forEach(k=>{ if(!k.endsWith("@"+S.day)) delete S.notify.notified[k]; });
+    save();
+  }
+}
+try{ setInterval(notifTick, 30000); }catch(e){}
 
 /* ---------- huby zakładek ---------- */
 function renderOmnieHub(){
@@ -2829,6 +2955,13 @@ function renderDayBrief(){
       todo.push(`${when}<b>${esc(e.name)}, dzień ${e.dayIn}/${e.activeLen}</b> — jak: ${esc(c?c.desc:"")}`);
       if(c) expect.push(`${esc(e.name)}: efekt zwykle widoczny po ~${c.lag} dniach (dowody ${c.evidence}/5); ochronny: ${DOMAINS.find(d=>d.id===e.guard).name}.`);
     }
+  });
+  (S.rituals||[]).filter(r=>!(r.doneDays||[]).includes(S.day)).forEach(r=>{
+    todo.push(`${r.time?"⏱ "+r.time+" — ":""}${r.kind==="postanowienie"?"Postanowienie":"Rytuał"}: ${esc(r.text)}`);
+  });
+  ((S.community&&S.community.challenges)||[]).filter(c=>c.active).forEach(ch=>{
+    const me=commSelf(ch); if(me && !me.doneDays.includes(S.day))
+      todo.push(`Wspólne wyzwanie „${esc(ch.title)}”: ${esc(ch.commitment||ch.step)}`);
   });
   if(act.length) todo.push(`Wieczorem check-in${act.length>1?"y (×"+act.length+")":""} — szczerość ważniejsza niż wynik.`);
   if(act.some(e=>e.phase==="baseline")) expect.push(`W fazach bazy wahania ±kilka punktów to szum, nie sygnał.`);
