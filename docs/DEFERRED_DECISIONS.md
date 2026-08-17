@@ -12,12 +12,14 @@ rozwiązanie opisane niżej · RESOLVED = rozstrzygnięte (z datą).
 
 ---
 
-## DD-001 · CI a mypy (OPEN — warunek wstępny spełniony)
+## DD-001 · CI a mypy (RESOLVED 2026-08-17)
 `make verify` uruchamia mypy, ale CI (`.github/workflows/ci.yml`) — nie.
 **2026-08-16: dług zszedł do 0** (`mypy hos_engine` czysty, 33 pliki).
-Pozostaje decyzja: czy dodać `mypy hos_engine` do CI jako bramkę?
+Pozostawała decyzja: czy dodać `mypy hos_engine` do CI jako bramkę?
 **Rekomendacja:** tak — baza jest zielona, bramka utrwali stan zerowy.
-**Tymczasowo:** CI bez zmian; `make verify` łapie regresje lokalnie.
+**Rozstrzygnięcie (2026-08-17):** founder zaakceptował porządki tego etapu;
+krok `python -m mypy hos_engine` dodany do `.github/workflows/ci.yml`
+między ruff a pytest, zgodnie z rekomendacją.
 
 ## DD-002 · Promocja pozycji self-modelu do encji Hub (OPEN)
 Potwierdzone pozycje Living Self Model (wartości, cele) mogłyby stawać się
