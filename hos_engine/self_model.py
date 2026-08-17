@@ -113,6 +113,23 @@ class InteractionLog:
     def messages(self, interaction_id: str) -> list[InteractionMessage]:
         return list(self._messages[interaction_id])
 
+    def all_interactions(self) -> list[Interaction]:
+        return list(self._interactions.values())
+
+    def all_messages(self) -> list[InteractionMessage]:
+        return [m for msgs in self._messages.values() for m in msgs]
+
+    @classmethod
+    def restore(cls, interactions: list[Interaction],
+                messages: list[InteractionMessage]) -> InteractionLog:
+        log = cls()
+        for it in interactions:
+            log._interactions[it.interaction_id] = it
+            log._messages[it.interaction_id] = []
+        for m in sorted(messages, key=lambda x: x.at):
+            log._messages[m.interaction_id].append(m)
+        return log
+
     def find_message(self, message_id: str) -> InteractionMessage | None:
         for msgs in self._messages.values():
             for m in msgs:
@@ -347,6 +364,14 @@ class SelfModelService:
                    {"tension_id": tension_id, "resolution": resolution},
                    tension_id)
         return new
+
+    def all_tensions(self) -> list[Tension]:
+        return list(self._tensions.values())
+
+    def restore_tension(self, tension: Tension) -> None:
+        """Persistence-layer hook: reinsert a tension verbatim, without
+        emitting a new audit event (the original recording already did)."""
+        self._tensions[tension.tension_id] = tension
 
     def open_tensions(self, subject_id: str) -> list[Tension]:
         return [t for t in self._tensions.values()
