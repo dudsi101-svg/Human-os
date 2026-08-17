@@ -56,6 +56,15 @@ remain unimplemented. Dedicated `recovery_*` event types are still not
 added to `event.types.json` — durable events use `STATE_OBSERVED` with the
 full 13-field record in the payload until that vocabulary decision is made.
 
+**Addendum 2026-08-17 (DD-003 resolved):** the vocabulary decision was
+made — `RECOVERY_ACTIVATED`, `RECOVERY_DEACTIVATED`, `RECOVERY_REFUSED`
+and `ENTITY_FROZEN` are now canonical types in `event.types.json` (0.3.0)
+and the event schema enum, mapped at the kernel's `_log` chokepoint.
+Names follow the dictionary's UPPERCASE convention. Historical
+`STATE_OBSERVED` events are not rewritten and remain readable; usage
+records (snapshot/rollback/export) intentionally stay `STATE_OBSERVED`.
+See `docs/recovery-contract.md` for the mapping table.
+
 Originally none of this was implemented. Two open, source-flagged items
 matter for any future implementation:
 1. The source itself (§12) states `FROZEN` must be added to the

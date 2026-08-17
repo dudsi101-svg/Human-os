@@ -33,7 +33,11 @@
         "STATE_OBSERVED",
         "PROOF_COMPLETED",
         "LIMITATION_DISCLOSED",
-        "VERSION_RELEASED"
+        "VERSION_RELEASED",
+        "RECOVERY_ACTIVATED",
+        "RECOVERY_DEACTIVATED",
+        "RECOVERY_REFUSED",
+        "ENTITY_FROZEN"
       ]
     },
     "occurred_at": {

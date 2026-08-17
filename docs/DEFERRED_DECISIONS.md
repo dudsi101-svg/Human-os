@@ -48,6 +48,11 @@ z rekomendacją — cztery typy (`recovery_activated`, `recovery_deactivated`,
 `recovery_refused`, `entity_frozen`) w jednej, osobnej zmianie ze schematem,
 walidacją, mapowaniem, dokumentacją i testami. Historycznych zdarzeń nie
 przepisujemy — stara historia jako `STATE_OBSERVED` pozostaje czytelna.
+**Wdrożone 2026-08-17:** słownik 0.3.0 + enum schematu (nazwy w konwencji
+UPPERCASE słownika), mapowanie w `_log` kernela, tabela mapowania
+w `docs/recovery-contract.md`, addendum w ADR-RECOVERY-004, 7 nowych
+testów (mapowanie, trwałość, zgodność słownik↔enum, czytelność historii).
+Przy okazji wykryto rozjazd wzorca HOSId — zapisany jako DD-009.
 
 ## DD-004 · HYPOTHESIS vs AI_INFERENCE (RESOLVED 2026-08-17)
 `EvidenceType` ma oba; ADR-SELFMODEL-001 przyjął konwencję
@@ -133,3 +138,23 @@ przegląd nie będzie niezależny od autorów kodu ani od agentów AI
 uczestniczących w rozwoju — ta granica jest zapisana jako ryzyko
 zaakceptowane, a powrót do przeglądu zewnętrznego pozostaje możliwy
 w przyszłości bez zmiany protokołu.
+
+## DD-009 · Wzorzec HOSId w schemacie vs identyfikatory silnika (OPEN)
+Wykryte 2026-08-17 podczas wdrażania DD-003, przez pierwszą próbę
+walidacji trwałego zdarzenia Recovery pełnym `event.schema.json`:
+kanoniczny wzorzec `HOSId` (`^HOS-[A-Z]{2,8}-[0-9]{6,}$`,
+`schemas/common.schema.json`) dopuszcza wyłącznie cyfry w członie
+numerycznym, podczas gdy silnik generuje identyfikatory szesnastkowe
+(`uuid4().hex[:12].upper()` — np. `HOS-EMG-B47A501F7A30`) w co najmniej:
+`recovery.py`, `execution_loop.py` (INT/PRF/REQ/EVT). Żaden runtime'owy
+identyfikator nie przechodzi więc walidacji pełnej koperty. Dodatkowo
+koperta z `sqlite_store` zawiera pola spoza schematu (`event_hash`,
+`causation_id: None`).
+**Opcje:** (a) rozszerzyć wzorzec `HOSId` o [0-9A-F] (zmiana materialna
+kanonicznego schematu), (b) przestawić generatory silnika na cyfry
+(zmiana formatu wszystkich nowych ID), (c) świadomie rozdzielić „ID
+runtime" od „ID kanonicznych" (wymaga definicji mapowania).
+**Rekomendacja:** (a) — wzorzec ma opisywać rzeczywistość silnika,
+a rozszerzenie zbioru znaków nie unieważnia żadnego istniejącego ID.
+**Tymczasowo:** testy DD-003 walidują zgodność `event_type` ze
+słownikiem i enumem; pełna walidacja koperty czeka na tę decyzję.

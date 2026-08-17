@@ -638,13 +638,26 @@ class SovereignRecoveryKernel:
         )
         self._events.append(event)
         if self._event_store is not None:
-            # Dedicated recovery_* event types are not yet in event.types.json
-            # (ADR-RECOVERY-004's open item); STATE_OBSERVED is the closest
-            # canonical type until they are added. Envelope shape matches
-            # ExecutionLoop._record_domain_event's.
+            # DD-003 (resolved 2026-08-17): recovery outcomes map to the
+            # canonical vocabulary. Anything that is neither an activation,
+            # a deactivation, nor a refusal (snapshot/rollback/export usage
+            # records) stays STATE_OBSERVED, as does all pre-DD-003 history.
+            # Envelope shape matches ExecutionLoop._record_domain_event's.
+            if result.startswith("REFUSED"):
+                canonical_type = "RECOVERY_REFUSED"
+            elif result == "DEACTIVATED":
+                canonical_type = "RECOVERY_DEACTIVATED"
+            elif result == "ACTIVATED":
+                canonical_type = (
+                    "ENTITY_FROZEN"
+                    if mode is EmergencyMode.FREEZE
+                    else "RECOVERY_ACTIVATED"
+                )
+            else:
+                canonical_type = "STATE_OBSERVED"
             self._event_store.append({
                 "id": event_id,
-                "event_type": "STATE_OBSERVED",
+                "event_type": canonical_type,
                 "occurred_at": timestamp,
                 "actor_id": initiator,
                 "subject_ids": [scope],
