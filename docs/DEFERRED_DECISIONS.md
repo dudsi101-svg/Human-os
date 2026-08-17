@@ -147,3 +147,24 @@ i mapowaniem na R0–R4 dla ryzyka wyzwań publicznych; ModerationCase jako
 druga, osobna zmiana po decyzji o rolach.
 **Tymczasowo:** demo aplikacji loguje te zdarzenia lokalnie w rejestrze
 klienta; silnik nie emituje żadnych `commons_*`.
+
+## DD-010 · Cennik i pakowanie wydania sklepowego (OPEN)
+Founder zatwierdził kierunek (2026-08-17): dystrybucja sklepowa aplikacji
+osobistej w modelu freemium — wersja bezpłatna z ograniczeniami, Premium
+z pełnym dostępem. Granice konstytucyjne (eksport/wyjście/model/tryby
+awaryjne nigdy płatne; bez reklam; bez sprzedaży danych; bez pól
+sponsorowanych) oraz podział funkcji w prototypie: `ADR-APP-001`.
+Otwarte pozostają decyzje wyłącznie founderskie:
+1) **cena subskrypcji** i waluty/rynki startowe;
+2) **ostateczny podział free/premium** (prototyp: premium = 3 równoległe
+   eksperymenty + prognoza zbiorcza, Plan/przypomnienia, moduł Wspólnie);
+3) **długość okresu próbnego** (prototyp: 7 dni, jednorazowo, bez karty);
+4) **kanał pakowania**: PWA→TWA (Google Play) i cienki wrapper (App Store)
+   vs. Capacitor; konto dewelopera, podpisywanie, polityka aktualizacji;
+5) **prawna wersja polityki prywatności i regulaminu** (teksty w aplikacji
+   są dziś szczere, ale nie przeszły przeglądu prawnego).
+**Rekomendacja:** utrzymać podział z ADR-APP-001; pakowanie przez PWA→TWA
+(najmniej kodu, zachowuje architekturę local-first); przegląd prawny przed
+publikacją. **Tymczasowo:** mechanizm referencyjny kodu aktywacyjnego
+(format-only) + próbne 7 dni, wszystko audytowane w rejestrze aplikacji.
+

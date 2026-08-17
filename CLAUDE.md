@@ -306,6 +306,14 @@ will flag it as an unused import.
   code slice of *part* of this (entity/relation registries only) — it is not the whole Hub.
 - `sdk/python/human_os_sdk/` directly imports from `hos_engine` — it is a thin convenience
   wrapper, not a decoupled client library.
+- `apps/user-demo/` — the single-file personal user app (HTML/JS, no build, no backend),
+  committed per DD-005 as an exact copy of the artifact under active development.
+  UX-ONLY PROTOTYPE: `localStorage` state, synthetic data, no auth, no promotion to Core/Hub.
+  It re-implements engine *patterns* client-side (self-model epistemics, decision gates,
+  recovery modes, Commons per ADR-COMMONS-001/002, freemium tiering per ADR-APP-001 —
+  export/exit/model/emergency modes are never paywalled). Distinct from `app/` (the Flask
+  Proof Kernel console). Its E2E tests (Playwright, `node test_*.js`) live in the artifact
+  scratchpad, not in this repo.
 - `docs/adr/` contains architecture decision records. Three populations exist:
   - `ADR-0002` through `ADR-0008` — original engine ADRs, each backing an implemented, tested
     component. Note `ADR-0006-simulation-laboratory.md` documents the code-level what-if scenario
