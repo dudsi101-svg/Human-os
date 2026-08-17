@@ -351,3 +351,20 @@ deploy pozostaje publiczny z twardą bramką onboardingu; AR-006 podpisane
 **przed jakąkolwiek promocją linku** poza krąg testerów (szkic pakietu:
 `docs/LEGAL_REVIEW_PACKAGE.md`). Zapis zgody: „Tak, należy wdrożyć te
 rozszerzenia" + wybór „(a) Utrzymać z bramką" w sesji roboczej.
+## DD-016 · Biometria na żywo: HealthKit/Health Connect i Web Bluetooth (OPEN)
+Dodano (2026-08-17, dyrektywa foundera „bajery biometryczne", ADR-APP-004):
+import plików zdrowotnych lokalnie (C6) + blokada biometryczna (WebAuthn).
+Poza zasięgiem PWA pozostają: (a) ciągłe, automatyczne sczytywanie z Apple
+Health / Google Health Connect — wymaga aplikacji natywnej (etap sklepowy);
+(b) czujniki Web Bluetooth na żywo (pas tętna) — działa tylko w Chrome na
+Androidzie/desktopie, brak w iOS Safari.
+**Do decyzji foundera:** (1) czy pakujemy aplikację natywnie (Capacitor/TWA)
+z modułem HealthKit/Health Connect i kiedy; (2) czy automatyczna
+synchronizacja to wyróżnik Premium (sam dostęp do własnych danych pozostaje
+bezpłatny — podłoga ADR-APP-001 §2; płatna mogłaby być automatyzacja);
+(3) czy dokładać Web Bluetooth już teraz mimo braku wsparcia na iPhonie.
+**Rekomendacja:** (1) tak, razem z decyzją DD-011 o kanale sklepowym;
+(2) tak — automatyzacja jako Premium, import plików zawsze darmowy;
+(3) nie teraz — wartość niska do czasu wersji natywnej.
+**Tymczasowo:** import plików (XML/CSV/JSON) + jawny zapis średnich do
+modelu pokrywa potrzebę twardych mierników eksperymentów.

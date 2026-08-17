@@ -622,6 +622,11 @@
       <div id="selfModelHost"></div>
       </div><!-- /model -->
 
+      <div class="subview" data-sub="pomiary">
+      <!-- dane ciała: import lokalny (C6) -->
+      <div id="bioHost"></div>
+      </div><!-- /pomiary -->
+
       <div class="subview" data-sub="formularz">
       <details class="forms-adv" open style="margin-top:2px">
         <summary>Formularz — szybka korekta i dane dla bram G4</summary>
@@ -829,12 +834,17 @@
           <button class="btn small" onclick="openCorrection()">Popraw model</button>
         </div>
         <div class="rights-row">
-          <div><b>Zgody</b><div class="d">C1 (personalizacja): <b id="c1State"></b> · C2 (pomiary): <b id="c2State"></b> · C4 (wspólnota): <b id="c4State"></b> · C5 (Przewodnik AI): <b id="c5State"></b></div></div>
+          <div><b>Zgody</b><div class="d">C1 (personalizacja): <b id="c1State"></b> · C2 (pomiary): <b id="c2State"></b> · C4 (wspólnota): <b id="c4State"></b> · C5 (Przewodnik AI): <b id="c5State"></b> · C6 (dane ciała): <b id="c6State"></b></div></div>
           <span style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn small" onclick="toggleConsent()">Przełącz C1</button>
             <button class="btn small" onclick="toggleConsentC4()">Przełącz C4</button>
             <button class="btn small" onclick="toggleConsentC5()">Przełącz C5</button>
+            <button class="btn small" onclick="toggleConsentC6()">Przełącz C6</button>
           </span>
+        </div>
+        <div class="rights-row" id="lockRow">
+          <div><b>Blokada aplikacji</b><div class="d">Face ID / odcisk / PIN urządzenia przy otwarciu. To zamek na ekran chroniący podgląd — nie szyfrowanie danych. Stan: <b id="lockState"></b></div></div>
+          <span id="lockBtns"></span>
         </div>
       </div>
       <div id="correctionHost" style="margin-top:14px"></div>
@@ -1062,7 +1072,8 @@ function freshState(name, domains, goal){
   return {
     v:2, name, day:1, epoch:1,
     domains, history:hist,
-    consents:{ C0:true, C1:true, C2:true, C4:false, C5:false },
+    consents:{ C0:true, C1:true, C2:true, C4:false, C5:false, C6:false },
+    biometrics:{ series:{}, imports:[] },
     goal, goals:[goal], activeGoal:0,
     rituals:[], notify:{ enabled:false, notified:{} },
     decisions:[], experiments:[], pastExperiments:[],
@@ -1104,6 +1115,8 @@ function migrateState(s){
   /* migracja: pojedynczy eksperyment -> tablica równoległych */
   if(s.consents && s.consents.C4===undefined) s.consents.C4=false;
   if(s.consents && s.consents.C5===undefined) s.consents.C5=false;
+  if(s.consents && s.consents.C6===undefined) s.consents.C6=false;
+  if(!s.biometrics) s.biometrics={ series:{}, imports:[] };
   /* wiele celów: goals[] + aktywny; S.goal zawsze wskazuje aktywny obiekt z tablicy */
   if(!Array.isArray(s.goals)) s.goals = s.goal ? [s.goal] : [];
   if(typeof s.activeGoal!=="number" || s.activeGoal<0 || s.activeGoal>=s.goals.length) s.activeGoal=0;
@@ -1257,7 +1270,7 @@ function showView(id){
   const ms=$("moreSheet"); if(ms) ms.classList.remove("open");
   ["omnie","eksperymenty","konstytucja","wspolnota"].forEach(v=>closeSub(v));
   if(id==="pulpit") renderPulpit();
-  if(id==="omnie"){ renderProfile(); renderChat(); renderSelfModel(); renderOmnieHub(); }
+  if(id==="omnie"){ renderProfile(); renderChat(); renderSelfModel(); renderOmnieHub(); renderBio(); }
   if(id==="eksperymenty"){ renderExperiments(); renderExpHub(); }
   if(id==="plan") renderPlan();
   if(id==="decyzje") renderAgent();
@@ -2408,6 +2421,223 @@ function renderAgent(){
     <div id="agentOut"></div></div>`;
 }
 
+/* ---------- pomiary ciała: import lokalny danych zdrowotnych (zgoda C6, ADR-APP-004) ----------
+   Zasady: plik czytany wyłącznie na urządzeniu; nic nie wychodzi; serie wchodzą do eksportu;
+   do modelu „O mnie" trafia coś TYLKO jawnym aktem użytkownika; nigdy w pakiecie Przewodnika AI. */
+const BIO_METRICS={
+  kroki:{ label:"Kroki", unit:"kroków/dzień", agg:"sum" },
+  sen_h:{ label:"Sen", unit:"h/noc", agg:"sum" },
+  tetno:{ label:"Tętno (średnie)", unit:"ud./min", agg:"avg" },
+  tetno_spocz:{ label:"Tętno spoczynkowe", unit:"ud./min", agg:"avg" },
+  hrv:{ label:"HRV (SDNN)", unit:"ms", agg:"avg" },
+  waga:{ label:"Waga", unit:"kg", agg:"avg" },
+};
+const BIO_APPLE_MAP={
+  "HKQuantityTypeIdentifierStepCount":"kroki",
+  "HKQuantityTypeIdentifierHeartRate":"tetno",
+  "HKQuantityTypeIdentifierRestingHeartRate":"tetno_spocz",
+  "HKQuantityTypeIdentifierHeartRateVariabilitySDNN":"hrv",
+  "HKQuantityTypeIdentifierBodyMass":"waga",
+};
+function bioState(){ if(!S.biometrics) S.biometrics={series:{},imports:[]}; return S.biometrics; }
+function bioSeriesCount(){ return S&&S.biometrics? Object.keys(S.biometrics.series).length:0; }
+function toggleConsentC6(){
+  S.consents.C6=!S.consents.C6;
+  logEvent("ZGODA", S.consents.C6?"C6-WŁĄCZONA":"C6-WYCOFANA",
+    S.consents.C6?"Dane ciała włączone — import i przetwarzanie wyłącznie lokalnie na urządzeniu; nigdy w pakiecie Przewodnika AI; objęte eksportem i prawem wymazania"
+                 :"Dane ciała wycofane — import zablokowany; zapisane serie zostają do Twojej dyspozycji (eksport/wymazanie)");
+  toast(S.consents.C6?"C6 włączona — możesz importować dane.":"C6 wycofana.");
+  save(); renderBio(); renderRights();
+}
+/* agregacja dzienna: p = { "RRRR-MM-DD": {s:suma, n:liczba} } → wartość wg agg */
+function bioAddPoint(acc, day, val){ if(!day||!isFinite(val)) return; (acc[day]=acc[day]||{s:0,n:0}); acc[day].s+=val; acc[day].n++; }
+function bioMergeSeries(key, acc){
+  const b=bioState(); const m=BIO_METRICS[key]||{label:key,unit:"",agg:"avg"};
+  const ser=b.series[key]=b.series[key]||{ label:m.label, unit:m.unit, points:{} };
+  let added=0;
+  Object.entries(acc).forEach(([d,{s,n}])=>{ ser.points[d]=Math.round(((m.agg==="sum")?s:s/n)*10)/10; added++; });
+  const days=Object.keys(ser.points).sort();
+  while(days.length>366){ delete ser.points[days.shift()]; }
+  return added;
+}
+function bioParseAppleXML(text){
+  const out={}; let m, count=0;
+  const re=/<Record\b[^>]*>/g;
+  const attr=(tag,n)=>{ const i=tag.indexOf(n+'="'); if(i<0) return null; const j=tag.indexOf('"', i+n.length+2); return tag.slice(i+n.length+2, j); };
+  while((m=re.exec(text)) && count<400000){
+    count++;
+    const tag=m[0];
+    const type=attr(tag,"type"), start=attr(tag,"startDate"), end=attr(tag,"endDate"), value=attr(tag,"value");
+    if(!type||!start) continue;
+    const day=start.slice(0,10);
+    if(type==="HKCategoryTypeIdentifierSleepAnalysis"){
+      if(!/Asleep/i.test(value)) continue;
+      const t0=Date.parse(start), t1=Date.parse(end||start);
+      if(isFinite(t0)&&isFinite(t1)&&t1>t0) bioAddPoint(out.sen_h=out.sen_h||{}, day, (t1-t0)/3600000);
+    } else {
+      const key=BIO_APPLE_MAP[type]; if(!key) continue;
+      bioAddPoint(out[key]=out[key]||{}, day, parseFloat(value));
+    }
+  }
+  return out;
+}
+function bioParseCSV(text, key){
+  const out={}; const acc=out[key]=out[key]||{};
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  const sep=(lines[0]||"").includes(";")?";":",";
+  for(const line of lines.slice(0,100000)){
+    const cells=line.split(sep).map(c=>c.trim().replace(/^"|"$/g,""));
+    let day=null, val=null;
+    for(const c of cells){
+      if(!day){ const d=c.match(/^(\d{4})-(\d{2})-(\d{2})/)||c.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+        if(d){ day=d[0].includes(".")?`${d[3]}-${d[2]}-${d[1]}`:d[0].slice(0,10); continue; } }
+      if(val===null){ const v=parseFloat(c.replace(",",".")); if(isFinite(v)&&c.match(/^[\d.,]+$/)) val=v; }
+    }
+    if(day&&val!==null) bioAddPoint(acc, day, val);
+  }
+  return out;
+}
+function bioHandleFile(){
+  if(!S.consents.C6){ toast("Import danych ciała wymaga zgody C6."); return; }
+  const inp=$("bioFile"); const f=inp&&inp.files&&inp.files[0]; if(!f){ toast("Wybierz plik z eksportu."); return; }
+  if(f.size>150*1024*1024){ toast("Plik jest bardzo duży (>150 MB) — wyeksportuj krótszy zakres."); return; }
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const text=String(reader.result||"");
+    let parsed={};
+    if(/<HealthData|<Record\s/i.test(text)) parsed=bioParseAppleXML(text);
+    else if(f.name.endsWith(".json")){ try{ const j=JSON.parse(text); if(j&&j.series){ Object.entries(j.series).forEach(([k,s])=>{ const acc={}; Object.entries(s.points||{}).forEach(([d,v])=>bioAddPoint(acc,d,Number(v))); parsed[k]=acc; }); } }catch(e){} }
+    else parsed=bioParseCSV(text, $("bioCsvMetric").value);
+    const summary=Object.entries(parsed).map(([k,acc])=>`${(BIO_METRICS[k]||{label:k}).label}: ${bioMergeSeries(k,acc)} dni`).filter(s=>!s.endsWith(" 0 dni"));
+    if(!summary.length){ toast("Nie rozpoznano danych w pliku — obsługiwane: eksport Apple Zdrowie (XML), CSV z kolumną daty i wartości, JSON Human OS."); return; }
+    bioState().imports.push({ id:"imp-"+Date.now().toString(36), file:f.name.slice(0,60), day:S.day, summary:summary.join(", ") });
+    logEvent("POMIARY","bio_import",`Import lokalny „${f.name.slice(0,60)}” — ${summary.join(", ")}; plik przetworzony wyłącznie na urządzeniu`,{scope:"biometrics"});
+    toast("Zaimportowane: "+summary.join(", "));
+    inp.value=""; save(); renderBio(); renderOmnieHub();
+  };
+  reader.onerror=()=>toast("Nie udało się odczytać pliku.");
+  reader.readAsText(f);
+}
+function bioWeekAvg(key){
+  const ser=bioState().series[key]; if(!ser) return null;
+  const days=Object.keys(ser.points).sort().slice(-7);
+  if(!days.length) return null;
+  const v=days.reduce((a,d)=>a+ser.points[d],0)/days.length;
+  return { days:days.length, avg:Math.round(v*10)/10 };
+}
+function bioSaveObservation(key){
+  const ser=bioState().series[key], w=bioWeekAvg(key); if(!ser||!w) return;
+  const txt=`${ser.label}: średnio ${w.avg} ${ser.unit} (ostatnie ${w.days} dni, import z urządzenia)`;
+  smAddItem({kind:"observation", value:txt, cls:"OBS", conf:0.95, createdBy:"user",
+    sources:[{msgId:"bio-import", quote:"jawny zapis z Pomiarów ciała"}]});
+  logEvent("POMIARY","bio_observation",`Użytkownik JAWNIE zapisał do modelu: ${txt}`,{scope:"biometrics"});
+  toast("Zapisane w modelu jako obserwacja."); save(); renderSelfModel(); renderBio();
+}
+function bioWipe(){
+  const b=bioState();
+  if(!b._wipeArm){ b._wipeArm=true; toast("Na pewno wymazać wszystkie pomiary? Kliknij jeszcze raz."); renderBio(); setTimeout(()=>{ delete b._wipeArm; renderBio(); },5000); return; }
+  b.series={}; b.imports=[]; delete b._wipeArm;
+  logEvent("POMIARY","bio_wipe","Wszystkie serie pomiarów wymazane na żądanie użytkownika (prawo do wymazania)",{scope:"biometrics"});
+  toast("Pomiary wymazane."); save(); renderBio(); renderOmnieHub();
+}
+function bioSpark(id, ser){
+  const c=$(id); if(!c) return;
+  const days=Object.keys(ser.points).sort().slice(-30);
+  drawSparkData(c, days.map(d=>ser.points[d]));
+}
+function drawSparkData(c, data){
+  const dpr=window.devicePixelRatio||1, W=c.width=c.clientWidth*dpr||200*dpr, H=c.height=30*dpr;
+  const ctx=c.getContext("2d"); if(!ctx||data.length<2) return;
+  const mn=Math.min(...data), mx=Math.max(...data), sp=(mx-mn)||1;
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()||"#7C9370";
+  ctx.lineWidth=1.5*dpr; ctx.beginPath();
+  data.forEach((v,i)=>{ const x=i/(data.length-1)*(W-4)+2, y=H-3-((v-mn)/sp)*(H-6); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.stroke();
+}
+function renderBio(){
+  const host=$("bioHost"); if(!host||!S) return;
+  const c6=S.consents.C6, b=bioState(), keys=Object.keys(b.series);
+  host.innerHTML=`<div class="card" style="margin-bottom:14px">
+    <h3 style="font-size:16px">∿ Pomiary ciała</h3>
+    <p class="note" style="margin:6px 0 10px">Twarde dane zamiast wrażeń: sen, tętno, kroki z zegarka lub telefonu jako mierniki eksperymentów N-of-1. Plik jest czytany <b>wyłącznie na tym urządzeniu</b> — nic nie wychodzi, serie wchodzą do eksportu i podlegają wymazaniu. Do modelu „O mnie” trafia coś tylko Twoim jawnym aktem; Przewodnik AI <b>nigdy</b> nie dostaje tych danych w pakiecie.</p>
+    ${!c6?`<button class="btn primary" onclick="toggleConsentC6()">Włącz zgodę C6 (dane ciała)</button>
+      <p class="note" style="margin-top:8px">Zgoda C6 obejmuje wyłącznie lokalny import i lokalne przetwarzanie. Skąd wziąć plik: iPhone → Zdrowie → profil → „Eksportuj wszystkie dane” (ZIP z eksport.xml); Garmin/Fitbit/Google — eksport CSV z panelu konta.</p>`
+    :`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <input type="file" id="bioFile" accept=".xml,.csv,.json,.txt" style="max-width:270px">
+        <select id="bioCsvMetric" title="Miernik dla pliku CSV" style="max-width:210px">
+          ${Object.entries(BIO_METRICS).map(([k,m])=>`<option value="${k}">${m.label} (CSV)</option>`).join("")}
+        </select>
+        <button class="btn primary small" onclick="bioHandleFile()">Importuj lokalnie</button>
+      </div>
+      <p class="note">XML z Apple Zdrowie rozpoznaje mierniki sam; przy CSV wybierz, czego dotyczy plik. Obsługa dużych plików: do 150 MB.</p>
+      ${keys.length?keys.map(k=>{ const ser=b.series[k], days=Object.keys(ser.points).sort(), last=days[days.length-1], w=bioWeekAvg(k);
+        return `<div class="card" style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap">
+          <p style="font-size:14.5px"><b>${esc(ser.label)}</b> <span class="note">· ${days.length} dni · ostatni: ${esc(last)} → ${ser.points[last]} ${esc(ser.unit)}</span></p>
+          <button class="btn small" onclick="bioSaveObservation('${k}')">Zapisz śr. 7 dni w modelu</button>
+        </div>
+        ${w?`<p class="note">średnia z ostatnich ${w.days} dni: <b>${w.avg} ${esc(ser.unit)}</b></p>`:""}
+        <canvas id="biospark-${k}" style="width:100%;height:30px"></canvas>
+      </div>`;}).join("")
+      :`<p class="note" style="margin-top:8px">Brak serii — zaimportuj pierwszy plik.</p>`}
+      ${b.imports.length?`<p class="note" style="margin-top:10px">Importy: ${b.imports.slice(-3).map(i=>esc(i.file)).join(", ")}${b.imports.length>3?" …":""}</p>`:""}
+      ${keys.length?`<div style="margin-top:10px"><button class="btn small ghost" onclick="bioWipe()">${b._wipeArm?"Potwierdź wymazanie":"Wymaż wszystkie pomiary"}</button></div>`:""}`}
+  </div>`;
+  keys.forEach(k=>bioSpark("biospark-"+k, b.series[k]));
+}
+
+/* ---------- blokada biometryczna aplikacji (WebAuthn) — zamek na ekran, nie szyfrowanie ---------- */
+function lockCfg(){ try{ return JSON.parse(store("human-os-lock")||"null"); }catch(e){ return null; } }
+function lockAvailable(){ return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create); }
+function b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function b64dec(s){ return Uint8Array.from(atob(s), c=>c.charCodeAt(0)); }
+async function enableAppLock(){
+  if(!lockAvailable()){ toast("Blokada biometryczna nie jest dostępna w tej przeglądarce."); return; }
+  try{
+    const cred=await navigator.credentials.create({ publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{ name:"Human OS" },
+      user:{ id:crypto.getRandomValues(new Uint8Array(16)), name:"human-os", displayName:(S&&S.name)||"Ty" },
+      pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+      authenticatorSelection:{ authenticatorAttachment:"platform", userVerification:"required" },
+      timeout:60000 } });
+    store("human-os-lock", JSON.stringify({ enabled:true, credId:b64(cred.rawId) }));
+    logEvent("BEZPIECZEŃSTWO","lock_enabled","Blokada biometryczna aplikacji włączona (Face ID / odcisk / PIN urządzenia). To zamek na ekran — dane pozostają nieszyfrowane lokalnie");
+    toast("Blokada włączona — aplikacja zapyta o biometrię przy otwarciu.");
+    renderRights();
+  }catch(e){ toast("Nie udało się włączyć blokady: "+String(e&&e.name||e)); }
+}
+async function verifyAppLock(){
+  const cfg=lockCfg(); if(!cfg||!cfg.enabled) return true;
+  try{
+    await navigator.credentials.get({ publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials:[{ type:"public-key", id:b64dec(cfg.credId) }],
+      userVerification:"required", timeout:60000 } });
+    return true;
+  }catch(e){ return false; }
+}
+async function disableAppLock(){
+  if(!(await verifyAppLock())){ toast("Potwierdź biometrią, żeby wyłączyć blokadę."); return; }
+  store("human-os-lock", null);
+  logEvent("BEZPIECZEŃSTWO","lock_disabled","Blokada biometryczna aplikacji wyłączona przez właściciela");
+  toast("Blokada wyłączona."); renderRights();
+}
+async function unlockApp(){
+  if(await verifyAppLock()){ const o=$("lockOverlay"); if(o) o.remove(); }
+  else toast("Nie udało się odblokować — spróbuj ponownie.");
+}
+function showLockIfEnabled(){
+  const cfg=lockCfg(); if(!cfg||!cfg.enabled||$("lockOverlay")) return;
+  const o=document.createElement("div"); o.id="lockOverlay";
+  o.style.cssText="position:fixed;inset:0;z-index:9999;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center";
+  o.innerHTML=`<div style="font-size:34px">🛡</div><h2 style="font-size:19px">Human OS jest zablokowany</h2>
+    <p class="note" style="max-width:340px">Odblokuj biometrią urządzenia (Face ID / odcisk / PIN). Blokada chroni podgląd — Twoje dane pozostają lokalnie na urządzeniu.</p>
+    <button class="btn primary" onclick="unlockApp()">Odblokuj</button>`;
+  document.body.appendChild(o);
+}
+try{ showLockIfEnabled(); }catch(e){}
+
 /* ---------- PWA: rejestracja service workera (tylko http/https) ---------- */
 try{
   if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
@@ -2723,7 +2953,10 @@ function renderOmnieHub(){
       "Wersjonowana mapa: deklaracje, obserwacje, hipotezy, napięcia — z pełnym „skąd to wiem”.",
       items?`<span class="pill verd">${items} pozycji</span>`:"")+
     hubCard("omnie","formularz","⚙","Formularz i dane",
-      "Szybka korekta, dolegliwości dla bram G4, obraz przyszłości i linia postępu.","");
+      "Szybka korekta, dolegliwości dla bram G4, obraz przyszłości i linia postępu.","")+
+    hubCard("omnie","pomiary","∿","Pomiary ciała",
+      "Import snu, tętna i kroków z zegarka lub telefonu — plik czytany lokalnie, twarde mierniki dla eksperymentów.",
+      bioSeriesCount()?`<span class="pill verd">${bioSeriesCount()} serii</span>`:"");
 }
 function renderExpHub(){
   const g=$("hubgrid-eksperymenty"); if(!g) return;
@@ -3696,6 +3929,15 @@ function renderRights(){
   $("c2State").textContent=S.consents.C2?"aktywna":"wyłączona";
   $("c4State").textContent=S.consents.C4?"aktywna":"wyłączona";
   const c5s=$("c5State"); if(c5s) c5s.textContent=S.consents.C5?"aktywna":"wyłączona";
+  const c6s=$("c6State"); if(c6s) c6s.textContent=S.consents.C6?"aktywna":"wyłączona";
+  const ls=$("lockState"), lb=$("lockBtns");
+  if(ls&&lb){
+    if(!lockAvailable()){ ls.textContent="niedostępna w tej przeglądarce"; lb.innerHTML=""; }
+    else { const on=!!(lockCfg()&&lockCfg().enabled);
+      ls.textContent=on?"włączona":"wyłączona";
+      lb.innerHTML=on?`<button class="btn small" onclick="disableAppLock()">Wyłącz</button>`
+                     :`<button class="btn small" onclick="enableAppLock()">Włącz blokadę</button>`; }
+  }
 }
 function toggleConsentC4(){
   S.consents.C4=!S.consents.C4;
