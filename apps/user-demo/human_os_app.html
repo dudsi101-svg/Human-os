@@ -1258,12 +1258,17 @@ function renderPulpit(){
     <p style="font-size:14.5px;margin-bottom:6px">„${esc(g.text)}"</p>
     <p class="note">Domena: ${gd.name} · horyzont: ${g.horizon} dni · ${left>0? "pozostało "+left+" dni":"horyzont minął — czas na przegląd celu"}</p>
     <p class="note">Właścicielem celu jesteś Ty — system go nie przepisze.</p>
-    ${S.goals.length>1?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-      ${S.goals.map((x,i)=>i===S.activeGoal
-        ?`<span class="pill verd">aktywny: ${esc(x.text.slice(0,26))}${x.text.length>26?"…":""}</span>`
-        :`<button class="day-chip" onclick="setActiveGoal(${i})" title="Przełącz na ten cel">${esc(x.text.slice(0,26))}${x.text.length>26?"…":""}</button>`).join("")}
+    ${S.goals.length>1?`<div id="goalList" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">
+      <p class="note" style="margin-bottom:6px">Twoje cele (${S.goals.length}/5) — wszystkie trwają, jeden jest aktywny:</p>
+      ${S.goals.map((x,i)=>{const xd=DOMAINS.find(d=>d.id===x.domain)||DOMAINS[0];const xl=x.createdDay+x.horizon-S.day;
+        return `<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)">
+        <div style="min-width:0"><p style="font-size:13.5px;overflow-wrap:anywhere">„${esc(x.text)}"</p>
+        <p class="note">${xd.name} · ${xl>0?"pozostało "+xl+" dni":"horyzont minął"}</p></div>
+        ${i===S.activeGoal?`<span class="pill verd" style="flex-shrink:0">aktywny</span>`
+          :`<button class="btn ghost small" style="flex-shrink:0" onclick="setActiveGoal(${i})">Ustaw aktywny</button>`}
+      </div>`;}).join("")}
     </div>`:""}
-    <div style="margin-top:10px"><button class="btn small" onclick="toggleGoalForm()">＋ Dodaj kolejny cel</button></div>
+    <div style="margin-top:10px"><button class="btn small" id="btnAddGoal" onclick="toggleGoalForm()">＋ Dodaj kolejny cel (${S.goals.length}/5)</button></div>
     <div id="newGoalForm" style="display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
       <label for="ngDomain">Domena nowego celu</label>
       <select id="ngDomain" style="margin-bottom:8px">${domOptsGoal}</select>
@@ -2095,7 +2100,7 @@ function renderCommunity(){
 function toggleGoalForm(){
   const f=$("newGoalForm"); if(!f) return;
   f.style.display = f.style.display==="none" ? "block" : "none";
-  if(f.style.display==="block"){ $("ngText").focus(); }
+  if(f.style.display==="block"){ f.scrollIntoView({behavior:"smooth",block:"nearest"}); $("ngText").focus(); }
 }
 function setActiveGoal(i){
   if(!S.goals[i]) return;
