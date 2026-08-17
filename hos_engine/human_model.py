@@ -35,6 +35,12 @@ class HumanModel:
  def active_records(self,subject_id:str,domain:str | None=None)->list[HumanRecord]:
   xs=[r for r in self._records.values() if r.subject_id==subject_id and r.status==RecordStatus.ACTIVE]
   return [r for r in xs if domain is None or r.domain==domain]
+ def all_records(self)->list[HumanRecord]: return list(self._records.values())
+ @classmethod
+ def restore(cls,records:list[HumanRecord])->HumanModel:
+  m=cls()
+  for r in records: m._records[r.record_id]=r
+  return m
  def records_of(self,subject_id:str,status:RecordStatus | None=None)->list[HumanRecord]:
   return [r for r in self._records.values() if r.subject_id==subject_id and (status is None or r.status==status)]
  def get(self,record_id:str)->HumanRecord: return self._records[record_id]

@@ -230,6 +230,10 @@ uses, don't mix:
   when a caller cares about provenance, not just a log.
 - `graph_store.py::SQLiteGraphStore` — SQLite-backed knowledge graph storage (for
   `knowledge_graph.py`, not `hub_entity_registry.py`).
+- `self_model_store.py::SQLiteSelfModelStore` — SQLite snapshot persistence for the Living Self
+  Model (`HumanModel` records incl. the supersedes chain, `InteractionLog` conversations/messages,
+  tensions); same snapshot-not-event-log semantics and `restore`-constructor pattern as
+  `hub_store.py`. The lifecycle audit trail stays in the event stores.
 - `hub_store.py::SQLiteHubStore` — SQLite snapshot persistence for the Hub's
   `EntityRegistry`/`RelationRegistry` (entities, relations, merge records, duplicate flags).
   Snapshot semantics, not an event log: `save_snapshot` atomically rewrites state and

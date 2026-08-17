@@ -19,6 +19,7 @@ __all__ = [
     "ProvenanceRecord",
     "SQLiteGraphStore",
     "SQLiteHubStore",
+    "SQLiteSelfModelStore",
     "SelfModelService",
     "SimulationGate",
     "Tension",
@@ -65,6 +66,7 @@ from .self_model import (
     TensionStatus,
     confidence_band,
 )
+from .self_model_store import SQLiteSelfModelStore
 from .simulation import *
 from .simulation_gate import GateDecision, SimulationGate
 from .trust import *
