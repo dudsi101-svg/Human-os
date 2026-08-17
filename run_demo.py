@@ -38,6 +38,16 @@ confirmed = svc.confirm(hyp.record_id, subject_id="HOS-HUM-000001", message_id=m
 view = svc.living_view("HOS-HUM-000001")
 print("Living view counts:", {k: len(v) for k, v in view.items()})
 
+from hos_engine import SQLiteSelfModelStore
+
+store = SQLiteSelfModelStore("data/self_model.db")
+store.save_snapshot(svc)
+reloaded = store.load_service()
+print("Survives restart:",
+      reloaded.why(confirmed.record_id)["sources"][0]["quote"] is not None,
+      "| counts:", store.counts())
+store.close()
+
 print("\nRECOVERY EXAMPLE (SAFE MODE + refusal audit)")
 from datetime import UTC, datetime, timedelta
 

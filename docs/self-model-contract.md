@@ -27,6 +27,10 @@ Status: first vertical slice (ADR-SELFMODEL-001). Style follows
   advisory-only (hypotheses).
 - Optional durable audit: every lifecycle transition appended to an event
   store (`STATE_OBSERVED` until DD-003 lands dedicated types).
+- Snapshot persistence: `SQLiteSelfModelStore.save_snapshot` /
+  `load_service` — current state (records incl. supersedes chain,
+  conversations, tensions) survives a process restart verbatim; the audit
+  trail stays in the event stores.
 
 ## Guarantees
 - The chat is not the user model: appending a message never creates a record.
