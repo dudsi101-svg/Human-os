@@ -388,6 +388,29 @@ class CanonicalEventTypeTests(unittest.TestCase):
             self.assertIn("STATE_OBSERVED", types)
             self.assertNotIn("RECOVERY_REFUSED", types)
 
+    def test_full_envelope_validates_against_event_schema(self):
+        """DD-010 resolved: the HOSId pattern now covers hex IDs, so the
+        whole canonical envelope validates. Storage-layer fields (the hash
+        chain) and the storage layer's explicit None for an absent
+        causation_id are stripped first - they belong to sqlite_store's
+        persistence format, not to the canonical event."""
+        from hos_engine.validation import SchemaRegistry
+        with tempfile.TemporaryDirectory() as tmp:
+            store, kernel = self.kernel_with_store(tmp)
+            activation = activate(kernel)
+            kernel.deactivate(
+                activation.activation_id, initiator_id=OWNER,
+                initiator_role=AuthorityRole.OWNER, reason="threat cleared",
+            )
+            registry = SchemaRegistry(Path(__file__).parent.parent / "schemas")
+            for event in store.all():
+                canonical = {
+                    key: value for key, value in event.items()
+                    if key not in ("event_hash", "previous_hash")
+                    and value is not None
+                }
+                registry.validate("event.schema.json", canonical)
+
     def test_new_types_are_canonical_in_dictionary_and_schema(self):
         import json
         root = Path(__file__).parent.parent

@@ -153,7 +153,7 @@ druga, osobna zmiana po decyzji o rolach.
 **Tymczasowo:** demo aplikacji loguje te zdarzenia lokalnie w rejestrze
 klienta; silnik nie emituje żadnych `commons_*`.
 
-## DD-010 · Wzorzec HOSId w schemacie vs identyfikatory silnika (OPEN)
+## DD-010 · Wzorzec HOSId w schemacie vs identyfikatory silnika (RESOLVED 2026-08-17)
 Wykryte 2026-08-17 podczas wdrażania DD-003, przez pierwszą próbę
 walidacji trwałego zdarzenia Recovery pełnym `event.schema.json`:
 kanoniczny wzorzec `HOSId` (`^HOS-[A-Z]{2,8}-[0-9]{6,}$`,
@@ -172,6 +172,19 @@ runtime" od „ID kanonicznych" (wymaga definicji mapowania).
 a rozszerzenie zbioru znaków nie unieważnia żadnego istniejącego ID.
 **Tymczasowo:** testy DD-003 walidują zgodność `event_type` ze
 słownikiem i enumem; pełna walidacja koperty czeka na tę decyzję.
+**Rozstrzygnięcie foundera (2026-08-17):** opcja (a) — wzorzec `HOSId`
+rozszerzony do `^HOS-[A-Z]{2,8}-[0-9A-F]{6,}$`. Żaden istniejący
+identyfikator nie traci ważności (ID cyfrowe są podzbiorem).
+**Wdrożone 2026-08-17:** `schemas/common.schema.json`, addendum
+w `docs/HOS_ENTITY_RELATION_EVENT_SCHEMA_v0.1.md`, test pełnej walidacji
+koperty zdarzenia Recovery włączony (pola warstwy magazynu — hash
+łańcucha i `causation_id: None` — są zdejmowane przed walidacją
+kanoniczną i opisane w teście; format change-log `HOS-CHG-...` z tekstu
+ADR-RECOVERY-004 nadal nie ma implementacji ani pokrycia wzorcem).
+Walidacja ujawniła też, że koperta Recovery wkładała wolnotekstowy
+`scope` do `subject_ids` (typowanych jako HOSId) — poprawione: scope
+pozostaje w payload, do `subject_ids` trafia wyłącznie ID encji
+z zakresu `entity:...`.
 
 ## DD-011 · Cennik i pakowanie wydania sklepowego (OPEN)
 Founder zatwierdził kierunek (2026-08-17): dystrybucja sklepowa aplikacji

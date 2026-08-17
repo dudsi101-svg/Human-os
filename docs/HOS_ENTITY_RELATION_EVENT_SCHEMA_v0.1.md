@@ -37,6 +37,14 @@ actual runtime IDs; flagged here, not fixed, since fixing it means picking
 one pattern as canonical (a real design decision, not a documentation
 task).
 
+**Resolved 2026-08-17 (DD-010, founder option a):** the canonical pattern
+is now `^HOS-[A-Z]{2,8}-[0-9A-F]{6,}$` — extended to cover the uppercase
+hex segment the engine actually generates. No existing ID becomes
+invalid (digit-only IDs are a subset). Note the change-log format
+(`HOS-CHG-2026-0721-001`) still does not match either pattern generation —
+it exists only in ADR-RECOVERY-004's text and no code emits it; if it is
+ever implemented, its dashes need their own decision.
+
 ## 2. Entity types
 
 ### 2.1 Base entity types (`schemas/entity.schema.json`)
