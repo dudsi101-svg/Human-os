@@ -324,6 +324,65 @@ class DurableAuditTests(unittest.TestCase):
             self.assertEqual(kinds, ["hypothesized", "confirmed_by_user", "declared"])
 
 
+class DecisionEngineCompositionTests(unittest.TestCase):
+    """End-to-end asymmetry: composing decision_context with the real
+    DecisionEngine. A hypothesis alone must not change the outcome; the
+    same information confirmed by the user must."""
+
+    def _request_from_context(self, svc, subject_id):
+        from hos_engine.decision_engine import (
+            DecisionCandidate,
+            DecisionRequest,
+            Goal,
+            RiskReactionClass,
+        )
+        ctx = svc.decision_context(subject_id)
+        goal_rec = ctx["goals"][0]
+        goal = Goal(owner_id=subject_id, outcome=str(goal_rec.value),
+                    horizon="30d", success_criterion="declared by user")
+        # The caller's mapping rule: only GATE-GRADE constraints may mark a
+        # candidate infeasible. Advisory hypotheses are visible but inert.
+        evenings_blocked = any(
+            "wieczor" in str(r.value).lower() for r in ctx["constraints"])
+        evening = DecisionCandidate(
+            candidate_id="evening_training", description="Trening wieczorem",
+            source="knowledge-map", risk_class=RiskReactionClass.NISKIE,
+            evidence_level=5, burden=1, feasible=not evenings_blocked)
+        morning = DecisionCandidate(
+            candidate_id="morning_light", description="Poranne światło",
+            source="knowledge-map", risk_class=RiskReactionClass.NISKIE,
+            evidence_level=4, burden=1)
+        return DecisionRequest(
+            request_id="REQ-1", owner_id=subject_id,
+            content="co poprawi energię?", domain="energy",
+            goal=goal, candidates=(evening, morning))
+
+    def test_hypothesis_does_not_change_outcome_until_confirmed(self):
+        from hos_engine.decision_engine import DecisionEngine
+        svc = service()
+        it = start_chat(svc)
+        m = svc.interactions.append(it.interaction_id, author=MessageAuthor.USER,
+                                    text="Zależy mi na energii.")
+        svc.declare(subject_id=SUBJECT, domain="goals", key="goal_candidate",
+                    value="więcej energii", message_id=m.message_id)
+        hyp = svc.hypothesize(subject_id=SUBJECT, domain="constraints",
+                              key="schedule", value="wieczory zajęte",
+                              confidence=0.6, supported_by=[m.message_id])
+        engine = DecisionEngine()
+
+        before = engine.decide(self._request_from_context(svc, SUBJECT))
+        self.assertEqual(before.chosen.candidate_id, "evening_training")
+        self.assertEqual(before.excluded, ())  # hypothesis was inert
+
+        m2 = svc.interactions.append(it.interaction_id, author=MessageAuthor.USER,
+                                     text="Tak, wieczory faktycznie odpadają.")
+        svc.confirm(hyp.record_id, subject_id=SUBJECT, message_id=m2.message_id)
+
+        after = engine.decide(self._request_from_context(svc, SUBJECT))
+        self.assertEqual(after.chosen.candidate_id, "morning_light")
+        self.assertIn("evening_training", after.excluded)  # gate, not ranking
+
+
 class ConfidenceBandTests(unittest.TestCase):
     def test_bands_are_coarse_not_falsely_precise(self):
         self.assertEqual(confidence_band(0.1), "LOW")
