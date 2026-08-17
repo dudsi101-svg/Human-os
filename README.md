@@ -42,6 +42,28 @@ Status: **BETA**
 - GitHub Actions CI,
 - contribution and governance framework.
 
+### Added since 0.9.0 (execution-foundation and layer slices, 2026-08)
+
+- immutable context snapshots and a minimum execution contract (`hos_core`),
+- Hub entity and relation registries with attributed, non-destructive merges,
+- authority roles as a separate axis from identity (`authority`),
+- an end-to-end execution loop with refusal as a first-class outcome,
+- Layer 5 Decision Engine slice: nine hard gates before ranking,
+  evidence asymmetry, abstention and escalation as first-class outcomes,
+- Sovereign Recovery Kernel: seven emergency modes mapped to R0–R4,
+  dual-key sovereignty, and all six Hub contracts (freeze, snapshot,
+  rollback with provenance, disconnect, sovereign export, event register),
+- conversational Living Self Model: interactions separated from the model,
+  declaration / observation / hypothesis epistemics, user-only
+  confirmation, tensions preserved as signal, full provenance (`why`),
+- purpose-limited consent gating for model writes,
+- durable audit trails for self-model and recovery on the hash chain,
+- I/O contract docs: `docs/self-model-contract.md`, `docs/recovery-contract.md`,
+- zero mypy debt across the engine.
+
+See `docs/DEFERRED_DECISIONS.md` for decisions deliberately queued for the
+founder rather than resolved silently.
+
 ### Not production-ready
 
 The current release lacks authentication, authorization, encryption at rest,
