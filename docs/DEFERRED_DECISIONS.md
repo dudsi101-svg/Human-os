@@ -255,3 +255,21 @@ potrzebny, najpierw szyfrowany end-to-end backup pliku eksportu (klucz u
 użytkownika), a dopiero w dalszej kolejności konta z logowaniem platformy;
 pełna tożsamość federacyjna wg HOSS dopiero z prawdziwym Hubem.
 **Tymczasowo:** bez kont; README i ekran „O aplikacji" mówią to wprost.
+
+## DD-013 · Przewodnik AI: backend, model i zakres danych wydania sklepowego (OPEN)
+Dyrektywa foundera (2026-08-17): agent LLM w aplikacji, objaśniający sytuacje
+i generujący pomysły na poprawę domen na bazie danych użytkownika. Wdrożone
+referencyjnie (ADR-APP-002): zgoda C5, zminimalizowany pakiet danych
+(nigdy hipotezy/rejestr/Wspólnota/klucz), własny klucz API użytkownika
+przechowywany poza stanem aplikacji, wyjścia wyłącznie jako hipotezy,
+przyjęcie pomysłu = jawny akt przez bramę G4, pełny audyt (w tym odmowy
+modelu). Otwarte decyzje foundera:
+1. **Backend dla sklepu**: BYO-key nie nadaje się dla masowego użytkownika —
+   potrzebny backend aplikacji (kustodia klucza, limity, nadużycia, koszty
+   w cenie subskrypcji?) vs pozostawienie BYO-key jako opcji zaawansowanej.
+2. **Model domyślny i polityka kosztów** (dziś: claude-opus-5, wybór
+   sonnet/haiku w konfiguracji).
+3. **Zakres danych**: czy Przewodnik może kiedykolwiek czytać historię
+   rozmowy „O mnie" (dziś: nigdy) — wymagałoby to rozszerzenia C5.
+4. **Przegląd prawny** kopii zgody C5 (dane zdrowotne wychodzą do API).
+**Tymczasowo:** mechanizm referencyjny BYO-key, funkcja premium.

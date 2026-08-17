@@ -184,6 +184,7 @@ The user-facing app layer (`apps/user-demo`), its distribution and monetization 
 | ADR | Status | Title |
 |---|---|---|
 | [ADR-APP-001](ADR-APP-001-store-distribution-and-freemium-boundaries.md) | Accepted | Store Distribution and the Constitutional Boundaries of a Freemium Model |
+| [ADR-APP-002](ADR-APP-002-in-app-llm-guide.md) | Accepted | An In-App LLM Guide ("Przewodnik AI") Behind Constitutional Gates |
 
 ## Living Self Model
 

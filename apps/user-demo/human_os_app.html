@@ -673,6 +673,7 @@
     <section class="view" id="view-decyzje">
       <h2>Silnik decyzji</h2>
       <p class="lede">Podaj, nad czym się zastanawiasz. Kandydaci przejdą przez dziewięć bram twardych (G0–G8), zanim cokolwiek zostanie uszeregowane — brama wyklucza bezwarunkowo, ranking niczego nie wskrzesza. Odmowa i eskalacja są pełnoprawnymi wynikami.</p>
+      <div id="agentHost"></div>
       <div class="card">
         <label for="decDomain">Domena decyzji</label>
         <select id="decDomain" style="margin-bottom:10px"></select>
@@ -803,10 +804,11 @@
           <button class="btn small" onclick="openCorrection()">Popraw model</button>
         </div>
         <div class="rights-row">
-          <div><b>Zgody</b><div class="d">C1 (personalizacja): <b id="c1State"></b> · C2 (pomiary): <b id="c2State"></b> · C4 (wspólnota): <b id="c4State"></b></div></div>
+          <div><b>Zgody</b><div class="d">C1 (personalizacja): <b id="c1State"></b> · C2 (pomiary): <b id="c2State"></b> · C4 (wspólnota): <b id="c4State"></b> · C5 (Przewodnik AI): <b id="c5State"></b></div></div>
           <span style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn small" onclick="toggleConsent()">Przełącz C1</button>
             <button class="btn small" onclick="toggleConsentC4()">Przełącz C4</button>
+            <button class="btn small" onclick="toggleConsentC5()">Przełącz C5</button>
           </span>
         </div>
       </div>
@@ -1035,7 +1037,7 @@ function freshState(name, domains, goal){
   return {
     v:2, name, day:1, epoch:1,
     domains, history:hist,
-    consents:{ C0:true, C1:true, C2:true, C4:false },
+    consents:{ C0:true, C1:true, C2:true, C4:false, C5:false },
     goal, decisions:[], experiments:[], pastExperiments:[],
     modes:{ SAFE_MODE:false, READ_ONLY:false },
     log:[],
@@ -1074,6 +1076,7 @@ function migrateState(s){
   if(!s.selfModel) s.selfModel = { msgs:[], items:[], tensions:[], mode:"NATURAL", asked:{}, pendingCheck:[], helpOffered:false, seq:0 };
   /* migracja: pojedynczy eksperyment -> tablica równoległych */
   if(s.consents && s.consents.C4===undefined) s.consents.C4=false;
+  if(s.consents && s.consents.C5===undefined) s.consents.C5=false;
   if(!s.community) s.community={ pid:"P-"+Math.random().toString(36).slice(2,8), pseudonym:"", challenges:[], experiences:[] };
   if(!s.community.circles) s.community.circles=[];
   if(!s.community.help) s.community.help=[];
@@ -1211,6 +1214,7 @@ function showView(id){
   if(id==="omnie"){ renderProfile(); renderChat(); renderSelfModel(); renderOmnieHub(); }
   if(id==="eksperymenty"){ renderExperiments(); renderExpHub(); }
   if(id==="plan") renderPlan();
+  if(id==="decyzje") renderAgent();
   if(id==="wspolnota"){ renderCommunityHub(); renderCommunity(); }
   if(id==="rejestr") renderLog();
   if(id==="konstytucja"){ renderRights(); renderPremium(); renderAbout(); }
@@ -2057,6 +2061,169 @@ function renderCommunity(){
     </div>`;
 }
 
+/* ---------- Przewodnik AI: agent LLM w aplikacji (ADR-APP-002) ---------- */
+const AGENT_MODELS=[["claude-opus-5","Claude Opus — najzdolniejszy"],["claude-sonnet-5","Claude Sonnet — szybszy"],["claude-haiku-4-5","Claude Haiku — ekonomiczny"]];
+const AGENT_SYSTEM=[
+  "Jesteś „Przewodnikiem” w Human OS — osobistej aplikacji rozwojowej. Odpowiadasz po polsku, zwięźle i konkretnie.",
+  "Zasady Konstytucji Human OS, których bezwzględnie przestrzegasz:",
+  "1. Nie diagnozujesz i nie leczysz. Nie proponujesz leków, suplementów, substancji ani dawek — nigdy.",
+  "2. Twoje propozycje to HIPOTEZY do samodzielnego przetestowania w małym eksperymencie N-of-1, nie zalecenia. Mów o nich jako o hipotezach.",
+  "3. Oznaczasz niepewność wprost. Nie przedstawiasz przypuszczeń jako faktów o użytkowniku.",
+  "4. Szanujesz autonomię: żadnych „musisz”, żadnej presji, żadnego strachu. Użytkownik jest autorem swojego życia.",
+  "5. Przy objawach alarmowych (ból w klatce, myśli samobójcze, stany nagłe) kierujesz do lekarza lub pomocy doraźnej i nie proponujesz nic innego.",
+  "6. Opierasz się wyłącznie na danych przekazanych w wiadomości. Niczego o użytkowniku nie zmyślasz i nie dopowiadasz.",
+].join("\n");
+function agentKey(){ try{ return localStorage.getItem("human-os-agent-key")||""; }catch(e){ return ""; } }
+function agentModel(){ try{ return localStorage.getItem("human-os-agent-model")||"claude-opus-5"; }catch(e){ return "claude-opus-5"; } }
+function saveAgentCfg(){
+  const k=($("agKey").value||"").trim(), m=$("agModel").value;
+  try{ if(k) localStorage.setItem("human-os-agent-key",k); localStorage.setItem("human-os-agent-model",m); }catch(e){}
+  logEvent("AGENT","agent_configured",`Konfiguracja Przewodnika zapisana (model ${m}); klucz przechowywany wyłącznie lokalnie, poza stanem i eksportem`);
+  toast(k?"Zapisane. Klucz zostaje tylko na tym urządzeniu.":"Model zapisany.");
+  renderAgent();
+}
+function clearAgentKey(){
+  try{ localStorage.removeItem("human-os-agent-key"); }catch(e){}
+  logEvent("AGENT","agent_key_removed","Klucz API Przewodnika usunięty z urządzenia");
+  toast("Klucz usunięty."); renderAgent();
+}
+/* minimalizacja: dokładnie ten pakiet — nigdy hipotezy, rejestr, Wspólnota ani klucz */
+function agentPayload(){
+  const items=((S.selfModel&&S.selfModel.items)||[]).filter(i=>i.status==="ACTIVE"&&i.cls!=="HYP")
+    .map(i=>({rodzaj:i.kind, tresc:i.value, klasa:i.cls}));
+  const exps=S.experiments.filter(e=>["baseline","active","HOLD"].includes(e.phase))
+    .map(e=>({nazwa:e.name, domena:e.domain, faza:e.phase, dzien_w_fazie:e.dayIn}));
+  const p=S.profile||{};
+  return { dzien:S.day, imie:S.name, cel:S.goal, domeny:S.domains,
+    profil:{ wiek:p.age, sen:p.sleep, cialo:p.body, psychika:p.mind, rutyna:p.routine,
+      uzaleznienia:p.addictions, przewlekle:p.chronic, dlaczego:p.why },
+    model_potwierdzony:items, aktywne_eksperymenty:exps };
+}
+async function agentCall(userText, format){
+  const body={ model:agentModel(), max_tokens:2048, system:AGENT_SYSTEM,
+    messages:[{role:"user", content:userText}] };
+  if(format) body.output_config={format:format};
+  const res=await fetch("https://api.anthropic.com/v1/messages",{ method:"POST",
+    headers:{ "content-type":"application/json", "x-api-key":agentKey(),
+      "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
+    body:JSON.stringify(body) });
+  if(!res.ok){ const err=await res.json().catch(()=>({})); throw new Error((err.error&&err.error.message)||("HTTP "+res.status)); }
+  return res.json();
+}
+function agentReady(){
+  if(!isPremium()){ toast("Przewodnik AI to funkcja Premium."); showView("konstytucja"); openSub("konstytucja","premium"); return false; }
+  if(!S.consents.C5){ toast("Przewodnik wymaga zgody C5 — włączysz ją w karcie Przewodnika lub w Konstytucji."); return false; }
+  if(!agentKey()){ toast("Podaj klucz API w konfiguracji Przewodnika."); renderAgent(); return false; }
+  return true;
+}
+function agentRefusalNote(out){
+  out.innerHTML=`<div class="quiet">Model odmówił odpowiedzi na to pytanie (klasyfikator bezpieczeństwa dostawcy). Odmowa jest zapisana w rejestrze — spróbuj przeformułować pytanie.</div>`;
+}
+function agentErrorNote(e,out){
+  logEvent("AGENT","agent_error",String(e&&e.message||e).slice(0,160));
+  out.innerHTML=`<div class="quiet">Nie udało się połączyć z API: ${esc(String(e&&e.message||e))}.<br>Uwaga: w podglądzie artefaktu połączenia zewnętrzne są zablokowane — Przewodnik działa w wersji PWA i sklepowej aplikacji.</div>`;
+}
+async function agentExplain(){
+  if(!agentReady()) return;
+  const out=$("agentOut"); out.innerHTML=`<div class="quiet">Przewodnik analizuje Twoje dane…</div>`;
+  logEvent("AGENT","agent_invoked","Objaśnienie sytuacji — wysłano zminimalizowany pakiet (profil, cel, domeny, potwierdzony model, eksperymenty); nigdy: hipotezy, rejestr, Wspólnota",{scope:"profil"});
+  try{
+    const r=await agentCall("Objaśnij moją obecną sytuację na podstawie poniższych danych. Zwięźle, w trzech częściach: (1) co widać w danych, (2) co może to znaczyć — wyraźnie jako hipotezy, (3) na co zwrócić uwagę w najbliższych dniach.\nDane:\n"+JSON.stringify(agentPayload()));
+    if(r.stop_reason==="refusal"){ logEvent("AGENT","agent_refused","Model odmówił (klasyfikator bezpieczeństwa)"); agentRefusalNote(out); return; }
+    const txt=((r.content||[]).find(b=>b.type==="text")||{}).text||"";
+    logEvent("AGENT","agent_response",`Objaśnienie otrzymane (${txt.length} znaków, model ${r.model})`);
+    out.innerHTML=`<div class="card" style="margin-top:12px">
+      <span class="pill warn">hipoteza AI — nie fakt, nie diagnoza</span>
+      <div style="font-size:14.5px;margin-top:8px;white-space:pre-wrap">${esc(txt)}</div>
+      <p class="note" style="margin-top:8px">Nic z tego nie zapisuje się samo w Twoim modelu ani planie — każde wykorzystanie to Twoja jawna decyzja.</p></div>`;
+  }catch(e){ agentErrorNote(e,out); }
+}
+const AGENT_IDEAS_SCHEMA={ type:"json_schema", schema:{ type:"object", properties:{
+  pomysly:{ type:"array", items:{ type:"object", properties:{
+    nazwa:{type:"string"}, opis:{type:"string"}, dlaczego_pasuje:{type:"string"} },
+    required:["nazwa","opis","dlaczego_pasuje"], additionalProperties:false } } },
+  required:["pomysly"], additionalProperties:false } };
+let AGENT_IDEAS=[];
+async function agentIdeas(){
+  if(!agentReady()) return;
+  const domain=$("agDomain").value, dn=DOMAINS.find(d=>d.id===domain).name;
+  const out=$("agentOut"); out.innerHTML=`<div class="quiet">Przewodnik szuka pomysłów dla domeny „${esc(dn)}”…</div>`;
+  logEvent("AGENT","agent_invoked",`Pomysły dla domeny „${dn}” — wysłano zminimalizowany pakiet danych`,{scope:domain});
+  try{
+    const r=await agentCall(`Zaproponuj 6–8 zróżnicowanych pomysłów na poprawę domeny „${dn}”, dopasowanych do danych użytkownika. Każdy pomysł: jeden konkretny codzienny krok, możliwy do przetestowania w 7-dniowym eksperymencie, bez substancji, suplementów i leków. W polu dlaczego_pasuje odwołaj się do konkretnych danych użytkownika.\nDane:\n`+JSON.stringify(agentPayload()), AGENT_IDEAS_SCHEMA);
+    if(r.stop_reason==="refusal"){ logEvent("AGENT","agent_refused","Model odmówił (klasyfikator bezpieczeństwa)"); agentRefusalNote(out); return; }
+    const txt=((r.content||[]).find(b=>b.type==="text")||{}).text||"{}";
+    let data; try{ data=JSON.parse(txt); }catch(e){ data={pomysly:[]}; }
+    AGENT_IDEAS=(data.pomysly||[]).slice(0,8);
+    logEvent("AGENT","agent_response",`Otrzymano ${AGENT_IDEAS.length} pomysłów dla „${dn}” (model ${r.model})`,{scope:domain});
+    out.innerHTML=`<div style="margin-top:12px">
+      <p class="note" style="margin-bottom:8px"><span class="pill warn">hipotezy AI</span> Każdy pomysł to hipoteza Przewodnika — przyjęcie go jest Twoją jawną decyzją i przechodzi przez te same bramy co własny krok (dowody 1/5, pełny rygor N-of-1).</p>
+      ${AGENT_IDEAS.map((p,i)=>`<div class="cand"><div class="top"><h3 style="font-size:15px">${esc(p.nazwa)}</h3>
+        <button class="btn small" onclick="agentAdoptIdea(${i},'${domain}')">Dodaj jako własny krok</button></div>
+        <div style="font-size:14px;margin-top:4px">${esc(p.opis)}</div>
+        <div class="meta">Dlaczego u Ciebie: ${esc(p.dlaczego_pasuje)}</div></div>`).join("")||`<div class="quiet">Brak pomysłów w odpowiedzi.</div>`}</div>`;
+  }catch(e){ agentErrorNote(e,out); }
+}
+function agentAdoptIdea(i,domain){
+  const idea=AGENT_IDEAS[i]; if(!idea) return;
+  if(/inieku|zastrzyk|peptyd|steryd|dawk|tabletk|suplement/i.test(idea.nazwa+" "+idea.opis)){
+    toast("Kroki z substancjami wymagają nadzoru profesjonalisty — system ich nie poprowadzi (G4).");
+    logEvent("AGENT","ODMOWA-G4",`Pomysł AI odrzucony na bramie: ${idea.nazwa}`,{scope:domain}); return;
+  }
+  S.customCatalog=S.customCatalog||[];
+  const c={ id:"agent-"+Date.now().toString(36)+"-"+i, name:idea.nazwa.slice(0,80),
+    desc:idea.opis.slice(0,220), mech:"hipoteza Przewodnika AI — do samodzielnego przetestowania",
+    evidence:1, risk:"R-NISKIE", effect:4, sd:7, lag:3, burden:2,
+    guard:(DOMAINS.find(d=>d.id!==domain)||DOMAINS[0]).id, domain, custom:true };
+  S.customCatalog.push(c);
+  logEvent("AGENT","idea_adopted",`Użytkownik JAWNIE przyjął pomysł AI jako własny krok: „${c.name}” (dowody 1/5, pełny rygor N-of-1)`,{scope:domain});
+  toast("Dodano jako własny krok — startuje eksperyment.");
+  save(); startExperiment(c.id);
+}
+function agentShowPayload(){
+  const out=$("agentOut");
+  out.innerHTML=`<div class="card" style="margin-top:12px">
+    <h3 style="font-size:14px;margin-bottom:6px">Dokładnie te dane wyjdą przy następnym pytaniu do Przewodnika:</h3>
+    <textarea readonly rows="10" class="mono" style="font-size:11.5px">${esc(JSON.stringify(agentPayload(),null,2))}</textarea>
+    <p class="note" style="margin-top:6px">Nigdy nie wychodzą: hipotezy modelu, rejestr zdarzeń, dane Wspólnoty, Twój klucz API.</p></div>`;
+}
+function toggleConsentC5(){
+  S.consents.C5=!S.consents.C5;
+  logEvent("ZGODA", S.consents.C5?"C5-WŁĄCZONA":"C5-WYCOFANA",
+    S.consents.C5?"Przewodnik AI włączony — przy każdym pytaniu wychodzi zminimalizowany pakiet danych, Twoim kluczem API, wyłącznie na Twoje żądanie"
+                 :"Przewodnik AI wycofany — żadne dane nie wychodzą; konfiguracja i historia lokalna zostają");
+  toast(S.consents.C5?"C5 włączona — Przewodnik gotowy do konfiguracji.":"C5 wycofana.");
+  renderAgent(); const c5s=$("c5State"); if(c5s) c5s.textContent=S.consents.C5?"aktywna":"wyłączona";
+  save();
+}
+function renderAgent(){
+  const host=$("agentHost"); if(!host) return;
+  const c5=S.consents.C5, key=agentKey();
+  const domOpts=DOMAINS.map(d=>`<option value="${d.id}">${d.name}</option>`).join("");
+  host.innerHTML=`<div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <h3 style="font-size:16px">✳ Przewodnik AI</h3>
+      <span class="pill ${c5&&key?"verd":"neutral"}">${!c5?"wymaga zgody C5":!key?"wymaga klucza API":"gotowy"}</span></div>
+    <p class="note" style="margin:6px 0 10px">Prawdziwy model AI (Claude), który objaśnia Twoją sytuację i podsuwa pomysły na podstawie Twoich danych. Reguły Konstytucji: AI proponuje wyłącznie hipotezy — nigdy samo nie zapisuje Twojego modelu ani planu; dane wychodzą tylko po zgodzie C5, w zminimalizowanym pakiecie, przez Twój własny klucz API.</p>
+    ${!c5?`<button class="btn primary" onclick="toggleConsentC5()">Włącz zgodę C5 (Przewodnik AI)</button>
+      <p class="note" style="margin-top:8px">Zgoda C5: przy każdym Twoim pytaniu do Przewodnika wysyłane są — do API Anthropic, Twoim kluczem — profil „O mnie”, cel, wartości domen, potwierdzone pozycje modelu i aktywne eksperymenty. Nigdy: hipotezy, rejestr zdarzeń, dane Wspólnoty. Klucz nie wchodzi do eksportu ani stanu aplikacji.</p>`
+    :`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+        <button class="btn primary" onclick="agentExplain()">Objaśnij moją sytuację</button>
+        <select id="agDomain" style="max-width:210px">${domOpts}</select>
+        <button class="btn" onclick="agentIdeas()">Pomysły na tę domenę</button>
+        <button class="btn small ghost" onclick="agentShowPayload()">Co wysyłam?</button>
+      </div>
+      <details ${key?"":"open"}><summary>Konfiguracja (klucz API, model)</summary>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
+          <input type="password" id="agKey" placeholder="sk-ant-…" value="${esc(key)}" style="max-width:250px">
+          <select id="agModel" style="max-width:230px">${AGENT_MODELS.map(([id,n])=>`<option value="${id}"${agentModel()===id?" selected":""}>${n}</option>`).join("")}</select>
+          <button class="btn small" onclick="saveAgentCfg()">Zapisz</button>
+          ${key?`<button class="btn small ghost" onclick="clearAgentKey()">Usuń klucz</button>`:""}
+        </div>
+        <p class="note" style="margin-top:6px">Klucz zostaje wyłącznie na tym urządzeniu — poza stanem aplikacji i poza eksportem. Za użycie płacisz bezpośrednio u Anthropic (console.anthropic.com). W wydaniu sklepowym docelowo zastąpi to backend aplikacji (DD-013).</p></details>`}
+    <div id="agentOut"></div></div>`;
+}
+
 /* ---------- PWA: rejestracja service workera (tylko http/https) ---------- */
 try{
   if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
@@ -2140,6 +2307,7 @@ function renderPremium(){
       ${row("Do 3 równoległych eksperymentów + prognoza zbiorcza",false,true)}
       ${row("Plan i przypomnienia",false,true)}
       ${row("Moduł „Wspólnie” (wyzwania, kręgi, wymiana pakietów)",false,true)}
+      ${row("Przewodnik AI (agent LLM, własny klucz API)",false,true)}
     </div>
     <div class="card" style="margin-bottom:14px;border-color:var(--accent)">
       <h3 style="font-size:15px;margin-bottom:6px">Gwarancja konstytucyjna</h3>
@@ -3094,6 +3262,7 @@ function renderRights(){
   $("c1State").textContent=S.consents.C1?"aktywna":"wyłączona";
   $("c2State").textContent=S.consents.C2?"aktywna":"wyłączona";
   $("c4State").textContent=S.consents.C4?"aktywna":"wyłączona";
+  const c5s=$("c5State"); if(c5s) c5s.textContent=S.consents.C5?"aktywna":"wyłączona";
 }
 function toggleConsentC4(){
   S.consents.C4=!S.consents.C4;
