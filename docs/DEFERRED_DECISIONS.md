@@ -269,7 +269,7 @@ użytkownika), a dopiero w dalszej kolejności konta z logowaniem platformy;
 pełna tożsamość federacyjna wg HOSS dopiero z prawdziwym Hubem.
 **Tymczasowo:** bez kont; README i ekran „O aplikacji" mówią to wprost.
 
-## DD-013 · Przewodnik AI: backend, model i zakres danych wydania sklepowego (OPEN)
+## DD-013 · Przewodnik AI: backend, model i zakres danych wydania sklepowego (CZĘŚCIOWO ROZSTRZYGNIĘTE 2026-08-17)
 Dyrektywa foundera (2026-08-17): agent LLM w aplikacji, objaśniający sytuacje
 i generujący pomysły na poprawę domen na bazie danych użytkownika. Wdrożone
 referencyjnie (ADR-APP-002): zgoda C5, zminimalizowany pakiet danych
@@ -286,6 +286,19 @@ modelu). Otwarte decyzje foundera:
    rozmowy „O mnie" (dziś: nigdy) — wymagałoby to rozszerzenia C5.
 4. **Przegląd prawny** kopii zgody C5 (dane zdrowotne wychodzą do API).
 **Tymczasowo:** mechanizm referencyjny BYO-key, funkcja premium.
+**Rozstrzygnięcie foundera (2026-08-17, architektura):** przyjęta
+architektura **trzech wymiennych silników** („wymienny mózg" — ADR-APP-003):
+(1) lokalny na urządzeniu — domyślny, gdy dostępny, nic nie wychodzi na
+zewnątrz; (2) chmura na własnym kluczu użytkownika; (3) chmura w cenie
+subskrypcji przez backend. Uzasadnienie foundera: modele będą się zmieniać
+na przestrzeni czasu — warstwa silnika jest stabilnym kontraktem, modele
+pod spodem wymienne. Wdrożone: selektor silnika, silnik lokalny na
+wbudowanym AI przeglądarki (wykrywanie funkcji, degradacja), kopia zgody
+zależna od silnika, silnik w audycie. Nadal otwarte: pkt 1 (kształt
+backendu — teraz jako silnik nr 3), pkt 2 (model domyślny chmury i polityka
+kosztów: analiza kosztów wskazuje Sonnet/Haiku dla subskrypcji), pkt 3-4
+oraz pełny model lokalny (WebLLM, pobieranie na życzenie ~1,5–2,5 GB) jako
+etap PWA.
 
 ## DD-014 · Powiadomienia push w tle (OPEN)
 Dyrektywa foundera (2026-08-17): zewnętrzne powiadomienia + podsumowanie
