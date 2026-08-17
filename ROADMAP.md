@@ -27,7 +27,16 @@ równolegle do powyższej osi i nie zamykają punktu 0.9:
 - [x] konwersacyjny Living Self Model z klasami epistemicznymi
       i persystencją SQLite,
 - [x] zerowy dług mypy w silniku,
-- [x] kolejka odłożonych decyzji (`docs/DEFERRED_DECISIONS.md`).
+- [x] kolejka odłożonych decyzji (`docs/DEFERRED_DECISIONS.md`),
+- [x] autoryzacja per-wywołanie z kontekstem delegacji (domknięcie luki
+      AR-003, `call_authorization.py`),
+- [x] skale DI/IQ/AR podpięte do Decision Engine w trybie SHADOW
+      (podpisane polityki v0.2.0, strukturalnie bez wpływu na wynik),
+- [x] kanoniczny słownik zdarzeń Commons (0.4.0) z podpisanym mapowaniem
+      ryzyka wyzwań publicznych na R0–R4 (ADR-COMMONS-003),
+- [x] fundament prawny: deklaracja zamierzonego przeznaczenia, polityka
+      prywatności, bramka wejściowa prototypu 16+, pakiet do przeglądu
+      prawnego z aneksem analizy wewnętrznej.
 
 Punkt 0.9 (interoperacyjność protokołu i niezależny przegląd
 bezpieczeństwa) pozostaje otwarty — żaden z powyższych plastrów go nie

@@ -6,6 +6,38 @@ jest niezależna od osi roadmapy 0.9 → 1.0 — wersja 1.0 pozostaje
 zarezerwowana dla systemu stabilnego, przejrzanego i wdrażalnego
 (decyzja foundera, 2026-08-17).
 
+## Niewydane (po 0.10.0-alpha.1)
+
+Zmiany zmergowane do `main` po tagu 0.10.0-alpha.1 (wszystkie 2026-08-17,
+PR #48 i #50):
+
+### Silnik
+- **Autoryzacja per-wywołanie** (`call_authorization.py`): deklaratywne
+  reguły per-capability (klucze/wartości/rozmiar argumentów, kontekst
+  delegacji) egzekwowane w `AgentRuntime.evaluate`; postawa wobec
+  capability bez reguły deklarowana jawnie (ALLOW/DENY, bez domyślnej).
+  Domyka lukę AR-003.
+- **Skale DI/IQ/AR w trybie SHADOW**: `DecisionRequest.measurements` →
+  `DecisionOutcome.shadow_interpretations`; interpretacje pod podpisanymi
+  politykami v0.2.0 liczone po pełnym obliczeniu decyzji (strukturalnie
+  bez wpływu na wynik); `load_policies_json()`.
+- **Słownik zdarzeń 0.4.0**: 14 kanonicznych typów Commons
+  (ADR-COMMONS-003); zgody źródła mapują się na istniejące
+  `CONSENT_GRANTED/REVOKED`; podpisane mapowanie ryzyka wyzwań
+  publicznych na R0–R4 (`policies/commons.challenge.risk.json`).
+
+### Aplikacja użytkownika
+- Twarda bramka wejściowa prototypu (16+, „bez prawdziwych danych
+  zdrowotnych", zdarzenie `PROTOTYP_ACK`).
+- Pełna karta prywatności (trzy wyjątki uruchamiane przez użytkownika)
+  + `PRIVACY.md`; stały dopisek „AI, nie lekarz" przy Przewodniku.
+
+### Governance i bezpieczeństwo
+- DD-015 rozstrzygnięte (wariant a), AR-006 podpisane, DD-009 cz. 1
+  wdrożona i mapowanie podpisane; U-001 rozwiązane (threat model
+  o mechanizmy suwerenności/odzyskiwania); `docs/INTENDED_PURPOSE.md`;
+  `docs/LEGAL_REVIEW_PACKAGE.md` z aneksem analizy wewnętrznej.
+
 ## 0.10.0-alpha.1 — Execution Foundation and Sovereign Recovery (2026-08-17)
 
 Status dojrzałości: **ALPHA / implementacja referencyjna** (obniżony

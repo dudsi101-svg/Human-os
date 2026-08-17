@@ -168,8 +168,14 @@ the decision record.
   escalation as first-class `DecisionOutcomeKind`s, never exceptions. Two ADR-DECISION-005
   invariants are enforced by code and dedicated tests: `user_determination` is read by nothing, and
   `sponsored` is absent from the ranking key. Like the Proof Kernel, it evaluates declared inputs
-  only; DI/IQ/AR scales, the ten-axis §18 profile, and live Knowledge Map integration are not
-  implemented. Not yet wired into `ExecutionLoop` — the two compose at the caller's discretion.
+  only; the ten-axis §18 profile and live Knowledge Map integration are not implemented. Not yet
+  wired into `ExecutionLoop` — the two compose at the caller's discretion. **DI/IQ/AR scales are
+  wired in SHADOW mode only (2026-08-17):** `decision_scales.py` holds the skeleton types (DD-006)
+  plus `load_policies_json()` for the founder-signed policies in
+  `policies/scale.interpretation.policies.json`; `DecisionEngine(shadow_interpreters=...)`
+  interprets `DecisionRequest.measurements` and attaches `DecisionOutcome.shadow_interpretations`
+  only *after* the decision is fully computed — structurally unable to change gates, ranking, or
+  outcome. Promotion to operational mode is a separate founder decision; no such code path exists.
 
 - **`experiment_engine.py`** (added 2026-08-17, founder directive "działaj z tą warstwą") — the
   first executable slice of Layer 6's Experiment Engine (`ADR-EXP-001..005`,
@@ -425,8 +431,9 @@ will flag it as an unused import.
   simulation engine (`docs/adr/ADR-0006-simulation-laboratory.md`'s scenario/invariant/score-
   distribution shape) respectively. `docs/self-model-contract.md` and `docs/recovery-contract.md`
   (added 2026-08-16) do the same for `self_model.py` and `recovery.py` — including the per-mode
-  risk/auto-trigger/dual-key table. Check the relevant contract doc before changing any of these
-  code paths' public shape.
+  risk/auto-trigger/dual-key table. `docs/call-authorization-contract.md` (added 2026-08-17) does
+  the same for `call_authorization.py` and its `AgentRuntime` integration point. Check the
+  relevant contract doc before changing any of these code paths' public shape.
 
 ## Licensing
 
