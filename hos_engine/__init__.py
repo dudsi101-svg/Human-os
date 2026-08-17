@@ -18,6 +18,7 @@ __all__ = [
     "MessageAuthor",
     "ProvenanceRecord",
     "SQLiteGraphStore",
+    "SQLiteHubStore",
     "SelfModelService",
     "SimulationGate",
     "Tension",
@@ -35,6 +36,7 @@ from .execution_loop import *
 from .graph_store import SQLiteGraphStore
 from .hos_core import *
 from .hub_entity_registry import *
+from .hub_store import SQLiteHubStore
 from .human_model import *
 from .key_rotation import *
 from .knowledge_graph import (

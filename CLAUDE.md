@@ -229,8 +229,12 @@ uses, don't mix:
   `event_store` parameter (both share the same `append(dict)` shape) — prefer `SQLiteEventStore`
   when a caller cares about provenance, not just a log.
 - `graph_store.py::SQLiteGraphStore` — SQLite-backed knowledge graph storage (for
-  `knowledge_graph.py`, not `hub_entity_registry.py` — the Hub's `EntityRegistry`/`RelationRegistry`
-  are in-memory only so far, no persistence layer yet).
+  `knowledge_graph.py`, not `hub_entity_registry.py`).
+- `hub_store.py::SQLiteHubStore` — SQLite snapshot persistence for the Hub's
+  `EntityRegistry`/`RelationRegistry` (entities, relations, merge records, duplicate flags).
+  Snapshot semantics, not an event log: `save_snapshot` atomically rewrites state and
+  `load_registries` rebuilds via the registries' explicit `restore` constructors (ids/timestamps
+  verbatim, no private-field pokes). Durable history stays in the event stores.
 - `replay.py::rebuild_entities` reconstructs entity state from the event log (distinct from
   `replay_guard.py`, see Security below — don't confuse the two "replay" modules).
 - `hos_core.EventEngine` is **not** durable persistence — it's an in-memory execution-lifecycle

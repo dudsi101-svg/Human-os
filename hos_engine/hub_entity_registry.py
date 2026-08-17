@@ -203,6 +203,39 @@ class EntityRegistry:
     def merge_record_for(self, retired_entity_id: str) -> MergeRecord | None:
         return self._merges.get(retired_entity_id)
 
+    def merge_records(self) -> list[MergeRecord]:
+        return list(self._merges.values())
+
+    def duplicate_pairs(self) -> list[tuple[str, str]]:
+        """Each flagged pair once, ordered (a < b)."""
+        seen: set[tuple[str, str]] = set()
+        for a, others in self._possible_duplicates.items():
+            for b in others:
+                seen.add((a, b) if a < b else (b, a))
+        return sorted(seen)
+
+    @classmethod
+    def restore(
+        cls,
+        *,
+        entities: list[HubEntity],
+        merges: list[MergeRecord],
+        duplicate_pairs: list[tuple[str, str]],
+    ) -> EntityRegistry:
+        """Rebuild a registry from persisted state (see hub_store). The
+        explicit constructor exists so persistence layers never have to
+        reach into private fields -- and so restored ids/timestamps are
+        preserved verbatim instead of being re-minted by register()."""
+        registry = cls()
+        for entity in entities:
+            registry._entities[entity.entity_id] = entity
+        for record in merges:
+            registry._merges[record.retire_entity_id] = record
+        for a, b in duplicate_pairs:
+            registry._possible_duplicates.setdefault(a, set()).add(b)
+            registry._possible_duplicates.setdefault(b, set()).add(a)
+        return registry
+
     def by_type(self, entity_type: HubEntityType) -> list[HubEntity]:
         return [e for e in self._entities.values() if e.entity_type == entity_type]
 
@@ -262,3 +295,19 @@ class RelationRegistry:
             eid for eid in entity_ids
             if not self._outgoing.get(eid) and not self._incoming.get(eid)
         ]
+
+    def all_relations(self) -> list[HubRelation]:
+        return list(self._relations.values())
+
+    @classmethod
+    def restore(
+        cls, entities: EntityRegistry, relations: list[HubRelation],
+    ) -> RelationRegistry:
+        """Rebuild from persisted state; same rationale as
+        EntityRegistry.restore (ids and validity windows kept verbatim)."""
+        registry = cls(entities)
+        for relation in relations:
+            registry._relations[relation.relation_id] = relation
+            registry._outgoing.setdefault(relation.source_entity_id, set()).add(relation.relation_id)
+            registry._incoming.setdefault(relation.target_entity_id, set()).add(relation.relation_id)
+        return registry
