@@ -5,7 +5,7 @@
   "$defs": {
     "HOSId": {
       "type": "string",
-      "pattern": "^HOS-[A-Z]{2,8}-[0-9]{6,}$"
+      "pattern": "^HOS-[A-Z]{2,8}-[0-9A-F]{6,}$"
     },
     "Timestamp": {
       "type": "string",

@@ -660,7 +660,14 @@ class SovereignRecoveryKernel:
                 "event_type": canonical_type,
                 "occurred_at": timestamp,
                 "actor_id": initiator,
-                "subject_ids": [scope],
+                # subject_ids is canonically a list of HOSIds; free-text
+                # scopes ("system", "finances") live in the payload, and
+                # only an entity-addressed scope contributes a real ID.
+                "subject_ids": (
+                    [scope.removeprefix("entity:")]
+                    if scope.startswith("entity:")
+                    else []
+                ),
                 "payload": {**fields, "signature": signature},
                 "correlation_id": event_id,
                 "immutable": True,
