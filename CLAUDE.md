@@ -151,8 +151,14 @@ the decision record.
   Refusal here is an **exception** (`RecoveryRefused`), deliberately unlike `ExecutionLoop`'s
   outcome-object style — ignoring a refused protection must not look like having it. Activations
   are scope-isolated and time-bounded; `freeze_entity()` reuses `HubEntityStatus.SUSPENDED`
-  (FROZEN=SUSPENDED per founder decision). Remaining: four of six Hub contracts, Emergency Root key
-  infrastructure, `recovery_*` event types (durable events use `STATE_OBSERVED` meanwhile).
+  (FROZEN=SUSPENDED per founder decision). **All six Hub contracts from the source's §9 are now
+  implemented**: Register Recovery Event (activate + log), Freeze Entity/Scope,
+  `create_recovery_snapshot` (non-destructive checkpoint), `rollback_entity` (new version from
+  snapshot + provenance via the registry's attributed merge — old version SUPERSEDED, never
+  deleted), `disconnect_representation` (detach with the historical relation preserved as a
+  record), `export_sovereign_package` (portable open-JSON package incl. retired history and the
+  audit trail). Remaining: Emergency Root key infrastructure, `recovery_*` event types (durable
+  events use `STATE_OBSERVED` meanwhile — DD-003 in `docs/DEFERRED_DECISIONS.md`).
 - **`decision_engine.py`** (added later on 2026-08-15, audit-plan Phase 3) — the first MVP slice of
   Layer 5's Decision & Recommendation Engine (`ADR-DECISION-001..005`):
   `DecisionEngine.decide(DecisionRequest) -> DecisionOutcome` runs the nine hard gates G0–G8
