@@ -8,6 +8,9 @@ pierwotna, uzasadnienie, warunki ponownego rozpatrzenia, podpis+data.
 Status legendy: PROPONOWANE (czeka na foundera) · ZAAKCEPTOWANE (z datą
 i podpisem).
 
+**2026-08-17: founder zaakceptował wszystkie pięć pozycji (AR-001…AR-005)**
+— zgoda wyrażona wprost w sesji roboczej; zapis poniżej przy każdej pozycji.
+
 ---
 
 ## AR-001 · Brak niezależności przeglądu bezpieczeństwa
@@ -20,7 +23,7 @@ i podpisem).
   własnymi siłami na tym etapie; koszt/dostępność przeglądu zewnętrznego.
 - **Warunki ponownego rozpatrzenia:** przed wydaniem produkcyjnym; po
   podłączeniu prawdziwych danych; na żądanie foundera.
-- **Status:** PROPONOWANE · **Podpis:** ______________ · **Data:** ______
+- **Status:** ZAAKCEPTOWANE · **Podpis:** founder (dudsi101-svg) — zgoda wyrażona wprost 2026-08-17 w sesji roboczej („Masz moją zgodę, podpisuję się") · **Data:** 2026-08-17
 
 ## AR-002 · HMAC jako mechanizm referencyjny
 - **Waga pierwotna:** WYSOKIE (dla wdrożenia produkcyjnego).
@@ -31,7 +34,7 @@ i podpisem).
   nie do danych produkcyjnych; ograniczenie jest jawnie udokumentowane.
 - **Warunki ponownego rozpatrzenia:** przed jakimkolwiek wdrożeniem
   przetwarzającym realne dane; wymaga threat modelu wdrożenia.
-- **Status:** PROPONOWANE · **Podpis:** ______________ · **Data:** ______
+- **Status:** ZAAKCEPTOWANE · **Podpis:** founder (dudsi101-svg) — zgoda wyrażona wprost 2026-08-17 w sesji roboczej („Masz moją zgodę, podpisuję się") · **Data:** 2026-08-17
 
 ## AR-003 · Brak autoryzacji per-wywołanie z kontekstem delegacji
 - **Waga pierwotna:** ŚREDNIE.
@@ -44,7 +47,7 @@ i podpisem).
   per-call to zaplanowane rozszerzenie, nie luka blokująca.
 - **Warunki ponownego rozpatrzenia:** przy dodaniu agentów o wyższym
   ryzyku lub argumentów wpływających na zakres skutku.
-- **Status:** PROPONOWANE · **Podpis:** ______________ · **Data:** ______
+- **Status:** ZAAKCEPTOWANE · **Podpis:** founder (dudsi101-svg) — zgoda wyrażona wprost 2026-08-17 w sesji roboczej („Masz moją zgodę, podpisuję się") · **Data:** 2026-08-17
 
 ## AR-004 · Brak produkcyjnego uwierzytelniania i szyfrowania w spoczynku
 - **Waga pierwotna:** WYSOKIE (dla wdrożenia produkcyjnego).
@@ -54,7 +57,7 @@ i podpisem).
   produkcyjnych.
 - **Warunki ponownego rozpatrzenia:** etap drugi przeglądu (test
   penetracyjny pełnego wdrożenia) po połączeniu aplikacji/API/logowania.
-- **Status:** PROPONOWANE · **Podpis:** ______________ · **Data:** ______
+- **Status:** ZAAKCEPTOWANE · **Podpis:** founder (dudsi101-svg) — zgoda wyrażona wprost 2026-08-17 w sesji roboczej („Masz moją zgodę, podpisuję się") · **Data:** 2026-08-17
 
 ## AR-005 · Replay Guard tylko w pamięci
 - **Waga pierwotna:** ŚREDNIE.
@@ -66,4 +69,4 @@ i podpisem).
   potrzebowałby trwałego magazynu nonce z TTL zgodnym z `expires_at`.
 - **Warunki ponownego rozpatrzenia:** wdrożenie wieloprocesowe lub
   restartowalne przetwarzające realne komunikaty.
-- **Status:** PROPONOWANE · **Podpis:** ______________ · **Data:** ______
+- **Status:** ZAAKCEPTOWANE · **Podpis:** founder (dudsi101-svg) — zgoda wyrażona wprost 2026-08-17 w sesji roboczej („Masz moją zgodę, podpisuję się") · **Data:** 2026-08-17

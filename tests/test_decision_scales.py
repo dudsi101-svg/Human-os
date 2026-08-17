@@ -160,3 +160,61 @@ class InterpreterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ApprovedShadowPolicyTests(unittest.TestCase):
+    """The founder-signed v0.1.0 shadow policies (2026-08-17) must load
+    into the engine's types and interpret every code of their scales.
+    DI stays CONFIGURATION_REQUIRED until the source section arrives."""
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        from pathlib import Path
+        raw = json.loads(
+            (Path(__file__).parent.parent
+             / "policies" / "scale.interpretation.policies.json").read_text()
+        )
+        cls.raw = raw
+        cls.policies = {
+            entry["scale"]: InterpretationPolicy(
+                policy_id=entry["policy_id"],
+                version=entry["version"],
+                approved_by=raw["approved_by"],
+                scale=ScaleKind(entry["scale"]),
+                rules=entry["rules"],
+            )
+            for entry in raw["policies"]
+        }
+
+    def test_config_is_shadow_mode_and_attributed(self):
+        self.assertEqual(self.raw["mode"], "SHADOW")
+        self.assertTrue(self.raw["approved_by"].strip())
+        self.assertTrue(self.raw["approved_at"].strip())
+
+    def test_iq_and_ar_policies_cover_every_code(self):
+        for scale_name, policy in self.policies.items():
+            definition = SCALE_DEFINITIONS[ScaleKind(scale_name)]
+            self.assertEqual(set(policy.rules), set(definition.codes()))
+
+    def test_signed_policy_interprets(self):
+        m = ScaleMeasurement(
+            scale=ScaleKind.INPUT_QUALITY, code="IQ0",
+            declared_by="HOS-HUM-000001", basis=SYNTHETIC_BASIS,
+        )
+        outcome = ScaleInterpreter(self.policies["IQ"]).interpret(m)
+        self.assertEqual(outcome.kind, InterpretationOutcomeKind.INTERPRETED)
+        self.assertEqual(outcome.result, "tylko-pytania-lub-eskalacja")
+        self.assertEqual(outcome.policy_version, "0.1.0")
+
+    def test_di_remains_configuration_required(self):
+        scales_with_policy = {e["scale"] for e in self.raw["policies"]}
+        self.assertNotIn("DI", scales_with_policy)
+        m = ScaleMeasurement(
+            scale=ScaleKind.DECISION_INTENT, code="DI-1",
+            declared_by="HOS-HUM-000001", basis=SYNTHETIC_BASIS,
+        )
+        outcome = ScaleInterpreter().interpret(m)
+        self.assertEqual(
+            outcome.kind, InterpretationOutcomeKind.CONFIGURATION_REQUIRED,
+        )

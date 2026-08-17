@@ -142,6 +142,12 @@ niekompletności konfiguracji. 14 testów; fixtures jawnie syntetyczne.
 Semantyka poszczególnych poziomów i progi — nadal otwarte (decyzja
 foundera po kalibracji). Profil dziesięcioosiowy §18 nie wchodzi w zakres
 tego szkieletu (zgoda obejmowała DI/IQ/AR).
+**2026-08-17 (podpis kalibracji):** founder podpisał semantyki IQ0–IQ5
+i AR0–AR5 oraz polityki `HOS-POL-IQ-001`/`HOS-POL-AR-001` v0.1.0
+w trybie fazy cienia (`policies/scale.interpretation.policies.json`);
+ścieżka uzupełnienia DI = odczyt sekcji 6.1 źródłowego DOCX (czeka na
+źródło). Przejście polityk z fazy cienia na tryb operacyjny — osobna
+decyzja po przeglądzie korpusu pomiarów.
 
 ## DD-008 · Model przeglądów bezpieczeństwa i kryterium zamknięcia 0.9 (RESOLVED 2026-08-17)
 Decyzja z 2026-08-17 (pkt 5) zakładała przegląd etapu pierwszego przez

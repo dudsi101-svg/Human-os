@@ -1,0 +1,37 @@
+{
+  "config": "Human OS Scale Interpretation Policies",
+  "mode": "SHADOW",
+  "mode_note": "Faza cienia (propozycja kalibracji §5.1): interpretacje są zapisywane i oznaczane wersją polityki, ale nie służą do blokowania. Przejście na tryb operacyjny wymaga osobnej decyzji foundera po przeglądzie korpusu.",
+  "approved_by": "founder (dudsi101-svg)",
+  "approved_at": "2026-08-17",
+  "approval_record": "docs/DI_IQ_AR_CALIBRATION_PROPOSAL.md — checklist §6, pozycje 1–3; zgoda wyrażona wprost w sesji roboczej 2026-08-17",
+  "policies": [
+    {
+      "policy_id": "HOS-POL-IQ-001",
+      "version": "0.1.0",
+      "scale": "IQ",
+      "rules": {
+        "IQ0": "tylko-pytania-lub-eskalacja",
+        "IQ1": "edukacja-bez-rekomendacji",
+        "IQ2": "rekomendacje-niskiego-ryzyka",
+        "IQ3": "eksperymenty-niskiego-ryzyka",
+        "IQ4": "decyzje-umiarkowane-z-monitoringiem",
+        "IQ5": "zlozona-decyzja-z-audytem"
+      }
+    },
+    {
+      "policy_id": "HOS-POL-AR-001",
+      "version": "0.1.0",
+      "scale": "AR",
+      "rules": {
+        "AR0": "nie-rekomendowac-zmniejszyc-zakres",
+        "AR1": "mikro-kroki-odwracalne",
+        "AR2": "krotki-horyzont-latwe-przerwanie",
+        "AR3": "standardowe-eksperymenty-osobiste",
+        "AR4": "protokoly-wieloetapowe",
+        "AR5": "protokoly-zlozone-z-nadzorem"
+      }
+    }
+  ],
+  "di_note": "Skala DI celowo bez polityki: klasy DI-1..DI-8 nie mają semantyki w digescie Warstwy 5. Founder przyjął ścieżkę 1 (odczyt sekcji 6.1 źródłowego DOCX) — do czasu dostarczenia źródła interpretacja DI pozostaje CONFIGURATION_REQUIRED."
+}

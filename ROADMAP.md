@@ -8,7 +8,11 @@
 - [x] 0.6 Agent Runtime and Capability Boundaries
 - [x] 0.7 Simulation and Scenario Laboratory
 - [x] 0.8 Human Model and Consent-Aware Personalization
-- [ ] 0.9 Protocol Interoperability and Security Review
+- [x] 0.9 Protocol Interoperability and Security Review — zamknięte
+      2026-08-17 wg kryterium DD-008: przegląd
+      `docs/security-reviews/REVIEW_2026-08-17.md` (0 ustaleń
+      krytycznych/wysokich), rejestr ryzyk AR-001…AR-005 podpisany przez
+      foundera, zestaw regresji zabezpieczeń zielony
 - [ ] 1.0 Stable Protocol, Engine and Reference Runtime
 
 ## Zrealizowane poza numeracją 0.x (sierpień 2026)

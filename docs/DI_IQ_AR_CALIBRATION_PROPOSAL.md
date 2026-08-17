@@ -115,11 +115,17 @@ ekspercka. Proponowany proces trzyetapowy:
 
 Zatwierdzenie tej propozycji oznacza dokładnie:
 
-- [ ] semantyki IQ1–IQ4 (tabela §2) — możliwe korekty w miejscu,
-- [ ] semantyki AR0–AR5 (tabela §3) — możliwe korekty w miejscu,
-- [ ] instancjonowanie `HOS-POL-IQ-001` i `HOS-POL-AR-001` w wersji
-      0.1.0 z `approved_by` = founder, w trybie fazy cienia (§5.1),
-- [ ] ścieżkę uzupełnienia DI (§4 — opcja 1 lub 2).
+- [x] semantyki IQ1–IQ4 (tabela §2) — **podpisane 2026-08-17**,
+- [x] semantyki AR0–AR5 (tabela §3) — **podpisane 2026-08-17**,
+- [x] instancjonowanie `HOS-POL-IQ-001` i `HOS-POL-AR-001` w wersji
+      0.1.0 z `approved_by` = founder, w trybie fazy cienia (§5.1) —
+      **wykonane: `policies/scale.interpretation.policies.json`**,
+- [x] ścieżka uzupełnienia DI: **opcja 1** (odczyt sekcji 6.1 źródłowego
+      DOCX Warstwy 5) — czeka na dostarczenie źródła; do tego czasu DI
+      pozostaje bez polityki.
 
-Bez zaznaczenia wszystkich pól silnik pozostaje w stanie
-`CONFIGURATION_REQUIRED` — co jest stanem poprawnym, nie awarią.
+**Podpis foundera: 2026-08-17** — zgoda wyrażona wprost w sesji roboczej
+(„Masz moją zgodę, podpisuję się"). Polityki IQ/AR działają w fazie
+cienia; przejście na tryb operacyjny wymaga osobnej decyzji po
+przeglądzie korpusu (§5.2–5.3). Interpretacja DI pozostaje
+`CONFIGURATION_REQUIRED` do czasu dostarczenia sekcji 6.1 źródła.
