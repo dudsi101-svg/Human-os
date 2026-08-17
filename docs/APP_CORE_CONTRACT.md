@@ -87,9 +87,20 @@ HTTP w przyszłym backendzie, mostek WASM w PWA):
 
 ## Tabela znanych rozjazdów (do zamknięcia)
 
+Golden-test zgodności (GS1–GS4, 2026-08-17; strona silnika:
+`tests/test_golden_nof1.py`, strona makiety: sonda `golden_nof1.js`
+w scratchpadzie sesji) potwierdził:
+
+| Scenariusz | Makieta (JS) | Silnik | Werdykt |
+|---|---|---|---|
+| GS1: start bez zgody | **startuje** (brak bramki zgody w `startExperiment`) | odmowa `consent not confirmed` | 🔴 rozjazd **D-GS1** |
+| GS2: substancja | G4 regex blokuje adopcję | XP-8 odrzucany na starcie | 🟡 zgodny skutek, inny mechanizm |
+| GS3: SE2 | faza → HOLD | `CycleState.HOLD` | 🟢 zgodne |
+| GS4: wynik nierozstrzygający | **nie istnieje** (tylko done/stopped) | `INCONCLUSIVE` pełnoprawny | 🔴 rozjazd **D-GS4** |
+
 | Obszar | Aplikacja (makieta) | Core (prawda) | Plan |
 |---|---|---|---|
-| N-of-1 | własna logika faz/HOLD/prognozy | `experiment_engine.py` | mapowanie pojęć + stopniowe przejście (P1 audytu, pkt 6) |
+| N-of-1 | własna logika faz/HOLD/prognozy; D-GS1 (brak bramki zgody), D-GS4 (brak INCONCLUSIVE) | `experiment_engine.py` | mapowanie pojęć + stopniowe przejście (P1 audytu, pkt 6); D-GS1/D-GS4 do naprawy po stronie makiety |
 | Bramy decyzji | G0–G8 w JS | `decision_engine.py` G0–G8 | UI ma pokazywać wynik Core; makieta do wygaszenia |
 | Self-model | epistemika w JS | `self_model.py` | jak wyżej |
 | Tryby awaryjne | SAFE MODE/READ-ONLY w JS | `recovery.py` | jak wyżej |
