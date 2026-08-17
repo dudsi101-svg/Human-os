@@ -204,6 +204,8 @@
   .sug-chip:hover { border-color: var(--accent); color: var(--ink); }
   .sug-chip.ask { border-style: dashed; }
   #chatInput { resize: none; min-height: 44px; max-height: 160px; overflow-y: auto; }
+  #btnMic.rec { border-color: #c0392b; color: #c0392b; animation: recpulse 1.2s ease-in-out infinite; }
+  @keyframes recpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .sm-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: var(--surface-2); }
   .sm-item .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
   .sm-item .val { font-size: 14.5px; }
@@ -587,7 +589,10 @@
       <div class="card" style="margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
           <h3 style="font-size:16px">Rozmowa</h3>
-          <div style="display:flex;gap:6px;flex-wrap:wrap" id="chatModes"></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="chatModes"></div>
+            <button class="mode-chip" id="btnVoiceOut" onclick="toggleVoiceOut()" title="Czytanie odpowiedzi na głos">🔈 głos</button>
+          </div>
         </div>
         <div id="chatWin" class="chat-win"></div>
         <div id="chatSuggest" class="chat-suggest"></div>
@@ -595,9 +600,10 @@
           <textarea id="chatInput" rows="2" placeholder="Napisz jednym zdaniem albo bardzo szeroko… (Enter wysyła, Shift+Enter = nowa linia)"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"
             oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px'"></textarea>
+          <button class="btn" id="btnMic" onclick="toggleDictation()" title="Dyktuj — mowa zamienia się w tekst w polu; wysyłasz sam">🎤</button>
           <button class="btn primary" onclick="sendChat()">Wyślij</button>
         </div>
-        <p class="note" style="margin-top:8px">Rozmowa jest interakcją, nie bazą danych. Do modelu trafia tylko to, co system jawnie z niej wydobędzie — a każda taka pozycja niesie źródło („skąd to wiem”) i status epistemiczny.</p>
+        <p class="note" style="margin-top:8px">Rozmowa jest interakcją, nie bazą danych. Do modelu trafia tylko to, co system jawnie z niej wydobędzie — a każda taka pozycja niesie źródło („skąd to wiem”) i status epistemiczny. Rozmowa słowna: 🎤 dyktujesz (tekst ląduje w polu — wysyłasz sam), 🔈 aplikacja czyta odpowiedzi na głos; uwaga — rozpoznawanie mowy przeglądarki może przetwarzać dźwięk na serwerach jej dostawcy.</p>
       </div>
 
       </div><!-- /rozmowa -->
@@ -2882,7 +2888,7 @@ function sendChat(){
   /* brama zgody: bez C1 rozmowa zostaje interakcją — nic nie trafia do modelu */
   if(!S.consents.C1){
     smAddMsg("sys","Rozmawiamy — ale zgoda C1 (personalizacja) jest wycofana, więc nic z tej rozmowy nie zapisuję do modelu. Sama wypowiedź zostaje w historii interakcji. Zgodę możesz przywrócić w „Konstytucji”.");
-    save(); renderChat(); return;
+    save(); renderChat(); speakLastSys(); return;
   }
   const found=smExtract(msg);
   const ck=smCheckpointText();
@@ -2895,7 +2901,7 @@ function sendChat(){
       : null;
     smAddMsg("sys", ack + (fu || reflect || smNextQuestion()));
   }
-  save(); renderChat(); renderSelfModel(); logEvent("INTERAKCJA","WIADOMOŚĆ","Rozmowa „O mnie” — wiadomość użytkownika i odpowiedź systemu",{scope:"self_model"});
+  save(); renderChat(); renderSelfModel(); speakLastSys(); logEvent("INTERAKCJA","WIADOMOŚĆ","Rozmowa „O mnie” — wiadomość użytkownika i odpowiedź systemu",{scope:"self_model"});
 }
 function smCheckpointAnswer(kind){
   const m=smState(); const ids=m.pendingCheck.slice(); m.pendingCheck=[]; m.checkOpen=false;
@@ -2903,15 +2909,73 @@ function smCheckpointAnswer(kind){
   else if(kind==="no"){ ids.forEach(id=>smReject(id,true)); smAddMsg("sys","Odrzucone — hipotezy zostają w historii jako odrzucone, żeby system nie wracał do nich po cichu. Popraw mnie proszę: jak jest naprawdę?"); }
   else if(kind==="partial"){ smAddMsg("sys","W porządku. Poniżej w modelu możesz potwierdzić lub odrzucić każdą pozycję osobno — nic nie zmienia się bez Ciebie."); }
   else { smAddMsg("sys","Słucham — dopowiedz swoimi słowami."); }
-  save(); renderChat(); renderSelfModel();
+  save(); renderChat(); renderSelfModel(); speakLastSys();
 }
 function chatSetMode(mode){ smState().mode=mode; save();
   const label={NATURAL:"naturalna rozmowa",DEEP_DISCOVERY:"głębsze poznanie",EXPLORATORY:"odkrywanie siebie"}[mode];
   smAddMsg("sys", mode==="EXPLORATORY"
     ? "Tryb odkrywania: będę ostrożnie proponować hipotezy i pytania refleksyjne. Wszystko, co z tego zapiszę, będzie oznaczone jako hipoteza — nie fakt. "+smNextQuestion()
     : `Tryb: ${label}. `+smNextQuestion());
-  renderChat();
+  renderChat(); speakLastSys();
 }
+/* rozmowa słowna: dyktowanie (Web Speech API) i czytanie odpowiedzi (speechSynthesis).
+   Suwerenność: dyktowanie tylko wypełnia pole — wysyła zawsze użytkownik; czytanie na głos jest
+   opt-in i zapamiętywane na urządzeniu. Rozpoznawanie mowy przeglądarki może przetwarzać dźwięk
+   u jej dostawcy — mówimy to wprost przy pierwszym użyciu i w notce pod rozmową. */
+let REC=null, REC_ON=false;
+function speechApi(){ return window.SpeechRecognition||window.webkitSpeechRecognition||null; }
+function voiceOutOn(){ try{ return localStorage.getItem("human-os-voice-out")==="1"; }catch(e){ return false; } }
+function updateVoiceUI(){
+  const vo=$("btnVoiceOut"); if(vo){ const on=voiceOutOn();
+    vo.textContent=on?"🔊 głos włączony":"🔈 głos"; vo.classList.toggle("on",on); }
+  const mic=$("btnMic"); if(mic){ mic.style.display=speechApi()?"":"none"; mic.classList.toggle("rec",REC_ON); mic.textContent=REC_ON?"⏺":"🎤"; }
+}
+function toggleVoiceOut(){
+  const on=!voiceOutOn();
+  try{ localStorage.setItem("human-os-voice-out",on?"1":"0"); }catch(e){}
+  if(!on&&window.speechSynthesis){ try{ speechSynthesis.cancel(); }catch(e){} }
+  logEvent("INTERAKCJA","GŁOS",on?"Czytanie odpowiedzi na głos włączone (synteza mowy na urządzeniu)":"Czytanie odpowiedzi na głos wyłączone");
+  toast(on?"Odpowiedzi będą czytane na głos.":"Czytanie na głos wyłączone.");
+  updateVoiceUI();
+  if(on) speakText("Głos włączony. Słucham.");
+}
+function speakText(t){
+  if(!voiceOutOn()||!window.speechSynthesis||!t) return;
+  try{ const u=new SpeechSynthesisUtterance(String(t)); u.lang="pl-PL"; speechSynthesis.speak(u); }catch(e){}
+}
+function speakLastSys(){
+  const m=smState(); const last=[...m.msgs].reverse().find(x=>x.who==="sys");
+  if(last) speakText(last.text);
+}
+function toggleDictation(){
+  const Api=speechApi();
+  if(!Api){ toast("Dyktowanie nie jest dostępne w tej przeglądarce — pisz w polu poniżej."); return; }
+  if(REC_ON){ try{ REC.stop(); }catch(e){} return; }
+  let noted=false; try{ noted=localStorage.getItem("human-os-voice-note")==="1"; }catch(e){}
+  if(!noted){
+    toast("Uwaga: rozpoznawanie mowy przeglądarki może przetwarzać dźwięk na serwerach jej dostawcy. Tekst trafia tylko do pola — wysyłasz sam.");
+    try{ localStorage.setItem("human-os-voice-note","1"); }catch(e){}
+    logEvent("INTERAKCJA","GŁOS","Pierwsze użycie dyktowania — użytkownik poinformowany o przetwarzaniu dźwięku przez dostawcę przeglądarki");
+  }
+  REC=new Api(); REC.lang="pl-PL"; REC.interimResults=true; REC.continuous=true;
+  let base=($("chatInput")&&$("chatInput").value.trim())||"";
+  REC.onresult=(ev)=>{
+    let fin="", inter="";
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const r=ev.results[i]; if(r.isFinal) fin+=r[0].transcript; else inter+=r[0].transcript;
+    }
+    if(fin) base=(base?base+" ":"")+fin.trim();
+    const inp=$("chatInput"); if(!inp) return;
+    inp.value=base+(inter?(base?" ":"")+inter:"");
+    inp.style.height="auto"; inp.style.height=Math.min(inp.scrollHeight,160)+"px";
+  };
+  REC.onend=()=>{ REC_ON=false; updateVoiceUI(); };
+  REC.onerror=(e)=>{ REC_ON=false; updateVoiceUI();
+    if(e&&e.error==="not-allowed") toast("Brak zgody na mikrofon — dyktowanie wymaga pozwolenia przeglądarki."); };
+  try{ REC.start(); REC_ON=true; }catch(e){ REC_ON=false; toast("Nie udało się uruchomić dyktowania."); }
+  updateVoiceUI();
+}
+
 /* chmurki z podpowiedziami: startery dobrane do braków w modelu — łatwo zacząć, łatwo odpowiedzieć obszernie.
    Chmurka tylko wypełnia pole (nic nie wysyła za użytkownika); starter jest tak sformułowany,
    żeby wydobycie (smExtract) rozpoznało odpowiedź i zapisało ją do modelu ze źródłem. */
@@ -2948,7 +3012,7 @@ function chatUseStarter(i){ if(CHAT_TOPICS[i]) chatFillInput(CHAT_TOPICS[i].star
 function chatDeepen(i){ if(CHAT_DEEPEN[i]!==undefined) chatFillInput(CHAT_DEEPEN[i],true); }
 function chatAsk(i){
   const q=CHAT_ASKBANK[i]; if(!q) return;
-  smAddMsg("sys",q); save(); renderChat();
+  smAddMsg("sys",q); save(); renderChat(); speakLastSys();
   const inp=$("chatInput"); if(inp) inp.focus();
 }
 function renderChatSuggest(){
@@ -2988,6 +3052,7 @@ function renderChat(){
       <button class="btn small ghost" onclick="smCheckpointAnswer('more')">Dopowiem coś</button></div></div>`:"");
   win.scrollTop=win.scrollHeight;
   renderChatSuggest();
+  updateVoiceUI();
 }
 
 /* przejścia sterowane wyłącznie przez użytkownika — historia nigdy nie znika */
