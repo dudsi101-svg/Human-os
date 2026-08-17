@@ -23,7 +23,7 @@ it is a swappable engine chosen by the user:
 | Engine | Who pays | Data path | Status |
 |---|---|---|---|
 | `local` — on-device AI (browser/OS built-in Prompt API; later a full local model via WebLLM) | nobody | **nothing leaves the device** | implemented (feature-detected; default whenever available) |
-| `key` — cloud Claude on the user's own API key | the user, directly to the provider | minimized C5 package | implemented (ADR-APP-002) |
+| `key` — cloud model on the user's own API key; user picks the provider: **Claude (Anthropic)** or **GPT (OpenAI)** (founder decision, 2026-08-17) | the user, directly to the chosen provider | minimized C5 package | implemented (ADR-APP-002; OpenAI variant added as a provider adapter) |
 | `backend` — cloud in the subscription price | the operator, priced into Premium | minimized C5 package via app backend | visible but disabled; blocked on DD-013 (backend, pricing, limits) |
 
 Rules that hold across every engine, present and future:
@@ -43,13 +43,24 @@ Rules that hold across every engine, present and future:
    Local structured output cannot be guaranteed, so idea parsing is
    defensive (fence-stripping, brace extraction, empty-list fallback).
 4. **No engine is ever paywalled into rights** — ADR-APP-001 §2 unchanged.
+5. **Cloud providers are adapters inside the `key` engine, not new engines.**
+   The `key` engine carries a provider selector (Anthropic Messages API /
+   OpenAI Chat Completions API). Each provider has its own key and model
+   storage (both device-local, outside app state and export), its own
+   payment relationship (console.anthropic.com / platform.openai.com), and
+   the audit names the provider on every invocation and switch. What
+   cannot be plugged in is a consumer chat app (e.g. chat.openai.com) —
+   only provider APIs, because the constitutional gates must wrap the call.
 
 ## Consequences
 
 - Implemented now: engine selector in the guide's configuration (local /
   own key / subscription-disabled), Prompt API feature detection with
   graceful degradation, engine-aware consent copy ("silnik lokalny — nic
-  nie wychodzi na zewnątrz"), engine name in every audit entry.
+  nie wychodzi na zewnątrz"), engine name in every audit entry; within the
+  `key` engine, a provider selector (Claude/GPT) with per-provider keys,
+  models, refusal mapping (OpenAI `message.refusal` → the same honest
+  refusal path), and strict JSON-schema structured output on both.
 - Roadmap (PWA): full local model via WebLLM/WebGPU as an opt-in ~1.5–2.5 GB
   download, never part of the store package; store package stays ~2–4 MB.
 - Open in DD-013: the backend engine (key custody, limits, Web Push reuse

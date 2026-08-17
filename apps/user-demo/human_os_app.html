@@ -2121,7 +2121,21 @@ function addGoal(){
 }
 
 /* ---------- Przewodnik AI: agent LLM w aplikacji (ADR-APP-002) ---------- */
-const AGENT_MODELS=[["claude-opus-5","Claude Opus — najzdolniejszy"],["claude-sonnet-5","Claude Sonnet — szybszy"],["claude-haiku-4-5","Claude Haiku — ekonomiczny"]];
+const AGENT_PROVIDERS={
+  anthropic:{ name:"Claude (Anthropic)", ph:"sk-ant-…", console:"console.anthropic.com",
+    keyStore:"human-os-agent-key", modelStore:"human-os-agent-model", defModel:"claude-opus-5",
+    models:[["claude-opus-5","Claude Opus — najzdolniejszy"],["claude-sonnet-5","Claude Sonnet — szybszy"],["claude-haiku-4-5","Claude Haiku — ekonomiczny"]] },
+  openai:{ name:"GPT (OpenAI)", ph:"sk-…", console:"platform.openai.com",
+    keyStore:"human-os-agent-key-openai", modelStore:"human-os-agent-model-openai", defModel:"gpt-5.1",
+    models:[["gpt-5.1","GPT-5.1 — najzdolniejszy"],["gpt-5-mini","GPT-5 mini — szybszy"],["gpt-5-nano","GPT-5 nano — ekonomiczny"]] },
+};
+function agentProvider(){ try{ const p=localStorage.getItem("human-os-agent-provider"); return AGENT_PROVIDERS[p]?p:"anthropic"; }catch(e){ return "anthropic"; } }
+function setAgentProvider(v){
+  if(!AGENT_PROVIDERS[v]) return;
+  try{ localStorage.setItem("human-os-agent-provider",v); }catch(e){}
+  logEvent("AGENT","agent_engine",`Dostawca chmurowego silnika Przewodnika: ${AGENT_PROVIDERS[v].name} — te same bramy konstytucyjne niezależnie od dostawcy`);
+  renderAgent();
+}
 const AGENT_SYSTEM=[
   "Jesteś „Przewodnikiem” w Human OS — osobistej aplikacji rozwojowej. Odpowiadasz po polsku, zwięźle i konkretnie.",
   "Zasady Konstytucji Human OS, których bezwzględnie przestrzegasz:",
@@ -2157,18 +2171,22 @@ function setAgentEngine(v){
   logEvent("AGENT","agent_engine",`Silnik Przewodnika: ${v==="local"?"na urządzeniu":"chmura (własny klucz)"}`);
   renderAgent();
 }
-function agentKey(){ try{ return localStorage.getItem("human-os-agent-key")||""; }catch(e){ return ""; } }
-function agentModel(){ try{ return localStorage.getItem("human-os-agent-model")||"claude-opus-5"; }catch(e){ return "claude-opus-5"; } }
+function agentKey(){ try{ return localStorage.getItem(AGENT_PROVIDERS[agentProvider()].keyStore)||""; }catch(e){ return ""; } }
+function agentModel(){
+  const pr=AGENT_PROVIDERS[agentProvider()];
+  try{ const m=localStorage.getItem(pr.modelStore); return pr.models.some(([id])=>id===m)?m:pr.defModel; }catch(e){ return pr.defModel; }
+}
 function saveAgentCfg(){
+  const pr=AGENT_PROVIDERS[agentProvider()];
   const k=($("agKey").value||"").trim(), m=$("agModel").value;
-  try{ if(k) localStorage.setItem("human-os-agent-key",k); localStorage.setItem("human-os-agent-model",m); }catch(e){}
-  logEvent("AGENT","agent_configured",`Konfiguracja Przewodnika zapisana (model ${m}); klucz przechowywany wyłącznie lokalnie, poza stanem i eksportem`);
+  try{ if(k) localStorage.setItem(pr.keyStore,k); localStorage.setItem(pr.modelStore,m); }catch(e){}
+  logEvent("AGENT","agent_configured",`Konfiguracja Przewodnika zapisana (${pr.name}, model ${m}); klucz przechowywany wyłącznie lokalnie, poza stanem i eksportem`);
   toast(k?"Zapisane. Klucz zostaje tylko na tym urządzeniu.":"Model zapisany.");
   renderAgent();
 }
 function clearAgentKey(){
-  try{ localStorage.removeItem("human-os-agent-key"); }catch(e){}
-  logEvent("AGENT","agent_key_removed","Klucz API Przewodnika usunięty z urządzenia");
+  try{ localStorage.removeItem(AGENT_PROVIDERS[agentProvider()].keyStore); }catch(e){}
+  logEvent("AGENT","agent_key_removed",`Klucz API Przewodnika (${AGENT_PROVIDERS[agentProvider()].name}) usunięty z urządzenia`);
   toast("Klucz usunięty."); renderAgent();
 }
 /* minimalizacja: dokładnie ten pakiet — nigdy hipotezy, rejestr, Wspólnota ani klucz */
@@ -2192,11 +2210,25 @@ async function agentCallLocal(userText){
   return { model:"model lokalny (na urządzeniu)", stop_reason:"end_turn",
     content:[{type:"text", text:String(txt||"")}] };
 }
+async function agentCallOpenAI(userText, format){
+  const body={ model:agentModel(), max_completion_tokens:2048,
+    messages:[{role:"system", content:AGENT_SYSTEM},{role:"user", content:userText}] };
+  if(format) body.response_format={ type:"json_schema", json_schema:{ name:"pomysly", strict:true, schema:format.schema } };
+  const res=await fetch("https://api.openai.com/v1/chat/completions",{ method:"POST",
+    headers:{ "content-type":"application/json", "authorization":"Bearer "+agentKey() },
+    body:JSON.stringify(body) });
+  if(!res.ok){ const err=await res.json().catch(()=>({})); throw new Error((err.error&&err.error.message)||("HTTP "+res.status)); }
+  const r=await res.json();
+  const ch=(r.choices&&r.choices[0])||{}, msg=ch.message||{};
+  return { model:r.model||agentModel(), stop_reason:msg.refusal?"refusal":"end_turn",
+    content:[{type:"text", text:String(msg.content||"")}] };
+}
 async function agentCall(userText, format){
   if(agentEngine()==="local"){
     const extra=format?"\nOdpowiedz WYŁĄCZNIE poprawnym JSON w formacie {\"pomysly\":[{\"nazwa\":\"...\",\"opis\":\"...\",\"dlaczego_pasuje\":\"...\"}]} — bez żadnego tekstu poza JSON.":"";
     return agentCallLocal(userText+extra);
   }
+  if(agentProvider()==="openai") return agentCallOpenAI(userText, format);
   const body={ model:agentModel(), max_tokens:2048, system:AGENT_SYSTEM,
     messages:[{role:"user", content:userText}] };
   if(format) body.output_config={format:format};
@@ -2225,7 +2257,7 @@ function agentErrorNote(e,out){
 async function agentExplain(){
   if(!agentReady()) return;
   const out=$("agentOut"); out.innerHTML=`<div class="quiet">Przewodnik analizuje Twoje dane…</div>`;
-  logEvent("AGENT","agent_invoked",`Objaśnienie sytuacji [silnik: ${agentEngine()==="local"?"na urządzeniu — dane nie wychodzą":"chmura, własny klucz"}] — pakiet zminimalizowany (profil, cel, domeny, potwierdzony model, eksperymenty); nigdy: hipotezy, rejestr, Wspólnota`,{scope:"profil"});
+  logEvent("AGENT","agent_invoked",`Objaśnienie sytuacji [silnik: ${agentEngine()==="local"?"na urządzeniu — dane nie wychodzą":"chmura "+AGENT_PROVIDERS[agentProvider()].name+", własny klucz"}] — pakiet zminimalizowany (profil, cel, domeny, potwierdzony model, eksperymenty); nigdy: hipotezy, rejestr, Wspólnota`,{scope:"profil"});
   try{
     const r=await agentCall("Objaśnij moją obecną sytuację na podstawie poniższych danych. Zwięźle, w trzech częściach: (1) co widać w danych, (2) co może to znaczyć — wyraźnie jako hipotezy, (3) na co zwrócić uwagę w najbliższych dniach.\nDane:\n"+JSON.stringify(agentPayload()));
     if(r.stop_reason==="refusal"){ logEvent("AGENT","agent_refused","Model odmówił (klasyfikator bezpieczeństwa)"); agentRefusalNote(out); return; }
@@ -2306,10 +2338,10 @@ function renderAgent(){
   host.innerHTML=`<div class="card" style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
       <h3 style="font-size:16px">✳ Przewodnik AI</h3>
-      <span class="pill ${c5&&engReady?"verd":"neutral"}">${!c5?"wymaga zgody C5":!engReady?(eng==="key"?"wymaga klucza API":"silnik niedostępny"):(eng==="local"?"gotowy · na urządzeniu":"gotowy · chmura")}</span></div>
+      <span class="pill ${c5&&engReady?"verd":"neutral"}">${!c5?"wymaga zgody C5":!engReady?(eng==="key"?"wymaga klucza API":"silnik niedostępny"):(eng==="local"?"gotowy · na urządzeniu":"gotowy · "+AGENT_PROVIDERS[agentProvider()].name)}</span></div>
     <p class="note" style="margin:6px 0 10px">Model AI, który objaśnia Twoją sytuację i podsuwa pomysły na podstawie Twoich danych — z wymiennym silnikiem: na urządzeniu (nic nie wychodzi), w chmurze na Twoim kluczu, a docelowo w cenie subskrypcji. Reguły Konstytucji: AI proponuje wyłącznie hipotezy — nigdy samo nie zapisuje Twojego modelu ani planu; poza urządzenie dane wychodzą tylko po zgodzie C5, w zminimalizowanym pakiecie.</p>
     ${!c5?`<button class="btn primary" onclick="toggleConsentC5()">Włącz zgodę C5 (Przewodnik AI)</button>
-      <p class="note" style="margin-top:8px">Zgoda C5: przy każdym Twoim pytaniu do Przewodnika wysyłane są — do API Anthropic, Twoim kluczem — profil „O mnie”, cel, wartości domen, potwierdzone pozycje modelu i aktywne eksperymenty. Nigdy: hipotezy, rejestr zdarzeń, dane Wspólnoty. Klucz nie wchodzi do eksportu ani stanu aplikacji.</p>`
+      <p class="note" style="margin-top:8px">Zgoda C5: przy każdym Twoim pytaniu do Przewodnika wysyłane są — do API wybranego dostawcy (Claude/Anthropic albo GPT/OpenAI), Twoim kluczem, albo nigdzie przy silniku lokalnym — profil „O mnie”, cel, wartości domen, potwierdzone pozycje modelu i aktywne eksperymenty. Nigdy: hipotezy, rejestr zdarzeń, dane Wspólnoty. Klucz nie wchodzi do eksportu ani stanu aplikacji.</p>`
     :`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
         <button class="btn primary" onclick="agentExplain()">Objaśnij moją sytuację</button>
         <select id="agDomain" style="max-width:210px">${domOpts}</select>
@@ -2320,16 +2352,20 @@ function renderAgent(){
         <div style="margin-top:8px"><label for="agEngine">Silnik AI</label>
         <select id="agEngine" onchange="setAgentEngine(this.value)" style="max-width:340px">
           <option value="local"${eng==="local"?" selected":""}${LOCAL_AI?"":" disabled"}>Na urządzeniu — wbudowane AI przeglądarki${LOCAL_AI?" · nic nie wychodzi na zewnątrz":" (niedostępne w tej przeglądarce)"}</option>
-          <option value="key"${eng==="key"?" selected":""}>Chmura — Claude, Twój własny klucz API</option>
+          <option value="key"${eng==="key"?" selected":""}>Chmura — Twój własny klucz API (Claude lub GPT)</option>
           <option value="backend" disabled>Chmura — w cenie subskrypcji (etap sklepowy, DD-013)</option>
         </select></div>
-        ${eng==="key"?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
-          <input type="password" id="agKey" placeholder="sk-ant-…" value="${esc(key)}" style="max-width:250px">
-          <select id="agModel" style="max-width:230px">${AGENT_MODELS.map(([id,n])=>`<option value="${id}"${agentModel()===id?" selected":""}>${n}</option>`).join("")}</select>
+        ${eng==="key"?`<div style="margin-top:8px"><label for="agProvider">Dostawca modelu</label>
+        <select id="agProvider" onchange="setAgentProvider(this.value)" style="max-width:340px">
+          ${Object.entries(AGENT_PROVIDERS).map(([id,p])=>`<option value="${id}"${agentProvider()===id?" selected":""}>${p.name}</option>`).join("")}
+        </select></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
+          <input type="password" id="agKey" placeholder="${AGENT_PROVIDERS[agentProvider()].ph}" value="${esc(key)}" style="max-width:250px">
+          <select id="agModel" style="max-width:230px">${AGENT_PROVIDERS[agentProvider()].models.map(([id,n])=>`<option value="${id}"${agentModel()===id?" selected":""}>${n}</option>`).join("")}</select>
           <button class="btn small" onclick="saveAgentCfg()">Zapisz</button>
           ${key?`<button class="btn small ghost" onclick="clearAgentKey()">Usuń klucz</button>`:""}
         </div>
-        <p class="note" style="margin-top:6px">Klucz zostaje wyłącznie na tym urządzeniu — poza stanem aplikacji i poza eksportem. Za użycie płacisz bezpośrednio u Anthropic (console.anthropic.com).</p>`
+        <p class="note" style="margin-top:6px">Klucz zostaje wyłącznie na tym urządzeniu — poza stanem aplikacji i poza eksportem. Za użycie płacisz bezpośrednio u dostawcy (${AGENT_PROVIDERS[agentProvider()].console}). Zasady Konstytucji egzekwuje aplikacja — są identyczne niezależnie od dostawcy.</p>`
         :`<p class="note" style="margin-top:6px">Silnik lokalny działa w całości na Twoim urządzeniu — żadne dane nie wychodzą na zewnątrz, bez kont i kluczy. Jakość odpowiedzi jest niższa niż w chmurze; modele będą się zmieniać, silniki można przełączać w każdej chwili.</p>`}</details>`}
     <div id="agentOut"></div></div>`;
 }
