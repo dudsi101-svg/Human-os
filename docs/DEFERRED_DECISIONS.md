@@ -192,6 +192,10 @@ z ADR, schematem i mapowaniem ryzyka wyzwań publicznych na R0–R4.
 Część 2 (ModerationCase i model ról moderacyjnych) pozostaje OTWARTA —
 founder świadomie jej nie wybrał; propozycja modelu ról powstanie przed
 jakimkolwiek kodem moderacji.
+**Uzupełnienie (2026-08-17, później):** founder zatwierdził także granice
+klas mapowania R0–R4 („Tak, róbmy to" — tabela przedstawiona wprost);
+`policies/commons.challenge.risk.json` przechodzi ze statusu SZKIC na
+ZATWIERDZONE, pozostając dokumentacyjne do czasu kodu Commons.
 
 ## DD-010 · Wzorzec HOSId w schemacie vs identyfikatory silnika (RESOLVED 2026-08-17)
 Wykryte 2026-08-17 podczas wdrażania DD-003, przez pierwszą próbę

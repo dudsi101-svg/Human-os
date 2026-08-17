@@ -1,7 +1,9 @@
 {
   "config": "Human OS Commons Challenge Risk Mapping",
   "version": "0.1.0",
-  "status": "SZKIC — struktura zatwierdzona z DD-009 cz. 1 (2026-08-17); granice klas zaproponowane przez wykonawcę i wymagają potwierdzenia foundera przed pierwszym użyciem operacyjnym. Do tego czasu artefakt jest wyłącznie dokumentacyjny — nic go nie interpretuje (precedens: policies/constitutional.policies.json).",
+  "status": "ZATWIERDZONE przez foundera 2026-08-17 — pełna tabela klas przedstawiona wprost w sesji roboczej, zgoda: „Tak, róbmy to\" (w odpowiedzi na pytanie o podpis granic klas). Artefakt pozostaje dokumentacyjny do czasu powstania kodu Commons — nic go jeszcze nie interpretuje (precedens: policies/constitutional.policies.json); publikacja R4 i kontrolna część R3 strukturalnie niedostępna do rozstrzygnięcia DD-009 cz. 2 (moderacja).",
+  "approved_by": "founder (dudsi101-svg)",
+  "approved_at": "2026-08-17",
   "source": "docs/COMMONS_MODULE_DIGEST.md §7 (klasyfikacja ryzyka wyzwań publicznych) + Konstytucja R0–R4",
   "source_constraints_verbatim": [
     "Publiczne wyzwania zdrowotne/finansowe/psychologiczne: klasyfikacja ryzyka.",
