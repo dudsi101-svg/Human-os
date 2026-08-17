@@ -86,11 +86,15 @@ i podpisem).
   zastrzeżenie zdrowotne w ustawieniach; dane wyłącznie w `localStorage`
   przeglądarki użytkownika — repozytorium i Pages nie przechowują żadnych
   danych osób.
-- **Uzasadnienie akceptacji:** *(do wypełnienia przy podpisie — wymaga
-  decyzji DD-015: utrzymać deploy z bramką, czy ograniczyć widoczność do
-  czasu przeglądu prawnego)*.
+- **Uzasadnienie akceptacji:** decyzja DD-015 wariant (a) — deploy
+  pozostaje publiczny z twardą bramką onboardingu; dane wyłącznie
+  w `localStorage` przeglądarki użytkownika; przegląd prawny nastąpi
+  **przed jakąkolwiek promocją linku** poza krąg testerów (szkic pakietu
+  do przeglądu: `docs/LEGAL_REVIEW_PACKAGE.md`).
 - **Warunki ponownego rozpatrzenia:** przegląd prawny (RODO/wyrób
   medyczny/regulaminy dostawców API); dodanie jakiegokolwiek backendu lub
   kont; udostępnianie linku poza krąg testerów.
-- **Status:** PROPONOWANE — **czeka na podpis foundera** (powiązane:
-  DD-015) · **Podpis:** — · **Data:** —
+- **Status:** ZAAKCEPTOWANE · **Podpis:** founder (dudsi101-svg) — decyzja
+  DD-015 wariant (a) wybrana wprost 2026-08-17 w sesji roboczej („Tak,
+  należy wdrożyć te rozszerzenia" + wybór „(a) Utrzymać z bramką") ·
+  **Data:** 2026-08-17
