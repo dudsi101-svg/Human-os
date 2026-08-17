@@ -306,11 +306,46 @@
   header.bar .day { font-size: 13.5px; color: var(--ink-2); }
   header.bar .day b { color: var(--ink); font-variant-numeric: tabular-nums; }
   header.bar .spacer { flex: 1; }
+  header.bar .hbrand { display: flex; align-items: center; gap: 9px; }
+  header.bar .hbrand svg { width: 23px; height: 23px; color: var(--accent); flex: none; display: block; }
+  nav.tabs .navsep { width: 1px; align-self: stretch; margin: 5px 7px; background: var(--line); flex: none; }
+  nav.tabs button .ti { margin-right: 6px; opacity: .7; font-size: 13px; }
+  .bnav { display: none; }
+  .sheet { display: none; }
+  @media (max-width: 720px) {
+    header.bar { padding: 9px 12px; gap: 8px; flex-wrap: nowrap; }
+    header.bar .mark { font-size: 16.5px; }
+    header.bar .hbrand svg { width: 20px; height: 20px; }
+    header.bar #hdrPrem { display: none !important; }
+    header.bar #hdrNameWrap { display: none; }
+    header.bar .btn.small { padding: 6px 10px; font-size: 12.5px; white-space: nowrap; }
+    header.bar .theme-toggle { width: 30px; height: 30px; flex: none; }
+    #tabs { display: none; }
+    main.panel { padding-bottom: 92px; }
+    .bnav { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      background: var(--surface); border-top: 1px solid var(--line);
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); justify-content: space-around; }
+    .bnav button { flex: 1; max-width: 96px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+      background: none; border: none; color: var(--ink-3); font-size: 11px; padding: 7px 4px; border-radius: 12px; }
+    .bnav button .bi { font-size: 19px; line-height: 1; }
+    .bnav button.active { color: var(--ink); background: var(--accent-tint); }
+    .sheet.open { display: block; position: fixed; inset: 0; z-index: 50; }
+    .sheet .backdrop { position: absolute; inset: 0; background: rgba(20,22,16,.45); }
+    .sheet .panel-sh { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface);
+      border-radius: 18px 18px 0 0; border-top: 1px solid var(--line);
+      padding: 14px 14px calc(16px + env(safe-area-inset-bottom)); }
+    .sheet h4 { font-size: 12.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; margin: 4px 4px 10px; }
+    .sheet .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .sheet .tiles button { display: flex; flex-direction: column; gap: 5px; align-items: center;
+      background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px;
+      padding: 13px 6px; font-size: 12px; color: var(--ink-2); }
+    .sheet .tiles button .bi { font-size: 20px; }
+  }
   nav.tabs { display: flex; gap: 2px; overflow-x: auto; padding: 0 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
   nav.tabs { padding: 8px 12px; gap: 4px; }
   nav.tabs button {
-    background: none; border: 1px solid transparent; color: var(--ink-3); padding: 7px 14px;
-    font-size: 14px; border-radius: 999px; white-space: nowrap; transition: background .15s;
+    background: none; border: 1px solid transparent; color: var(--ink-3); padding: 7px 11px;
+    font-size: 13.5px; border-radius: 999px; white-space: nowrap; transition: background .15s;
   }
   nav.tabs button:hover { color: var(--ink-2); }
   nav.tabs button.active { color: var(--ink); background: var(--accent-tint); border-color: var(--line); }
@@ -476,14 +511,35 @@
 <div id="app">
   <div id="safeBanner">SAFE MODE aktywny — agenci, symulacje i rekomendacje wyłączone. Dostępne: dane, konfiguracja, eksport, odzyskiwanie.</div>
   <header class="bar">
-    <span class="mark">Human OS</span>
-    <span class="day">Dzień <b id="hdrDay">1</b> · <span id="hdrName"></span></span>
+    <span class="hbrand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10.4"/><path d="M12 3 L17.29 19.28 L3.44 9.22 L20.56 9.22 L6.71 19.28 Z" stroke-linejoin="round"/></svg><span class="mark">Human OS</span></span>
+    <span class="day">Dzień <b id="hdrDay">1</b><span id="hdrNameWrap"> · <span id="hdrName"></span></span></span>
     <span class="pill verd" id="hdrPrem" style="display:none">★ Premium</span>
     <span class="spacer"></span>
     <button class="btn small" id="btnNewDay" onclick="newDay()">Nowy dzień →</button>
     <button class="theme-toggle" onclick="cycleTheme()" id="themeBtn" title="Motyw">◐</button>
   </header>
   <nav class="tabs" id="tabs"></nav>
+  <nav class="bnav" id="bnav" aria-label="Nawigacja dolna">
+    <button data-v="pulpit" onclick="showView('pulpit')"><span class="bi">◐</span>Pulpit</button>
+    <button data-v="omnie" onclick="showView('omnie')"><span class="bi">◉</span>O mnie</button>
+    <button data-v="decyzje" onclick="showView('decyzje')"><span class="bi">✦</span>Decyzje</button>
+    <button data-v="eksperymenty" onclick="showView('eksperymenty')"><span class="bi">◇</span>Eksper.</button>
+    <button id="bnavMore" onclick="toggleMoreSheet(true)"><span class="bi">⋯</span>Więcej</button>
+  </nav>
+  <div class="sheet" id="moreSheet">
+    <div class="backdrop" onclick="toggleMoreSheet(false)"></div>
+    <div class="panel-sh">
+      <h4>Więcej</h4>
+      <div class="tiles">
+        <button onclick="showView('symulator')"><span class="bi">⟲</span>Symulator</button>
+        <button onclick="showView('plan')"><span class="bi">◷</span>Plan</button>
+        <button onclick="showView('wspolnota')"><span class="bi">❋</span>Wspólnie</button>
+        <button onclick="showView('rejestr')"><span class="bi">☰</span>Rejestr</button>
+        <button onclick="showView('konstytucja')"><span class="bi">⚖︎</span>Konstytucja</button>
+        <button onclick="showView('odzyskiwanie')"><span class="bi">↺</span>Odzyskiwanie</button>
+      </div>
+    </div>
+  </div>
   <main class="panel">
 
     <!-- PULPIT -->
@@ -1129,19 +1185,27 @@ function finishOnboarding(){
 }
 
 /* ---------- shell ---------- */
-const VIEWS=[["pulpit","Pulpit"],["omnie","O mnie"],["decyzje","Decyzje"],["symulator","Symulator"],["eksperymenty","Eksperymenty"],["plan","Plan"],["wspolnota","Wspólnie"],["rejestr","Rejestr"],["konstytucja","Konstytucja"],["odzyskiwanie","Odzyskiwanie"]];
+const VIEWS=[["pulpit","Pulpit","◐"],["omnie","O mnie","◉"],["decyzje","Decyzje","✦"],["symulator","Symulator","⟲"],["eksperymenty","Eksperymenty","◇"],["plan","Plan","◷"],["wspolnota","Wspólnie","❋"],["rejestr","Rejestr","☰"],["konstytucja","Konstytucja","⚖︎"],["odzyskiwanie","Odzyskiwanie","↺"]];
+const NAV_GROUPS=[["pulpit","omnie"],["decyzje","symulator","eksperymenty","plan"],["wspolnota"],["rejestr","konstytucja","odzyskiwanie"]];
 function enterApp(){
   $("onboarding").style.display="none";
   $("app").style.display="block";
-  $("tabs").innerHTML = VIEWS.map(([id,t])=>`<button data-v="${id}" onclick="showView('${id}')">${t}</button>`).join("");
+  $("tabs").innerHTML = NAV_GROUPS.map(g=>g.map(id=>{
+    const v=VIEWS.find(x=>x[0]===id);
+    return `<button data-v="${v[0]}" onclick="showView('${v[0]}')"><span class="ti">${v[2]}</span>${v[1]}</button>`;
+  }).join("")).join(`<span class="navsep"></span>`);
   buildDecSelect();
   buildSimSelect();
   showView("pulpit");
   renderAll();
 }
+function toggleMoreSheet(open){ const s=$("moreSheet"); if(s) s.classList.toggle("open", !!open); }
 function showView(id){
   document.querySelectorAll("section.view").forEach(s=>s.classList.toggle("active", s.id==="view-"+id));
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active", b.dataset.v===id));
+  document.querySelectorAll(".bnav button[data-v]").forEach(b=>b.classList.toggle("active", b.dataset.v===id));
+  const mb=$("bnavMore"); if(mb) mb.classList.toggle("active", ["symulator","plan","wspolnota","rejestr","konstytucja","odzyskiwanie"].includes(id));
+  const ms=$("moreSheet"); if(ms) ms.classList.remove("open");
   ["omnie","eksperymenty","konstytucja","wspolnota"].forEach(v=>closeSub(v));
   if(id==="pulpit") renderPulpit();
   if(id==="omnie"){ renderProfile(); renderChat(); renderSelfModel(); renderOmnieHub(); }
