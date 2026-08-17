@@ -53,8 +53,8 @@ class UnknownReferencesTests(unittest.TestCase):
         self.rt.register_tool("CAP-READ", lambda a: "ok")
 
     def _req(self, **over):
-        base = dict(request_id="R", agent_id="A", capability_id="CAP-READ",
-                    action="read", resource="x", arguments={})
+        base = {"request_id": "R", "agent_id": "A", "capability_id": "CAP-READ",
+                "action": "read", "resource": "x", "arguments": {}}
         base.update(over)
         return InvocationRequest(**base)
 
