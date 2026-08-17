@@ -33,10 +33,15 @@ Durable events go to an optional ``EventStore``/``SQLiteEventStore`` via the
 same interim pattern DD-003 used for recovery before ``RECOVERY_*`` types
 existed; dedicated ``EXPERIMENT_*`` event types are future vocabulary work.
 
-This is a bounded slice: adaptive experiments (§28), the parallel-portfolio
-limits (§29), trajectory model (§30), community contribution (§38), and the
-remaining quality scales (EC/MQ/PF/DQ/CA/PE) are specified but not yet
-implemented here.
+This is a bounded slice. Second increment adds: the EC/MQ/PF/DQ/CA/PE
+quality scales as ordinal labels (class assignment from raw data would
+need an explicit, versioned interpretation config — the DD-006 pattern —
+and is not implemented), protocol adaptation with the §28.2 bans the
+digest quotes verbatim (full five-item list awaits source bytes, DD-017),
+and ``ExperimentPortfolio`` (§29) whose active-changes limit is a
+mandatory explicit argument because the digest does not carry the
+concrete number (DD-017). Still not implemented: adaptive-experiment
+stop rules (§28.3), trajectory model (§30), community contribution (§38).
 """
 
 from __future__ import annotations
@@ -166,6 +171,78 @@ class MetricKind(str, Enum):
     GUARD = "GUARD"  # protective metric with its own stop threshold ("antywynik")
 
 
+class ContractCompleteness(str, Enum):
+    """EC0..EC5 (source §5.2). Ordinal class labels only — assigning a class
+    from raw data requires an explicit, versioned interpretation config (the
+    DD-006 pattern); this module never infers a class silently."""
+
+    EC0 = "EC0"
+    EC1 = "EC1"
+    EC2 = "EC2"
+    EC3 = "EC3"
+    EC4 = "EC4"
+    EC5 = "EC5"
+
+
+class MeasurementQuality(str, Enum):
+    """MQ0..MQ5 (source §9.3). Labels only — see ContractCompleteness note."""
+
+    MQ0 = "MQ0"
+    MQ1 = "MQ1"
+    MQ2 = "MQ2"
+    MQ3 = "MQ3"
+    MQ4 = "MQ4"
+    MQ5 = "MQ5"
+
+
+class ProtocolFidelity(str, Enum):
+    """PF0..PF5 (source §12.2). Labels only. Compliance failures are never
+    described in moralizing terms (source §12.4 "Zakaz moralizacji
+    zgodności") — these are classes of fidelity, not judgments of character."""
+
+    PF0 = "PF0"
+    PF1 = "PF1"
+    PF2 = "PF2"
+    PF3 = "PF3"
+    PF4 = "PF4"
+    PF5 = "PF5"
+
+
+class DataQuality(str, Enum):
+    """DQ0..DQ5 (source §19.2). Labels only — see ContractCompleteness note."""
+
+    DQ0 = "DQ0"
+    DQ1 = "DQ1"
+    DQ2 = "DQ2"
+    DQ3 = "DQ3"
+    DQ4 = "DQ4"
+    DQ5 = "DQ5"
+
+
+class CausalConfidence(str, Enum):
+    """CA0..CA5 (source §26.2). Labels only. Interpretive-domain results can
+    never raise this scale (ADR-EXP-005)."""
+
+    CA0 = "CA0"
+    CA1 = "CA1"
+    CA2 = "CA2"
+    CA3 = "CA3"
+    CA4 = "CA4"
+    CA5 = "CA5"
+
+
+class PersonalEvidence(str, Enum):
+    """PE0..PE5, the personal-evidence ladder (source appendix L). Personal
+    evidence is never automatically population evidence (source §0.3)."""
+
+    PE0 = "PE0"
+    PE1 = "PE1"
+    PE2 = "PE2"
+    PE3 = "PE3"
+    PE4 = "PE4"
+    PE5 = "PE5"
+
+
 _FORBIDDEN_ACTOR_ROLES = {
     AuthorityRole.AGENT,
     AuthorityRole.SERVICE,
@@ -268,11 +345,13 @@ class Experiment:
     specialist_approved_by: str | None = None  # required for XP-7
     legality_confirmed: bool = False  # required for XP-7
     monitoring_plan: str | None = None  # required for XP-7
+    infrastructural: bool = False  # §29.3: confirmed-value routines in maintenance
     id: str = field(default_factory=lambda: _new_id("XPR"))
     created_at: str = field(default_factory=_now)
     observations: list[Observation] = field(default_factory=list)
     safety_events: list[SafetyEvent] = field(default_factory=list)
     hypothesis_history: list[Hypothesis] = field(default_factory=list)
+    protocol_history: list[ExperimentProtocol] = field(default_factory=list)
     launch_thresholds: dict[str, float | None] = field(default_factory=dict)
     result: ExperimentResult | None = None
     escalated: bool = False
@@ -490,6 +569,60 @@ class ExperimentEngine:
             experiment.launch_thresholds.get(m.id) != m.stop_threshold for m in experiment.metrics
         )
 
+    # -- protocol adaptation (source §28) ----------------------------------
+
+    def adapt_protocol(
+        self,
+        experiment: Experiment,
+        new_description: str,
+        actor_role: AuthorityRole,
+        adds_new_intervention: bool = False,
+    ) -> TransitionResult:
+        """Versioned protocol adaptation with the source's structural bans.
+
+        Only the bans the digest quotes verbatim from §28.2 are enforced
+        here; the full five-item list awaits the source bytes (DD-017):
+        - removing unfavorable days or adverse events to improve the picture
+          is impossible by construction — no deletion API exists for
+          ``observations`` or ``safety_events``;
+        - stacking another intervention while the current one runs is
+          refused ("Automatyczne dokładanie kolejnej interwencji, gdy
+          pierwsza nie działa");
+        - agents cannot adapt protocols at all (ADR-EXP-004).
+        """
+        if actor_role in _FORBIDDEN_ACTOR_ROLES:
+            result = TransitionResult(
+                False, experiment.state, (f"actor role {actor_role.value} may not adapt a protocol",)
+            )
+            self._emit("experiment_adaptation_refused", experiment, {"reasons": list(result.reasons)})
+            return result
+        if adds_new_intervention and experiment.state in (CycleState.ACTIVE, CycleState.HOLD):
+            result = TransitionResult(
+                False,
+                experiment.state,
+                ("banned adaptation (§28.2): adding another intervention while one is running",),
+            )
+            self._emit("experiment_adaptation_refused", experiment, {"reasons": list(result.reasons)})
+            return result
+        if experiment.state in (CycleState.COMPLETED, CycleState.STOPPED, CycleState.INCONCLUSIVE):
+            return TransitionResult(
+                False, experiment.state, ("cannot adapt a concluded experiment",)
+            )
+        old = experiment.protocol
+        experiment.protocol_history.append(old)
+        experiment.protocol = ExperimentProtocol(
+            description=new_description,
+            duration_days=old.duration_days,
+            stop_rules=list(old.stop_rules),
+            version=old.version + 1,
+        )
+        self._emit(
+            "experiment_protocol_adapted",
+            experiment,
+            {"supersedes": old.id, "version": experiment.protocol.version},
+        )
+        return TransitionResult(True, experiment.state)
+
     # -- conclusion --------------------------------------------------------
 
     def conclude(
@@ -528,3 +661,63 @@ class ExperimentEngine:
             },
         )
         return experiment.result
+
+
+_PORTFOLIO_ACTIVE_STATES = {CycleState.BASELINE, CycleState.ACTIVE, CycleState.HOLD}
+
+
+@dataclass(frozen=True)
+class PortfolioDecision:
+    admitted: bool
+    reasons: tuple[str, ...] = ()
+
+
+class ExperimentPortfolio:
+    """Parallel-experiment portfolio (source §29).
+
+    The source caps the number of simultaneously active changes but the
+    digest does not carry the concrete number, so the limit is an explicit,
+    mandatory constructor argument with no default (the DD-006/DD-007
+    configuration-required pattern; see DD-017). Infrastructural
+    experiments (§29.3 — confirmed-value routines such as a fixed sleep
+    time or prescribed rehabilitation) move to maintenance and do not
+    compete with active hypotheses for attention, so they never count
+    against the limit. Interactions between experiments are recorded as
+    declared context, never silently inferred.
+    """
+
+    def __init__(self, max_active_experiments: int) -> None:
+        if max_active_experiments < 1:
+            raise ValueError("max_active_experiments must be a positive, explicit limit")
+        self.max_active_experiments = max_active_experiments
+        self._experiments: dict[str, Experiment] = {}
+        self.interactions: list[dict[str, str]] = []
+
+    def active_count(self) -> int:
+        return sum(
+            1
+            for e in self._experiments.values()
+            if e.state in _PORTFOLIO_ACTIVE_STATES and not e.infrastructural
+        )
+
+    def admit(self, experiment: Experiment) -> PortfolioDecision:
+        if experiment.id in self._experiments:
+            return PortfolioDecision(False, ("experiment already in portfolio",))
+        if not experiment.infrastructural and self.active_count() >= self.max_active_experiments:
+            reason = (
+                f"portfolio limit reached ({self.max_active_experiments} active changes); "
+                "attention spread over more stops being attention (§29.1)"
+            )
+            return PortfolioDecision(False, (reason,))
+        self._experiments[experiment.id] = experiment
+        return PortfolioDecision(True)
+
+    def declare_interaction(self, experiment_a: Experiment, experiment_b: Experiment, note: str) -> None:
+        """§29.2: possible interactions are declared context for analysis,
+        recorded verbatim — the portfolio never merges or reweighs results."""
+        self.interactions.append(
+            {"a": experiment_a.id, "b": experiment_b.id, "note": note, "at": _now()}
+        )
+
+    def experiments(self) -> list[Experiment]:
+        return list(self._experiments.values())

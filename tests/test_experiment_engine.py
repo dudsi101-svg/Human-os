@@ -268,3 +268,68 @@ class TestProvenanceAndFirewall(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAdaptationAndPortfolio(unittest.TestCase):
+    def setUp(self):
+        from hos_engine.experiment_engine import ExperimentPortfolio
+
+        self.engine = ExperimentEngine()
+        self.portfolio_cls = ExperimentPortfolio
+        self.exp = _experiment()
+        self.engine.launch(self.exp, _master_test(), AuthorityRole.OWNER)
+        self.engine.activate(self.exp)
+
+    def test_adaptation_versions_protocol_and_keeps_history(self):
+        old = self.exp.protocol
+        result = self.engine.adapt_protocol(self.exp, "walk moved to before dinner", AuthorityRole.OWNER)
+        self.assertTrue(result.applied)
+        self.assertEqual(self.exp.protocol.version, old.version + 1)
+        self.assertIn(old, self.exp.protocol_history)
+
+    def test_stacking_intervention_mid_run_is_banned(self):
+        result = self.engine.adapt_protocol(
+            self.exp, "walk plus new supplement", AuthorityRole.OWNER, adds_new_intervention=True
+        )
+        self.assertFalse(result.applied)
+        self.assertIn("§28.2", result.reasons[0])
+
+    def test_agent_cannot_adapt_protocol(self):
+        result = self.engine.adapt_protocol(self.exp, "tweak", AuthorityRole.AGENT)
+        self.assertFalse(result.applied)
+
+    def test_no_deletion_api_for_observations_or_safety_events(self):
+        banned = [n for n in dir(ExperimentEngine) if "remove" in n or "delete" in n]
+        self.assertEqual(banned, [])
+
+    def test_portfolio_limit_is_explicit_and_enforced(self):
+        with self.assertRaises(TypeError):
+            self.portfolio_cls()  # no default limit exists on purpose (DD-017)
+        with self.assertRaises(ValueError):
+            self.portfolio_cls(0)
+        portfolio = self.portfolio_cls(1)
+        self.assertTrue(portfolio.admit(self.exp).admitted)
+        second = _experiment()
+        engine2 = ExperimentEngine()
+        engine2.launch(second, _master_test(), AuthorityRole.OWNER)
+        decision = portfolio.admit(second)
+        self.assertFalse(decision.admitted)
+        self.assertIn("portfolio limit", decision.reasons[0])
+
+    def test_infrastructural_experiments_do_not_compete(self):
+        portfolio = self.portfolio_cls(1)
+        portfolio.admit(self.exp)
+        infra = _experiment(infrastructural=True)
+        engine2 = ExperimentEngine()
+        engine2.launch(infra, _master_test(), AuthorityRole.OWNER)
+        self.assertTrue(portfolio.admit(infra).admitted)
+        self.assertEqual(portfolio.active_count(), 1)
+
+    def test_interactions_are_declared_not_inferred(self):
+        portfolio = self.portfolio_cls(2)
+        second = _experiment()
+        portfolio.admit(self.exp)
+        portfolio.admit(second)
+        portfolio.declare_interaction(self.exp, second, "both touch evening routine")
+        self.assertEqual(len(portfolio.interactions), 1)
+        self.assertEqual(portfolio.interactions[0]["note"], "both touch evening routine")

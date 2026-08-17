@@ -372,3 +372,23 @@ bezpłatny — podłoga ADR-APP-001 §2; płatna mogłaby być automatyzacja);
 (3) nie teraz — wartość niska do czasu wersji natywnej.
 **Tymczasowo:** import plików (XML/CSV/JSON) + jawny zapis średnich do
 modelu pokrywa potrzebę twardych mierników eksperymentów.
+
+## DD-017 · Warstwa 6: brakujące szczegóły §28/§29 (pełna lista zakazów adaptacji, limit portfela) (OPEN)
+Drugi przyrost `hos_engine/experiment_engine.py` (2026-08-17) wdrożył
+adaptacje protokołu i portfel równoległych eksperymentów, ale digest
+(`docs/LAYER_6_EXPERIMENT_ENGINE_DIGEST.md`) nie niesie pełnej treści
+źródła: z pięciu zakazanych adaptacji (§28.2) cytuje dosłownie dwie
+(usuwanie niekorzystnych dni/zdarzeń dla poprawy obrazu; automatyczne
+dokładanie kolejnej interwencji), a §29.1 nie podaje konkretnej liczby
+limitu aktywnych zmian.
+**Wdrożone tymczasowo (wzorzec DD-006/DD-007 — konfiguracja wymagana,
+zero domyślnych):** dwa cytowane zakazy strukturalnie (brak API usuwania
+obserwacji/zdarzeń; odmowa dokładania interwencji w trakcie); limit
+portfela jako obowiązkowy jawny argument konstruktora bez wartości
+domyślnej; adaptacje wersjonowane, historia zachowana.
+**Do decyzji foundera / do źródła:** (1) pełna lista pięciu zakazów §28.2
+i reguły zatrzymania adaptacji §28.3 — najlepiej przez ponowny odczyt
+oryginalnego DOCX Warstwy 6; (2) kanoniczna wartość limitu §29.1 (aplikacja
+używa dziś 3 równoległych eksperymentów + 5 celów — przyjąć te wartości?).
+**Rekomendacja:** dosłać/odczytać źródło zamiast zgadywać; do tego czasu
+konfiguracja jawna przy każdym użyciu.
