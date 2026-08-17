@@ -7,7 +7,7 @@ packages = ["hos_engine"]
 
 [project]
 name = "human-os-engine"
-version = "0.9.0"
+version = "0.10.0a1"
 description = "Reference runtime for the Human OS constitutional protocol and engine."
 readme = "README.md"
 license = "Apache-2.0"

@@ -9,9 +9,15 @@ and generative flows of value.
 
 ## Current release
 
-**Human OS Engine 0.9.0 — Protocol, Identity and Security**
+**Human OS Engine 0.10.0-alpha.1 — Execution Foundation and Sovereign Recovery**
 
 Status: **ALPHA — reference implementation**
+
+Version and maturity are separate dimensions (founder decision,
+2026-08-17): growing the engine justifies a new minor version, but it
+does not imply production readiness, and release numbering is
+independent of the roadmap's 0.9 → 1.0 axis. See `CHANGELOG.md` for the
+full delta since 0.9.0.
 
 The engine is a reference implementation of the Human OS protocol and
 constitution. Individual components carry their own maturity statuses in
@@ -48,7 +54,7 @@ a documented security review per DD-008) remains open.
 - GitHub Actions CI,
 - contribution and governance framework.
 
-### Added since 0.9.0 (execution-foundation and layer slices, 2026-08)
+### Added in 0.10.0-alpha.1 (execution-foundation and layer slices, 2026-08)
 
 - immutable context snapshots and a minimum execution contract (`hos_core`),
 - Hub entity and relation registries with attributed, non-destructive merges,
@@ -65,7 +71,16 @@ a documented security review per DD-008) remains open.
 - purpose-limited consent gating for model writes,
 - durable audit trails for self-model and recovery on the hash chain,
 - I/O contract docs: `docs/self-model-contract.md`, `docs/recovery-contract.md`,
-- zero mypy debt across the engine.
+- zero mypy debt across the engine, enforced as a CI gate,
+- canonical recovery event types (`RECOVERY_ACTIVATED/DEACTIVATED/REFUSED`,
+  `ENTITY_FROZEN`) with historical `STATE_OBSERVED` events kept readable,
+- skeleton types for the Layer 5 scales DI/IQ/AR — structure, measurement
+  and interpretation policy strictly separated; no thresholds exist until
+  the founder approves a versioned configuration,
+- Emergency Root skeleton: versioned k-of-n policy with no defaults,
+  custodian key descriptors without key material, full append-only audit,
+- the HOSId pattern extended to the engine's hex identifiers (DD-010),
+- an ADR index covering every decision record (`docs/adr/README.md`).
 
 See `docs/DEFERRED_DECISIONS.md` for decisions deliberately queued for the
 founder rather than resolved silently.
