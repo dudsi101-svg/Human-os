@@ -1,41 +1,64 @@
 # Prezentacja Human OS
 
-`Human-OS-prezentacja.pptx` — czternastoslajdowa prezentacja przeglądowa projektu
-(język polski), przeznaczona do przedstawienia Human OS osobie, która nie zna
-repozytorium.
+`Human-OS-prezentacja.pptx` — dwudziestoslajdowa prezentacja narracyjna (język polski),
+przeznaczona do przedstawienia Human OS osobie, która nie zna repozytorium.
+To opowieść z łukiem dramaturgicznym, nie katalog funkcji: pytanie → stawka →
+reguły → jedna intencja prześledzona od początku do końca → uczciwy epilog.
 
-## Zakres
+## Struktura
 
-1. Slajd tytułowy (wydanie 0.9.0, licencje, stos warstw)
-2. Czym Human OS jest, a czym nigdy nie będzie
-3. Odwrotne kryterium sukcesu (GEN-012)
-4. Pięć warstw i kierunek zależności
-5. Genom konstytucyjny — 15 genów
-6. Proof Kernel — 9 testów, 6 werdyktów
-7. Pętla wykonawcza — od intencji do poświadczenia
-8. Sovereign Recovery Kernel — 7 trybów awaryjnych
-9. Silnik decyzji (Warstwa 5) — bramy przed rankingiem
-10. Żywy model siebie — klasy epistemiczne i proweniencja
-11. Bezpieczeństwo i jawna deklaracja dojrzałości
-12. Stan implementacji w liczbach
-13. Roadmapa do 1.0
-14. Slajd zamykający
+**Akt I — Pytanie** (slajdy 2–5)
+Kto jest autorem twojego dnia · Dwie miary sukcesu (typowa metryka vs. GEN-012) ·
+Obietnica i granice.
+
+**Akt II — Reguły** (slajdy 6–9)
+Pięć warstw i kierunek zależności · Genom konstytucyjny (15 genów) ·
+Proof Kernel (9 testów, 6 werdyktów).
+
+**Akt III — Podróż** (slajdy 10–17)
+Jedna intencja przechodzi przez cały system: intencja → sześć bram → odmowa
+i zgoda zakresowa → abstencja przy sprzecznych danych → korekta modelu siebie →
+hamulec awaryjny → suwerenny eksport.
+
+**Epilog** (slajdy 18–20)
+Czego jeszcze nie ma · Gdzie jesteśmy dzisiaj (liczby + roadmapa) · Klamra:
+powrót do pytania otwierającego.
 
 Każdy slajd ma notatki prelegenta (`Widok prelegenta` w PowerPoint).
+
+## O bohaterce
+
+„Marta” z Aktu III jest **przykładem ilustracyjnym, nie prawdziwym przypadkiem
+użytkownika** — slajd otwierający akt mówi to wprost i to zdanie musi tam zostać.
+Każdy mechanizm, przez który przechodzi jej intencja, istnieje w kodzie:
+`ExecutionLoop` i `IntentOutcome.REFUSED_CONSENT` (`execution_loop.py`),
+`APPROVED_WITH_LIMITS` jako status porażki PROOF-003 (`proof.rules.json`),
+`AbstentionReason.CONTRADICTORY_EVIDENCE` (`decision_engine.py`),
+`reject`/`correct` przez łańcuch „supersedes” (`self_model.py`),
+tryby awaryjne i `export_sovereign_package()` (`recovery.py`).
 
 ## Źródła treści
 
 Wszystkie liczby i sformułowania pochodzą z repozytorium, stan na 2026-08-17:
 `README.md`, `constitution/README.md`, `genome.registry.json`, `proof.rules.json`,
 `ECOSYSTEM.md`, `ROADMAP.md`, `security/THREAT_MODEL.md`, `hos_engine/` oraz
-`docs/adr/`. Liczby na slajdzie „Stan implementacji” policzono bezpośrednio
-z drzewa plików (moduły, metody testowe, schematy, ADR-y).
+`docs/adr/`. Liczby na slajdzie „Gdzie jesteśmy dzisiaj” policzono bezpośrednio
+z drzewa plików (moduły, metody testowe, ADR-y).
 
-Slajd 11 celowo powtarza ostrzeżenie z `README.md` i `security/THREAT_MODEL.md`:
-wydanie **nie jest produkcyjne** (brak uwierzytelniania, autoryzacji, szyfrowania
-w spoczynku, niezależnego przeglądu bezpieczeństwa i kalibracji empirycznej).
-Nie usuwaj tego slajdu przy skracaniu prezentacji — jawność ograniczeń jest
-wymogiem konstytucyjnym (GEN-015).
+Slajd „Hamulec, którego nie da się zabrać” podaje klasy ryzyka za mapowaniem
+z `hos_engine/recovery.py` (`SAFE_MODE`/`READ_ONLY` = R0, `FREEZE`/`DISCONNECT`/
+`EXPORT` = R1, `ROLLBACK` = R2, `RECOVERY` = R3 — żaden tryb nie sięga R4).
+Przy edycji sprawdź to mapowanie w kodzie, a nie w pamięci.
+
+Slajd „Czego jeszcze nie ma” celowo powtarza ostrzeżenie z `README.md`
+i `security/THREAT_MODEL.md`: wydanie **nie jest produkcyjne** (brak
+uwierzytelniania, autoryzacji, szyfrowania w spoczynku, niezależnego przeglądu
+bezpieczeństwa i kalibracji empirycznej). Nie usuwaj tego slajdu przy skracaniu
+prezentacji — jawność ograniczeń jest wymogiem konstytucyjnym (GEN-015), a w tej
+opowieści pełni też rolę dramaturgiczną.
+
+Prezentacja nie zawiera żadnych statystyk o świecie zewnętrznym — świadomie,
+bo nie dałoby się ich zweryfikować w repozytorium.
 
 ## Ponowne wygenerowanie
 
@@ -47,8 +70,7 @@ node docs/presentation/build_presentation.js
 ```
 
 Edytuj `build_presentation.js`, nie sam `.pptx` — dzięki temu zmiany treści są
-widoczne w diffie. Po każdej zmianie liczb sprawdź, czy nadal zgadzają się
-z repozytorium.
+widoczne w diffie.
 
 ## Uwaga o zakresie
 

@@ -1,11 +1,16 @@
 /**
- * Generator prezentacji "Human OS — konstytucyjny protokół i silnik referencyjny".
+ * Generator prezentacji "Human OS — opowieść o autorstwie własnego życia".
  *
  * Uruchomienie:  node docs/presentation/build_presentation.js
  * Wynik:         docs/presentation/Human-OS-prezentacja.pptx
  *
+ * Struktura: trzy akty (Pytanie → Reguły → Podróż) plus epilog.
+ * Bohaterka „Marta” jest przykładem ilustracyjnym, nie prawdziwym przypadkiem;
+ * każdy mechanizm w jej historii istnieje w kodzie i jest opisany w ADR.
+ *
  * Źródła treści: README.md, constitution/README.md, genome.registry.json,
- * proof.rules.json, ECOSYSTEM.md, ROADMAP.md, hos_engine/*.py, docs/adr/*.
+ * proof.rules.json, ECOSYSTEM.md, ROADMAP.md, security/THREAT_MODEL.md,
+ * hos_engine/{policy,execution_loop,decision_engine,self_model,recovery}.py.
  */
 
 const pptxgen = require("pptxgenjs");
@@ -26,6 +31,7 @@ const TEAL = "2F7D8E"; // wsparcie
 const CRIMSON = "9E2B32"; // naruszenie / ostrzeżenie
 const GREY = "5B6280";
 const GREY_LT = "9AA0B8";
+const DIM = "C9CEE0";
 
 const H_FONT = "Cambria";
 const B_FONT = "Calibri";
@@ -38,7 +44,7 @@ const M = 0.7; // margines
 const pres = new pptxgen();
 pres.layout = "LAYOUT_WIDE";
 pres.author = "Human OS Initiative";
-pres.title = "Human OS — konstytucyjny protokół i silnik referencyjny";
+pres.title = "Human OS — opowieść o autorstwie własnego życia";
 
 /* -------------------------------------------------------------- pomocnicze */
 
@@ -46,15 +52,16 @@ pres.title = "Human OS — konstytucyjny protokół i silnik referencyjny";
 function chip(slide, x, y, text, opts) {
   const o = opts || {};
   const w = o.w || 1.15;
+  const h = o.h || 0.28;
   slide.addShape(pres.ShapeType.roundRect, {
-    x, y, w, h: o.h || 0.28,
+    x, y, w, h,
     rectRadius: 0.06,
     fill: { color: o.fill || GOLD },
     line: { color: o.fill || GOLD, width: 0 },
   });
   slide.addText(text, {
-    x, y, w, h: o.h || 0.28,
-    align: "center", valign: "middle", margin: 0,
+    x, y, w, h,
+    align: o.align || "center", valign: "middle", margin: 0,
     fontFace: M_FONT, fontSize: o.fontSize || 10, bold: true,
     color: o.color || INK,
   });
@@ -115,12 +122,38 @@ function footer(slide, text) {
   });
 }
 
+// Przerywnik aktu: cyfra rzymska w tle, tytuł aktu, jedno zdanie premisy.
+function actBreak(numeral, name, premise, note) {
+  const s = pres.addSlide();
+  darkBg(s);
+  s.addText(numeral, {
+    x: 8.3, y: 1.1, w: 4.3, h: 4.6, margin: 0,
+    align: "center", valign: "middle",
+    fontFace: H_FONT, fontSize: 190, bold: true, color: INK_SOFT,
+  });
+  chip(s, M, 2.35, "AKT " + numeral, { w: 1.35, fill: GOLD });
+  s.addText(name, {
+    x: M, y: 2.85, w: 7.3, h: 0.95, margin: 0,
+    fontFace: H_FONT, fontSize: 44, bold: true, color: PAPER, valign: "middle",
+  });
+  s.addText(premise, {
+    x: M, y: 3.95, w: 7.2, h: 0.8, margin: 0,
+    fontFace: B_FONT, fontSize: 16, color: GREY_LT, lineSpacing: 24, valign: "top",
+  });
+  if (note) {
+    s.addText(note, {
+      x: M, y: 4.95, w: 7.2, h: 0.4, margin: 0,
+      fontFace: B_FONT, fontSize: 12, italic: true, color: GOLD, valign: "middle",
+    });
+  }
+  return s;
+}
+
 /* ============================================================ 1. TYTUŁ === */
 {
   const s = pres.addSlide();
   darkBg(s);
 
-  // motyw warstw po prawej: pięć pasm architektury
   const bands = ["Applications", "SDK / Hub", "Engine", "HOSS / HOSP", "Constitution"];
   bands.forEach((b, i) => {
     const y = 1.35 + i * 0.82;
@@ -144,7 +177,7 @@ function footer(slide, text) {
     fontFace: H_FONT, fontSize: 60, bold: true, margin: 0,
     color: PAPER, valign: "middle",
   });
-  s.addText("Konstytucyjny protokół i silnik referencyjny", {
+  s.addText("Opowieść o autorstwie własnego życia", {
     x: M, y: 3.05, w: 7.4, h: 0.5,
     fontFace: B_FONT, fontSize: 21, margin: 0,
     color: GOLD, valign: "middle",
@@ -162,30 +195,139 @@ function footer(slide, text) {
   chip(s, 1.8, 4.85, "BETA", { w: 0.9, fill: INK_SOFT, color: PAPER });
   chip(s, 2.85, 4.85, "Apache-2.0 / CC BY 4.0", { w: 2.5, fill: INK_SOFT, color: PAPER });
 
-  s.addText("Protocol, Identity and Security  ·  wydanie 0.9.0  ·  sierpień 2026", {
-    x: M, y: 6.4, w: 7.4, h: 0.35,
+  s.addText("Konstytucyjny protokół i silnik referencyjny  ·  wydanie 0.9.0  ·  sierpień 2026", {
+    x: M, y: 6.4, w: 7.6, h: 0.35,
     fontFace: B_FONT, fontSize: 11, margin: 0,
     color: GREY_LT, valign: "middle",
   });
 
   s.addNotes(
-    "Human OS to nie system operacyjny w potocznym sensie. To protokół konstytucyjny " +
-    "wraz z referencyjną implementacją w Pythonie. Repozytorium jest silnikiem " +
-    "referencyjnym — częścią szerszej inicjatywy, nie jej całością."
+    "Trzy akty: Pytanie (dlaczego to w ogóle powstało), Reguły (czym są związane " +
+    "obietnice), Podróż (jak wygląda jedna intencja od początku do końca). " +
+    "Epilog mówi, czego jeszcze nie ma."
   );
 }
 
-/* ================================================ 2. CZYM JEST / NIE JEST = */
+/* ====================================================== 2. AKT I ========= */
+{
+  const s = actBreak(
+    "I", "Pytanie",
+    "Zanim powstała pierwsza linia kodu, było pytanie: kto właściwie pisze scenariusz " +
+    "twojego dnia — ty czy systemy, z których korzystasz?"
+  );
+  s.addNotes("Ten akt nie mówi jeszcze o technologii. Mówi o stawce.");
+}
+
+/* ============================================ 3. HOOK: PYTANIE =========== */
 {
   const s = pres.addSlide();
   lightBg(s);
-  title(s, "Czym jest — i czym nigdy nie będzie", false,
-    "Obietnica systemu i jego jawne granice (Konstytucja, rozdz. 1)");
+  title(s, "Kto jest autorem twojego dnia?", false,
+    "Zwykły poranek, w którym większość wyborów została podjęta zanim się obudziłeś");
+
+  s.addText(
+    "Nie chodzi o spisek. Chodzi o kierunek optymalizacji: systemy, które nas otaczają, " +
+    "są strojone pod własną metrykę — a ta rzadko brzmi „niech ten człowiek będzie bardziej " +
+    "samodzielny”.",
+    {
+      x: M, y: 1.95, w: 5.9, h: 1.6, margin: 0,
+      fontFace: B_FONT, fontSize: 15, color: INK, lineSpacing: 26, valign: "top",
+    }
+  );
+  s.addText(
+    "Pytanie nie jest, czy technologia ma wpływ. Pytanie brzmi: czy ten wpływ jest " +
+    "jawny, ograniczony i odwracalny — i czy ktoś go w ogóle egzekwuje.",
+    {
+      x: M, y: 3.75, w: 5.9, h: 1.5, margin: 0,
+      fontFace: B_FONT, fontSize: 15, italic: true, color: GREY, lineSpacing: 26, valign: "top",
+    }
+  );
+
+  const day = [
+    ["Co czytasz", "wybiera ranking"],
+    ["Co oglądasz", "wybiera rekomendacja"],
+    ["Kiedy przerywasz", "wybiera powiadomienie"],
+  ];
+  day.forEach((d, i) => {
+    const y = 1.95 + i * 1.55;
+    card(s, 7.1, y, 5.53, 1.3, false);
+    s.addText(d[0], {
+      x: 7.45, y: y + 0.22, w: 4.9, h: 0.36, margin: 0,
+      fontFace: B_FONT, fontSize: 17, bold: true, color: INK, valign: "middle",
+    });
+    s.addText(d[1], {
+      x: 7.45, y: y + 0.62, w: 4.9, h: 0.4, margin: 0,
+      fontFace: B_FONT, fontSize: 14, color: CRIMSON, valign: "middle",
+    });
+  });
+
+  s.addNotes("Świadomie bez statystyk — deck nie opiera się na liczbach, których nie da się " +
+    "zweryfikować w repozytorium.");
+}
+
+/* ============================================ 4. DWIE MIARY ============== */
+{
+  const s = pres.addSlide();
+  lightBg(s);
+  title(s, "Dwie miary sukcesu", false,
+    "Ta sama technologia, dwa zupełnie różne kryteria wygranej");
+
+  card(s, M, 1.9, 5.6, 4.4, false);
+  s.addText("Typowa metryka", {
+    x: M + 0.35, y: 2.15, w: 4.9, h: 0.4, margin: 0,
+    fontFace: B_FONT, fontSize: 17, bold: true, color: CRIMSON, valign: "middle",
+  });
+  const theirs = ["czas spędzony w aplikacji", "retencja i częstotliwość powrotów",
+    "„zaangażowanie” jako cel sam w sobie", "użytkownik, który nie potrafi odejść"];
+  theirs.forEach((t, i) => {
+    const y = 2.75 + i * 0.78;
+    bullet(s, M + 0.35, y, CRIMSON, "✕");
+    s.addText(t, {
+      x: M + 0.85, y: y - 0.02, w: 4.4, h: 0.36, margin: 0,
+      fontFace: B_FONT, fontSize: 13.5, color: INK, valign: "middle",
+    });
+  });
+
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 6.95, y: 1.9, w: 5.68, h: 4.4,
+    rectRadius: 0.05,
+    fill: { color: INK }, line: { color: INK, width: 0 },
+  });
+  s.addText("Metryka Human OS", {
+    x: 7.3, y: 2.15, w: 5.0, h: 0.4, margin: 0,
+    fontFace: B_FONT, fontSize: 17, bold: true, color: GOLD, valign: "middle",
+  });
+  const ours = ["spadek zależności od systemu", "wzrost autonomii i sprawczości",
+    "jawność wpływu i ograniczeń", "wyjście, z którego da się skorzystać"];
+  ours.forEach((t, i) => {
+    const y = 2.75 + i * 0.78;
+    bullet(s, 7.3, y, TEAL, "✓");
+    s.addText(t, {
+      x: 7.8, y: y - 0.02, w: 4.5, h: 0.36, margin: 0,
+      fontFace: B_FONT, fontSize: 13.5, color: PAPER, valign: "middle",
+    });
+  });
+  chip(s, 7.3, 5.85, "GEN-012", { w: 1.25, fill: GOLD });
+  s.addText("malejąca niezbędność systemu", {
+    x: 8.75, y: 5.85, w: 3.6, h: 0.28, margin: 0,
+    fontFace: B_FONT, fontSize: 12, bold: true, color: GREY_LT, valign: "middle",
+  });
+
+  footer(s, "„Human OS wygrywa wtedy, gdy jest coraz mniej potrzebny” — to jedyny gen, który każe systemowi dążyć do własnego zaniku.");
+  s.addNotes("To jest zwrot akcji całej opowieści: kryterium sukcesu jest odwrócone.");
+}
+
+/* ======================================== 5. OBIETNICA I GRANICE ========= */
+{
+  const s = pres.addSlide();
+  lightBg(s);
+  title(s, "Obietnica i granice", false,
+    "Deklaracja jest tania — dlatego od razu towarzyszy jej lista rzeczy zakazanych");
 
   const jest = [
-    ["Protokół konstytucyjny", "Zestaw wiążących zasad, które system musi spełnić, zanim cokolwiek wykona."],
-    ["Silnik referencyjny", "Wykonywalna implementacja tych zasad — testowalna, audytowalna, otwarta."],
-    ["Warstwa suwerenności danych", "Pełny eksport, historia zmian, prawo wyjścia bez utraty dorobku."],
+    ["Pomaga rozumieć", "Nie zastępuje rozumienia ani nie odbiera decyzji."],
+    ["Ujawnia niepewność", "Zamiast ukrywać wątpliwość, pokazuje ją wprost."],
+    ["Traktuje dane jak depozyt", "Powierzony zasób, nigdy towar do sprzedania."],
   ];
   const nie = [
     ["Wyrocznia", "Nie rozstrzyga, co jest słuszne w czyimś życiu."],
@@ -193,13 +335,13 @@ function footer(slide, text) {
     ["Platforma uzależniająca", "Nie optymalizuje czasu w aplikacji i nie rankinguje ludzi."],
   ];
 
-  s.addText("JEST", {
+  s.addText("SZEŚĆ ZOBOWIĄZAŃ — OTO TRZY", {
     x: M, y: 1.78, w: 5.9, h: 0.3, margin: 0,
-    fontFace: B_FONT, fontSize: 13, bold: true, color: TEAL, charSpacing: 2,
+    fontFace: B_FONT, fontSize: 12, bold: true, color: TEAL, charSpacing: 2,
   });
-  s.addText("NIE JEST", {
+  s.addText("SZEŚĆ ZAKAZÓW — OTO TRZY", {
     x: 6.95, y: 1.78, w: 5.7, h: 0.3, margin: 0,
-    fontFace: B_FONT, fontSize: 13, bold: true, color: CRIMSON, charSpacing: 2,
+    fontFace: B_FONT, fontSize: 12, bold: true, color: CRIMSON, charSpacing: 2,
   });
 
   jest.forEach((it, i) => {
@@ -231,64 +373,20 @@ function footer(slide, text) {
   });
 
   footer(s, "Źródło: constitution/README.md — „Obietnica systemu” i „Czym system nie jest”.");
-  s.addNotes("Sześć zobowiązań i sześć jawnych zakazów tożsamościowych z Konstytucji 0.2.");
+  s.addNotes("Konstytucja wymienia po sześć pozycji w każdej kolumnie; slajd pokazuje po trzy.");
 }
 
-/* ================================================= 3. KRYTERIUM SUKCESU == */
+/* ===================================================== 6. AKT II ========= */
 {
-  const s = pres.addSlide();
-  darkBg(s);
-  title(s, "Odwrotne kryterium sukcesu", true,
-    "Nie wzrost zaangażowania, lecz spadek własnej niezbędności");
-
-  chip(s, M, 2.05, "GEN-012", { w: 1.25, fill: GOLD });
-  s.addText("Malejąca niezbędność systemu", {
-    x: M + 1.45, y: 2.02, w: 6.2, h: 0.34, margin: 0,
-    fontFace: B_FONT, fontSize: 13, bold: true, color: GREY_LT, valign: "middle",
-  });
-
-  s.addText("Human OS wygrywa wtedy,\ngdy jest coraz mniej potrzebny.", {
-    x: M, y: 2.55, w: 7.7, h: 1.7, margin: 0,
-    fontFace: H_FONT, fontSize: 30, bold: true, color: PAPER,
-    lineSpacing: 40, valign: "top",
-  });
-  s.addText(
-    "Sukces mierzy się spadkiem zależności od rozwiązań, które obniżają autonomię, " +
-    "uwagę, energię, sprawczość twórczą, odpowiedzialność, jakość relacji lub " +
-    "zgodność z własnymi wartościami użytkownika.",
-    {
-      x: M, y: 4.45, w: 7.5, h: 1.3, margin: 0,
-      fontFace: B_FONT, fontSize: 14, color: GREY_LT, lineSpacing: 22, valign: "top",
-    }
+  const s = actBreak(
+    "II", "Reguły",
+    "Obietnica, której nikt nie egzekwuje, jest marketingiem. Dlatego zasady zostały " +
+    "zapisane tak, żeby dało się je wykonać — i przetestować."
   );
-
-  const stats = [
-    ["↑", "Autonomia", "sprawczość i autorstwo decyzji"],
-    ["↓", "Zależność", "od systemu i od mechanik uwagi"],
-    ["→", "Wyjście", "pełny eksport, zawsze dostępny"],
-  ];
-  stats.forEach((st, i) => {
-    const y = 1.95 + i * 1.55;
-    card(s, 8.75, y, 3.88, 1.32, true);
-    s.addText(st[0], {
-      x: 8.98, y: y + 0.18, w: 0.6, h: 0.95, margin: 0,
-      fontFace: "Arial", fontSize: 30, bold: true, color: GOLD,
-      align: "center", valign: "middle",
-    });
-    s.addText(st[1], {
-      x: 9.65, y: y + 0.24, w: 2.8, h: 0.34, margin: 0,
-      fontFace: B_FONT, fontSize: 15, bold: true, color: PAPER, valign: "middle",
-    });
-    s.addText(st[2], {
-      x: 9.65, y: y + 0.6, w: 2.85, h: 0.55, margin: 0,
-      fontFace: B_FONT, fontSize: 11, color: GREY_LT, valign: "top",
-    });
-  });
-
-  s.addNotes("Kryterium z README: „Human OS succeeds as dependence decreases…”.");
+  s.addNotes("Przejście od „chcemy dobrze” do „oto mechanizm, który tego pilnuje”.");
 }
 
-/* ==================================================== 4. ARCHITEKTURA ==== */
+/* ==================================================== 7. ARCHITEKTURA ==== */
 {
   const s = pres.addSlide();
   lightBg(s);
@@ -308,8 +406,7 @@ function footer(slide, text) {
     s.addShape(pres.ShapeType.roundRect, {
       x: M, y, w: 7.6, h: 0.78,
       rectRadius: 0.05,
-      fill: { color: l[3] },
-      line: { color: l[3], width: 0 },
+      fill: { color: l[3] }, line: { color: l[3], width: 0 },
     });
     s.addText(l[0], {
       x: M + 0.32, y: y + 0.06, w: 2.5, h: 0.36, margin: 0,
@@ -326,7 +423,7 @@ function footer(slide, text) {
     if (i < 4) {
       s.addShape(pres.ShapeType.triangle, {
         x: M + 3.6, y: y + 0.8, w: 0.34, h: 0.16,
-        fill: { color: "C9CEE0" }, line: { color: "C9CEE0", width: 0 },
+        fill: { color: DIM }, line: { color: DIM, width: 0 },
         rotate: 180,
       });
     }
@@ -363,7 +460,7 @@ function footer(slide, text) {
   s.addNotes("Źródło: ECOSYSTEM.md — kolejność zależności warstw.");
 }
 
-/* ========================================================= 5. GENOM ====== */
+/* ========================================================= 8. GENOM ====== */
 {
   const s = pres.addSlide();
   lightBg(s);
@@ -382,15 +479,14 @@ function footer(slide, text) {
     const c = i % cols, r = Math.floor(i / cols);
     const x = M + c * (cw + gap);
     const y = 2.0 + r * 1.42;
-    const hot = i === 11; // GEN-012 — wyróżniony
+    const hot = i === 11; // GEN-012 — bohater tej opowieści
     s.addShape(pres.ShapeType.roundRect, {
       x, y, w: cw, h: 1.22,
       rectRadius: 0.05,
       fill: { color: hot ? INK : PAPER_ALT },
       line: { color: hot ? INK : "DFE3EE", width: 1 },
     });
-    const id = "GEN-" + String(i + 1).padStart(3, "0");
-    s.addText(id, {
+    s.addText("GEN-" + String(i + 1).padStart(3, "0"), {
       x: x + 0.22, y: y + 0.18, w: cw - 0.4, h: 0.28, margin: 0,
       fontFace: M_FONT, fontSize: 10.5, bold: true,
       color: hot ? GOLD : TEAL, valign: "middle",
@@ -403,10 +499,10 @@ function footer(slide, text) {
   });
 
   footer(s, "genome.registry.json v0.2.0 — geny deklaruje się w każdym pull requeście (CONTRIBUTING.md).");
-  s.addNotes("GEN-012 wyróżniony, bo to jedyny gen, który każe systemowi dążyć do własnego zaniku.");
+  s.addNotes("Genom to nie ozdobnik: PR bez deklaracji genów nie przechodzi przeglądu.");
 }
 
-/* ==================================================== 6. PROOF KERNEL ==== */
+/* ==================================================== 9. PROOF KERNEL ==== */
 {
   const s = pres.addSlide();
   lightBg(s);
@@ -436,11 +532,8 @@ function footer(slide, text) {
   });
 
   const decisions = [
-    ["APPROVED", TEAL],
-    ["APPROVED_WITH_LIMITS", "4F9AA8"],
-    ["REQUIRES_CONSENT", GOLD],
-    ["REQUIRES_HUMAN_DECISION", "C07A22"],
-    ["REQUIRES_REDESIGN", "8A5A9E"],
+    ["APPROVED", TEAL], ["APPROVED_WITH_LIMITS", "4F9AA8"], ["REQUIRES_CONSENT", GOLD],
+    ["REQUIRES_HUMAN_DECISION", "C07A22"], ["REQUIRES_REDESIGN", "8A5A9E"],
     ["CONSTITUTIONAL_VIOLATION", CRIMSON],
   ];
 
@@ -466,82 +559,317 @@ function footer(slide, text) {
   s.addNotes("proof.rules.json v0.2.0; implementacja w hos_engine/policy.py.");
 }
 
-/* =================================================== 7. PĘTLA WYKONAWCZA = */
+/* ==================================================== 10. AKT III ======== */
+{
+  const s = actBreak(
+    "III", "Podróż",
+    "Prześledźmy jedną intencję od początku do końca — z bramami, odmową, wątpliwością, " +
+    "hamulcem awaryjnym i wyjściem.",
+    "Marta jest przykładem ilustracyjnym, nie prawdziwym przypadkiem użytkownika."
+  );
+  s.addNotes("Od tego miejsca mechanika przestaje być listą funkcji, a staje się fabułą.");
+}
+
+/* ==================================================== 11. INTENCJA ======= */
 {
   const s = pres.addSlide();
   lightBg(s);
-  title(s, "Od intencji do poświadczenia", false,
-    "ExecutionLoop.execute(HumanIntent) → ExecutionResult (ADR-CORE-002)");
+  title(s, "Intencja", false,
+    "Wszystko zaczyna się od zdania wypowiedzianego przez człowieka — nie od decyzji systemu");
 
-  const steps = [
-    "TOŻSAMOŚĆ", "ROLA", "ZGODA", "KONTEKST", "ENCJE",
-    "KONSTYTUCJA", "AGENT", "POŚWIADCZENIE", "ZDARZENIE", "AUDYT",
+  card(s, M, 1.9, 6.6, 2.5, false);
+  chip(s, M + 0.35, 2.15, "HOS-INT-…", { w: 1.55, fill: GOLD });
+  s.addText(
+    "„Poukładaj mi plan zmiany pracy na najbliższy kwartał — sięgnij po moje notatki z ostatniego roku.”",
+    {
+      x: M + 0.35, y: 2.6, w: 5.9, h: 1.5, margin: 0,
+      fontFace: H_FONT, fontSize: 19, italic: true, color: INK, lineSpacing: 30, valign: "top",
+    }
+  );
+
+  card(s, M, 4.6, 6.6, 1.75, false);
+  s.addText("Dlaczego to trudna prośba", {
+    x: M + 0.35, y: 4.78, w: 5.9, h: 0.32, margin: 0,
+    fontFace: B_FONT, fontSize: 14, bold: true, color: CRIMSON, valign: "middle",
+  });
+  s.addText(
+    "Dotyka danych wrażliwych, wymaga działania agenta w jej imieniu i dotyczy decyzji " +
+    "życiowej, której nikt nie powinien podejmować za nią.",
+    {
+      x: M + 0.35, y: 5.15, w: 5.9, h: 1.0, margin: 0,
+      fontFace: B_FONT, fontSize: 13, color: GREY, lineSpacing: 20, valign: "top",
+    }
+  );
+
+  const asks = [
+    ["Kto pyta?", "tożsamość i rola, w jakiej występuje"],
+    ["Na co jest zgoda?", "cel, zakres i czas — nie „zgoda na wszystko”"],
+    ["Czy wolno to zrobić?", "dziewięć testów konstytucyjnych"],
   ];
-  const cw = 2.28, gap = 0.22;
-  steps.forEach((st, i) => {
-    const c = i % 5, r = Math.floor(i / 5);
-    const x = M + c * (cw + gap);
-    const y = 1.95 + r * 1.35;
-    const gate = i < 6;
+  s.addText("Zanim cokolwiek się wydarzy, system musi odpowiedzieć sobie na trzy pytania:", {
+    x: 7.55, y: 1.9, w: 5.08, h: 0.6, margin: 0,
+    fontFace: B_FONT, fontSize: 13, color: GREY, lineSpacing: 20, valign: "top",
+  });
+  asks.forEach((a, i) => {
+    const y = 2.65 + i * 1.25;
+    card(s, 7.55, y, 5.08, 1.05, false);
+    s.addText(a[0], {
+      x: 7.85, y: y + 0.16, w: 4.5, h: 0.34, margin: 0,
+      fontFace: B_FONT, fontSize: 15, bold: true, color: TEAL, valign: "middle",
+    });
+    s.addText(a[1], {
+      x: 7.85, y: y + 0.54, w: 4.5, h: 0.4, margin: 0,
+      fontFace: B_FONT, fontSize: 12, color: GREY, valign: "top",
+    });
+  });
+
+  s.addNotes("HumanIntent to punkt wejścia ExecutionLoop (ADR-CORE-002).");
+}
+
+/* ==================================================== 12. SZEŚĆ BRAM ===== */
+{
+  const s = pres.addSlide();
+  lightBg(s);
+  title(s, "Sześć bram przed działaniem", false,
+    "Każda brama zadaje jedno pytanie. Pierwsza odmowa kończy sprawę");
+
+  const gates = [
+    ["1 · TOŻSAMOŚĆ", "Czy prośba pochodzi od Marty, a nie od czegoś, co się nią podszywa?", "PRZECHODZI", TEAL],
+    ["2 · ROLA", "W jakiej roli występuje? Jako właścicielka tych danych, nie jako agent.", "PRZECHODZI", TEAL],
+    ["3 · ZGODA", "Czy jest zgoda na notatki z ostatniego roku — w tym konkretnym celu?", "BRAK ZGODY", GOLD],
+    ["4 · KONTEKST", "Nie zostaje uruchomiona.", "—", DIM],
+    ["5 · ENCJE", "Nie zostaje uruchomiona.", "—", DIM],
+    ["6 · KONSTYTUCJA", "Nie zostaje uruchomiona.", "—", DIM],
+  ];
+
+  gates.forEach((g, i) => {
+    const y = 1.9 + i * 0.75;
+    const dead = g[3] === DIM;
     s.addShape(pres.ShapeType.roundRect, {
-      x, y, w: cw, h: 1.05,
+      x: M, y, w: 11.93, h: 0.62,
       rectRadius: 0.05,
-      fill: { color: gate ? PAPER_ALT : CARD },
-      line: { color: gate ? "C9CEE0" : "DFE3EE", width: 1 },
+      fill: { color: dead ? PAPER : PAPER_ALT },
+      line: { color: "DFE3EE", width: 1 },
     });
-    s.addShape(pres.ShapeType.ellipse, {
-      x: x + 0.2, y: y + 0.2, w: 0.36, h: 0.36,
-      fill: { color: gate ? INK : TEAL }, line: { color: gate ? INK : TEAL, width: 0 },
+    chip(s, M + 0.25, y + 0.17, g[0], {
+      w: 2.25, fill: dead ? DIM : INK, color: dead ? GREY : PAPER, fontSize: 9.5,
     });
-    s.addText(String(i + 1), {
-      x: x + 0.2, y: y + 0.2, w: 0.36, h: 0.36, margin: 0,
-      align: "center", valign: "middle",
-      fontFace: B_FONT, fontSize: 12, bold: true, color: PAPER,
+    s.addText(g[1], {
+      x: M + 2.75, y, w: 7.0, h: 0.62, margin: 0,
+      fontFace: B_FONT, fontSize: 12.5, italic: dead,
+      color: dead ? GREY_LT : INK, valign: "middle",
     });
-    s.addText(st, {
-      x: x + 0.18, y: y + 0.62, w: cw - 0.36, h: 0.34, margin: 0,
-      fontFace: B_FONT, fontSize: 12, bold: true, color: INK, valign: "middle",
+    chip(s, 10.9, y + 0.17, g[2], {
+      w: 1.6, fill: dead ? PAPER : g[3], color: dead ? GREY_LT : PAPER, fontSize: 9.5,
     });
   });
 
   s.addShape(pres.ShapeType.roundRect, {
-    x: M, y: 4.8, w: W - 2 * M, h: 1.5,
+    x: M, y: 6.4, w: 11.93, h: 0.55,
     rectRadius: 0.05,
     fill: { color: INK }, line: { color: INK, width: 0 },
   });
-  chip(s, M + 0.35, 5.05, "REFUSED_*", { w: 1.5, fill: GOLD });
-  s.addText("Odmowa jest wynikiem pierwszej klasy — nigdy wyjątkiem.", {
-    x: M + 2.05, y: 5.02, w: 9.2, h: 0.34, margin: 0,
-    fontFace: B_FONT, fontSize: 15, bold: true, color: PAPER, valign: "middle",
+  chip(s, M + 0.3, 6.53, "REFUSED_CONSENT", { w: 2.1, fill: GOLD, fontSize: 9.5 });
+  s.addText("Pętla zatrzymuje się, zanim cokolwiek zostanie wykonane lub zapisane.", {
+    x: M + 2.65, y: 6.4, w: 9.0, h: 0.55, margin: 0,
+    fontFace: B_FONT, fontSize: 13, bold: true, color: PAPER, valign: "middle",
+  });
+
+  s.addNotes("Kolejność bram: IDENTITY → AUTHORITY → CONSENT → CONTEXT → ENTITY → CONSTITUTION. " +
+    "Bramy 4–6 nie są „pominięte” — one się po prostu nie wykonują.");
+}
+
+/* ============================================== 13. ODMOWA ============== */
+{
+  const s = pres.addSlide();
+  lightBg(s);
+  title(s, "Odmowa, która nie jest błędem", false,
+    "Refusal jest wynikiem pierwszej klasy — nie wyjątkiem, nie ciszą, nie awarią");
+
+  card(s, M, 1.9, 5.9, 4.4, false);
+  s.addText("Co Marta widzi", {
+    x: M + 0.35, y: 2.12, w: 5.2, h: 0.36, margin: 0,
+    fontFace: B_FONT, fontSize: 16, bold: true, color: INK, valign: "middle",
+  });
+  const shown = [
+    ["Czego zabrakło", "zgody na notatki z ostatniego roku"],
+    ["W jakim celu", "wyłącznie ułożenie planu, nic poza tym"],
+    ["Na jak długo", "zakres i czas deklarowane z góry"],
+    ["Co się nie stało", "żadne dane nie zostały odczytane"],
+  ];
+  shown.forEach((it, i) => {
+    const y = 2.65 + i * 0.88;
+    bullet(s, M + 0.35, y, INK, String(i + 1));
+    s.addText(it[0], {
+      x: M + 0.85, y: y - 0.04, w: 4.7, h: 0.32, margin: 0,
+      fontFace: B_FONT, fontSize: 13.5, bold: true, color: INK, valign: "middle",
+    });
+    s.addText(it[1], {
+      x: M + 0.85, y: y + 0.28, w: 4.7, h: 0.32, margin: 0,
+      fontFace: B_FONT, fontSize: 12, color: GREY, valign: "middle",
+    });
+  });
+
+  s.addText("DRUGIE PODEJŚCIE — ZGODA ZAKRESOWA", {
+    x: 7.25, y: 1.9, w: 5.38, h: 0.3, margin: 0,
+    fontFace: B_FONT, fontSize: 11, bold: true, color: TEAL, charSpacing: 1.5,
+  });
+
+  const after = [
+    ["Bramy 1–6", "przechodzą — zgoda ma cel, zakres i czas", TEAL],
+    ["Proof Kernel", "APPROVED_WITH_LIMITS (PROOF-003)", "4F9AA8"],
+    ["Co to znaczy", "plan wraca jako szkic do redakcji, nie gotowa decyzja", GOLD],
+  ];
+  after.forEach((a, i) => {
+    const y = 2.35 + i * 1.35;
+    card(s, 7.25, y, 5.38, 1.15, false);
+    s.addText(a[0], {
+      x: 7.55, y: y + 0.14, w: 4.8, h: 0.32, margin: 0,
+      fontFace: B_FONT, fontSize: 14, bold: true, color: a[2], valign: "middle",
+    });
+    s.addText(a[1], {
+      x: 7.55, y: y + 0.5, w: 4.8, h: 0.5, margin: 0,
+      fontFace: B_FONT, fontSize: 12.5, color: GREY, valign: "top",
+    });
+  });
+
+  s.addText("A potem, już bez pytania:", {
+    x: 7.25, y: 6.28, w: 5.38, h: 0.3, margin: 0,
+    fontFace: B_FONT, fontSize: 11, italic: true, color: GREY, valign: "middle",
+  });
+  chip(s, 7.25, 6.6, "7 AGENT  ·  8 POŚWIADCZENIE  ·  9 ZDARZENIE  ·  10 AUDYT", {
+    w: 5.38, fill: INK, color: PAPER, fontSize: 9,
+  });
+
+  s.addNotes("PROOF-003 (test generatywności) ma status porażki APPROVED_WITH_LIMITS — " +
+    "działanie jest dozwolone, ale w ograniczonej formie.");
+}
+
+/* ============================================== 14. ABSTENCJA =========== */
+{
+  const s = pres.addSlide();
+  lightBg(s);
+  title(s, "Kiedy system nie wie", false,
+    "Najtrudniejsza umiejętność doradcy: powiedzieć „wstrzymuję się” zamiast zgadywać");
+
+  s.addText(
+    "Notatki Marty przeczą sobie nawzajem: w marcu pisała, że chce stabilności, w listopadzie — " +
+    "że dusi się w tej pracy. Zwykły ranking wybrałby po prostu wyżej punktowany wariant.",
+    {
+      x: M, y: 1.9, w: 6.05, h: 1.35, margin: 0,
+      fontFace: B_FONT, fontSize: 14, color: INK, lineSpacing: 24, valign: "top",
+    }
+  );
+  card(s, M, 3.35, 6.05, 2.62, false);
+  chip(s, M + 0.35, 3.6, "CONTRADICTORY_EVIDENCE", { w: 3.1, fill: GOLD, fontSize: 9 });
+  s.addText("Human OS nie rankinguje. Wstrzymuje się i mówi, dlaczego.", {
+    x: M + 0.35, y: 4.05, w: 5.4, h: 0.7, margin: 0,
+    fontFace: H_FONT, fontSize: 18, bold: true, color: INK, lineSpacing: 26, valign: "top",
   });
   s.addText(
-    "Odrzucenie na dowolnej z sześciu pierwszych bram zatrzymuje pętlę, zanim cokolwiek " +
-    "zostanie wykonane lub zapisane. Kroki 7–10 nie są opcjonalne: każde wykonanie zostawia " +
-    "poświadczenie, zdarzenie na łańcuchu skrótów i ślad audytowy.",
+    "Sprzeczność wraca do Marty jako pytanie, nie znika w uśrednionej rekomendacji. " +
+    "Rozstrzygnięcie należy do niej.",
     {
-      x: M + 0.35, y: 5.45, w: 11.5, h: 0.75, margin: 0,
-      fontFace: B_FONT, fontSize: 12, color: GREY_LT, lineSpacing: 18, valign: "top",
+      x: M + 0.35, y: 4.85, w: 5.4, h: 1.2, margin: 0,
+      fontFace: B_FONT, fontSize: 13, color: GREY, lineSpacing: 20, valign: "top",
     }
   );
 
-  s.addNotes("Bramy 1–6 to twarde gate'y; runtime agentów ma dodatkową bramę zatwierdzenia przez człowieka.");
+  s.addText("OSIEM NAZWANYCH POWODÓW WSTRZYMANIA SIĘ", {
+    x: 7.25, y: 1.9, w: 5.38, h: 0.3, margin: 0,
+    fontFace: B_FONT, fontSize: 11, bold: true, color: TEAL, charSpacing: 1.5,
+  });
+  const reasons = [
+    "NO_CLEAR_GOAL", "INSUFFICIENT_DATA", "VALUE_CONFLICT", "CONTRADICTORY_EVIDENCE",
+    "NOT_MONITORABLE", "EXCESSIVE_RISK", "BEYOND_COMPETENCE", "SUSPECTED_CRISIS",
+  ];
+  reasons.forEach((r, i) => {
+    const y = 2.35 + i * 0.52;
+    const hot = r === "CONTRADICTORY_EVIDENCE";
+    s.addShape(pres.ShapeType.roundRect, {
+      x: 7.25, y, w: 5.38, h: 0.42,
+      rectRadius: 0.05,
+      fill: { color: hot ? GOLD : PAPER_ALT },
+      line: { color: hot ? GOLD : "DFE3EE", width: 1 },
+    });
+    s.addText(r, {
+      x: 7.5, y, w: 5.0, h: 0.42, margin: 0,
+      fontFace: M_FONT, fontSize: 11, bold: true,
+      color: hot ? INK : GREY, valign: "middle",
+    });
+  });
+
+  footer(s, "Abstencja i eskalacja są osobnymi rodzajami wyniku — nigdy wyjątkami (ADR-DECISION-003).");
+  s.addNotes("Dziewięć twardych bram G0–G8 działa przed rankingiem; kandydat odrzucony przez bramę " +
+    "nie wraca później nawet z wysokim wynikiem.");
 }
 
-/* ====================================================== 8. RECOVERY ====== */
+/* ============================================== 15. KOREKTA ============= */
+{
+  const s = pres.addSlide();
+  lightBg(s);
+  title(s, "Kiedy system się myli", false,
+    "Model siebie jest hipotezą o człowieku — i tylko ten człowiek może ją zatwierdzić");
+
+  const kinds = [
+    ["DEKLARACJA", "„Zmieniam branżę.” — powiedziała to wprost.", TEAL, PAPER],
+    ["OBSERWACJA", "Wieczorami wraca do notatek o projektach.", "4F9AA8", PAPER],
+    ["HIPOTEZA", "„Unikasz ryzyka.” — domysł systemu.", GOLD, INK],
+  ];
+  kinds.forEach((k, i) => {
+    const x = M + i * 4.03;
+    card(s, x, 1.9, 3.83, 1.72, false);
+    chip(s, x + 0.28, 2.12, k[0], { w: 1.5, fill: k[2], color: k[3] });
+    s.addText(k[1], {
+      x: x + 0.28, y: 2.56, w: 3.3, h: 0.95, margin: 0,
+      fontFace: B_FONT, fontSize: 12.5, color: GREY, lineSpacing: 18, valign: "top",
+    });
+  });
+
+  s.addText("Marta czyta hipotezę i mówi: nieprawda.", {
+    x: M, y: 3.85, w: 11.93, h: 0.42, margin: 0,
+    fontFace: H_FONT, fontSize: 20, bold: true, color: INK, valign: "middle",
+  });
+
+  const steps = [
+    ["Nie znika", "Hipoteza dostaje status CONTESTED — zapis zostaje, historia też."],
+    ["Nie nadpisuje", "Korekta tworzy nową wersję przez łańcuch „supersedes”."],
+    ["Tłumaczy się", "why() pokazuje cytat, autora, pasmo pewności i całą historię."],
+    ["Nie awansuje sama", "Hipoteza nigdy nie jest podawana dalej jako deklaracja."],
+  ];
+  steps.forEach((st, i) => {
+    const x = M + i * 3.03;
+    card(s, x, 4.45, 2.85, 1.85, false);
+    bullet(s, x + 0.25, 4.68, INK, String(i + 1));
+    s.addText(st[0], {
+      x: x + 0.25, y: 5.08, w: 2.35, h: 0.32, margin: 0,
+      fontFace: B_FONT, fontSize: 14, bold: true, color: TEAL, valign: "middle",
+    });
+    s.addText(st[1], {
+      x: x + 0.25, y: 5.42, w: 2.35, h: 0.8, margin: 0,
+      fontFace: B_FONT, fontSize: 11.5, color: GREY, lineSpacing: 17, valign: "top",
+    });
+  });
+
+  footer(s, "Sprzeczność między zapisami jest zachowywana jako sygnał — rozstrzyga ją tylko osoba, której dotyczy.");
+  s.addNotes("Silnik nie zawiera NLP: rozpoznawanie kandydatów na zapisy to zadanie aplikacji.");
+}
+
+/* ============================================== 16. HAMULEC ============= */
 {
   const s = pres.addSlide();
   darkBg(s);
-  title(s, "Sovereign Recovery Kernel", true,
-    "Niezbywalne prawo właściciela do zatrzymania systemu — siedem trybów awaryjnych");
+  title(s, "Hamulec, którego nie da się zabrać", true,
+    "Marta mówi „stop” — i to zdanie musi działać nawet wtedy, gdy reszta zawodzi");
 
-  const prot = [["SAFE_MODE", "R1"], ["READ_ONLY", "R1"], ["FREEZE", "R2"], ["DISCONNECT", "R2"]];
-  const cons = [["ROLLBACK", "R3"], ["EXPORT", "R2"], ["RECOVERY", "R4"]];
+  const prot = [["SAFE_MODE", "R0"], ["READ_ONLY", "R0"], ["FREEZE", "R1"], ["DISCONNECT", "R1"]];
+  const cons = [["EXPORT", "R1"], ["ROLLBACK", "R2"], ["RECOVERY", "R3"]];
 
   s.addText("TRYBY OCHRONNE", {
     x: M, y: 1.95, w: 5.9, h: 0.3, margin: 0,
     fontFace: B_FONT, fontSize: 12, bold: true, color: TEAL, charSpacing: 2,
   });
-  s.addText("automatyczne tylko za powiadomieniem właściciela · zawsze odwracalne", {
+  s.addText("automatyczne tylko za powiadomieniem · zawsze odwracalne", {
     x: M, y: 2.25, w: 5.9, h: 0.3, margin: 0,
     fontFace: B_FONT, fontSize: 11, color: GREY_LT,
   });
@@ -559,7 +887,7 @@ function footer(slide, text) {
     x: 6.95, y: 1.95, w: 5.7, h: 0.3, margin: 0,
     fontFace: B_FONT, fontSize: 12, bold: true, color: GOLD, charSpacing: 2,
   });
-  s.addText("wyłącznie ręcznie · ROLLBACK i RECOVERY wymagają drugiego klucza", {
+  s.addText("wyłącznie ręcznie · ROLLBACK i RECOVERY na dwa klucze", {
     x: 6.95, y: 2.25, w: 5.7, h: 0.3, margin: 0,
     fontFace: B_FONT, fontSize: 11, color: GREY_LT,
   });
@@ -574,9 +902,9 @@ function footer(slide, text) {
   });
 
   const guards = [
-    ["Brak API do zmiany polityki", "Agent nie wyłączy tego, co nie ma settera."],
+    ["Nie ma czego wyłączyć", "Nie istnieje API zmieniające politykę ani dziennik audytu."],
     ["Agent nigdy nie aktywuje", "AGENT, SERVICE i SYSTEM_PROCESS dostają odmowę — a sama odmowa jest logowana."],
-    ["Zero zależności od AI", "Warstwa ratunkowa działa bez modelu i bez sieci."],
+    ["Działa bez AI i bez sieci", "Warstwa ratunkowa nie ma zależności od modelu ani od świata zewnętrznego."],
   ];
   guards.forEach((g, i) => {
     const x = M + i * 4.03;
@@ -596,128 +924,79 @@ function footer(slide, text) {
     });
   });
 
-  s.addNotes("R1–R4 to skala ryzyka Konstytucji. Odmowa jest tu wyjątkiem (RecoveryRefused) — " +
-    "zignorowana ochrona nie może wyglądać jak ochrona działająca.");
+  s.addNotes("R0–R3 to skala ryzyka Konstytucji; żaden z siedmiu trybów nie sięga R4, bo wszystkie " +
+    "są mechanizmami sankcjonowanymi. Odmowa jest tu wyjątkiem (RecoveryRefused) — zignorowana " +
+    "ochrona nie może wyglądać jak ochrona działająca.");
 }
 
-/* ================================================ 9. DECISION ENGINE ===== */
+/* ============================================== 17. WYJŚCIE ============= */
 {
   const s = pres.addSlide();
   lightBg(s);
-  title(s, "Silnik decyzji: bramy przed rankingiem", false,
-    "Warstwa 5 — dziewięć twardych bram G0–G8 działa, zanim cokolwiek zostanie uszeregowane");
+  title(s, "Wyjście jest częścią umowy", false,
+    "Ostatni rozdział tej historii: Marta odchodzi — i to nie jest porażka systemu");
 
-  card(s, M, 1.9, 6.05, 2.35, false);
-  s.addText("Nieprzemienność", {
-    x: M + 0.3, y: 2.08, w: 5.4, h: 0.34, margin: 0,
-    fontFace: B_FONT, fontSize: 15, bold: true, color: INK, valign: "middle",
+  card(s, M, 1.9, 6.4, 4.4, false);
+  s.addText("Co zabiera ze sobą", {
+    x: M + 0.35, y: 2.12, w: 5.7, h: 0.36, margin: 0,
+    fontFace: B_FONT, fontSize: 16, bold: true, color: INK, valign: "middle",
+  });
+  const pack = [
+    "dane i graf powiązań w otwartym JSON",
+    "metadane i rejestr zmian",
+    "historię wersji wycofanych — nic nie zostaje po cichu skasowane",
+    "ślad audytowy: kto, kiedy, na jakiej podstawie",
+  ];
+  pack.forEach((p, i) => {
+    const y = 2.7 + i * 0.82;
+    bullet(s, M + 0.35, y, TEAL, "✓");
+    s.addText(p, {
+      x: M + 0.85, y: y - 0.06, w: 5.2, h: 0.42, margin: 0,
+      fontFace: B_FONT, fontSize: 13, color: INK, valign: "middle",
+    });
+  });
+  chip(s, M + 0.35, 5.8, "EXPORT", { w: 1.15, fill: GOLD });
+  s.addText("tryb ręczny, klasa ryzyka R1 —\nnigdy nie odbywa się bez jej decyzji", {
+    x: M + 1.65, y: 5.72, w: 4.35, h: 0.55, margin: 0,
+    fontFace: B_FONT, fontSize: 11.5, color: GREY, lineSpacing: 15, valign: "middle",
+  });
+
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 7.55, y: 1.9, w: 5.08, h: 4.4,
+    rectRadius: 0.05,
+    fill: { color: INK }, line: { color: INK, width: 0 },
+  });
+  s.addText("Odejście jako dowód", {
+    x: 7.9, y: 2.2, w: 4.4, h: 0.4, margin: 0,
+    fontFace: B_FONT, fontSize: 17, bold: true, color: GOLD, valign: "middle",
   });
   s.addText(
-    "Kandydat odrzucony przez bramę nie wraca do gry później, nawet z wysokim wynikiem. " +
-    "Kolejność bram i rankingu nie jest wymienna.",
+    "Gdyby wyjście było trudne, cała reszta byłaby dekoracją. Kosztowne wyjście zamienia " +
+    "obietnicę autonomii w pułapkę — i to niezależnie od tego, jak dobre są intencje twórców.",
     {
-      x: M + 0.3, y: 2.48, w: 5.4, h: 0.85, margin: 0,
-      fontFace: B_FONT, fontSize: 12, color: GREY, lineSpacing: 18, valign: "top",
+      x: 7.9, y: 2.75, w: 4.4, h: 1.7, margin: 0,
+      fontFace: B_FONT, fontSize: 13, color: GREY_LT, lineSpacing: 21, valign: "top",
     }
   );
-  ["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8"].forEach((g, i) => {
-    chip(s, M + 0.3 + i * 0.63, 3.5, g, { w: 0.55, fill: INK, color: PAPER, fontSize: 10 });
-  });
-
-  card(s, M, 4.45, 6.05, 2.2, false);
-  s.addText("Asymetria dowodowa", {
-    x: M + 0.3, y: 4.63, w: 5.4, h: 0.34, margin: 0,
-    fontFace: B_FONT, fontSize: 15, bold: true, color: INK, valign: "middle",
-  });
   s.addText(
-    "Im wyższa klasa ryzyka, tym wyższy próg wymaganego dowodu (skala 0–5). " +
-    "Klasa R-KRYTYCZNE nie jest dopuszczalna w żadnym wariancie.",
+    "Dlatego przenośność i wyjście mają własny test konstytucyjny (PROOF-008) i własny gen.",
     {
-      x: M + 0.3, y: 5.03, w: 5.4, h: 0.9, margin: 0,
-      fontFace: B_FONT, fontSize: 12, color: GREY, lineSpacing: 18, valign: "top",
+      x: 7.9, y: 4.5, w: 4.4, h: 1.0, margin: 0,
+      fontFace: B_FONT, fontSize: 13, bold: true, color: PAPER, lineSpacing: 21, valign: "top",
     }
   );
-  chip(s, M + 0.3, 6.05, "R-KRYTYCZNE", { w: 1.75, fill: CRIMSON, color: PAPER });
-  s.addText("nigdy dopuszczalne", {
-    x: M + 2.2, y: 6.05, w: 3.4, h: 0.28, margin: 0,
-    fontFace: B_FONT, fontSize: 12, italic: true, color: CRIMSON, valign: "middle",
-  });
+  chip(s, 7.9, 5.75, "GEN-012", { w: 1.25, fill: GOLD });
+  chip(s, 9.35, 5.75, "PROOF-008", { w: 1.45, fill: INK_SOFT, color: PAPER });
 
-  const rights = [
-    ["Abstencja jest wynikiem", "Osiem nazwanych powodów wstrzymania się od rekomendacji — nie awaria, tylko odpowiedź."],
-    ["Eskalacja trójstopniowa", "Miękka, warunkowa i twarda — decyzja wraca do człowieka, gdy przekracza kompetencje systemu."],
-    ["Dwie niezmienności w kodzie", "Pole „user_determination” nie jest czytane przez nic. Pole „sponsored” nie istnieje w kluczu rankingu."],
-  ];
-  rights.forEach((r, i) => {
-    const y = 1.9 + i * 1.63;
-    card(s, 7.15, y, 5.48, 1.42, false);
-    s.addText(r[0], {
-      x: 7.45, y: y + 0.16, w: 4.9, h: 0.34, margin: 0,
-      fontFace: B_FONT, fontSize: 15, bold: true, color: TEAL, valign: "middle",
-    });
-    s.addText(r[1], {
-      x: 7.45, y: y + 0.54, w: 4.9, h: 0.75, margin: 0,
-      fontFace: B_FONT, fontSize: 12, color: GREY, lineSpacing: 18, valign: "top",
-    });
-  });
-
-  s.addNotes("ADR-DECISION-001..005; implementacja hos_engine/decision_engine.py. " +
-    "Sponsorowanie i etykiety użytkownika są strukturalnie odcięte od rankingu.");
+  s.addNotes("export_sovereign_package() w hos_engine/recovery.py — jeden z sześciu kontraktów Hub.");
 }
 
-/* ================================================ 10. SELF MODEL ========= */
+/* ======================================== 18. CZEGO NIE MA ============== */
 {
   const s = pres.addSlide();
   lightBg(s);
-  title(s, "Żywy model siebie", false,
-    "Rozmowa nigdy nie staje się faktem automatycznie (ADR-SELFMODEL-001)");
-
-  const kinds = [
-    ["DEKLARACJA", "Użytkownik powiedział to wprost o sobie.", TEAL, PAPER],
-    ["OBSERWACJA", "System zauważył wzorzec w danych, które mu powierzono.", "4F9AA8", PAPER],
-    ["HIPOTEZA", "Domysł — wymaga wskazania dowodu i nigdy nie jest podawany jak fakt.", GOLD, INK],
-  ];
-  kinds.forEach((k, i) => {
-    const x = M + i * 4.03;
-    card(s, x, 1.95, 3.83, 1.62, false);
-    chip(s, x + 0.28, 2.18, k[0], { w: 1.5, fill: k[2], color: k[3] });
-    s.addText(k[1], {
-      x: x + 0.28, y: 2.62, w: 3.3, h: 1.0, margin: 0,
-      fontFace: B_FONT, fontSize: 12.5, color: GREY, lineSpacing: 18, valign: "top",
-    });
-  });
-
-  const rules = [
-    ["Tylko użytkownik potwierdza", "Potwierdzenie, odrzucenie i korekta są wyłącznie w jego rękach."],
-    ["Historia nigdy nie znika", "Zmiana tworzy nową wersję przez łańcuch „supersedes”; odrzucenie oznacza CONTESTED, nie usunięcie."],
-    ["Sprzeczność to sygnał", "Napięcie między zapisami jest zachowywane; rozstrzyga je tylko osoba, której dotyczy."],
-    ["Pełna proweniencja: why()", "Dla każdego zapisu: cytat, autor, pasmo pewności i cała historia zmian."],
-  ];
-  rules.forEach((r, i) => {
-    const c = i % 2, row = Math.floor(i / 2);
-    const x = M + c * 6.13;
-    const y = 4.1 + row * 1.32;
-    bullet(s, x, y + 0.05, INK, String(i + 1));
-    s.addText(r[0], {
-      x: x + 0.45, y, w: 5.4, h: 0.34, margin: 0,
-      fontFace: B_FONT, fontSize: 14, bold: true, color: INK, valign: "middle",
-    });
-    s.addText(r[1], {
-      x: x + 0.45, y: y + 0.36, w: 5.35, h: 0.75, margin: 0,
-      fontFace: B_FONT, fontSize: 12, color: GREY, lineSpacing: 18, valign: "top",
-    });
-  });
-
-  footer(s, "Silnik nie zawiera NLP — rozpoznawanie kandydatów na zapisy to zadanie aplikacji, nie jądra.");
-  s.addNotes("Pasma pewności pokazywane są jako LOW/MEDIUM/HIGH, nigdy jako surowa liczba.");
-}
-
-/* ============================================== 11. BEZPIECZEŃSTWO ======= */
-{
-  const s = pres.addSlide();
-  lightBg(s);
-  title(s, "Bezpieczeństwo i dojrzałość", false,
-    "Co już działa — i czego świadomie jeszcze nie ma");
+  title(s, "Czego jeszcze nie ma", false,
+    "Historia, która chwali się tylko sukcesami, nie zasługuje na zaufanie");
 
   const have = [
     ["Podpisane koperty HOSP/0.2", "kanoniczny JSON, HMAC, znacznik protokołu"],
@@ -727,28 +1006,32 @@ function footer(slide, text) {
     ["Security Gateway", "dziesięciokrokowy potok kontroli przed wykonaniem"],
     ["Łańcuch skrótów SHA-256", "weryfikowalna integralność dziennika zdarzeń"],
   ];
+  s.addText("CO JUŻ DZIAŁA", {
+    x: M, y: 1.78, w: 7.6, h: 0.3, margin: 0,
+    fontFace: B_FONT, fontSize: 11, bold: true, color: TEAL, charSpacing: 1.5,
+  });
   have.forEach((h, i) => {
     const c = i % 2, r = Math.floor(i / 2);
     const x = M + c * 3.95;
-    const y = 1.95 + r * 1.5;
-    card(s, x, y, 3.75, 1.28, false);
+    const y = 2.2 + r * 1.42;
+    card(s, x, y, 3.75, 1.22, false);
     s.addText(h[0], {
-      x: x + 0.25, y: y + 0.24, w: 3.3, h: 0.32, margin: 0,
+      x: x + 0.25, y: y + 0.2, w: 3.3, h: 0.32, margin: 0,
       fontFace: B_FONT, fontSize: 13, bold: true, color: INK, valign: "middle",
     });
     s.addText(h[1], {
-      x: x + 0.25, y: y + 0.6, w: 3.3, h: 0.55, margin: 0,
+      x: x + 0.25, y: y + 0.56, w: 3.3, h: 0.55, margin: 0,
       fontFace: B_FONT, fontSize: 11, color: GREY, valign: "top",
     });
   });
 
   s.addShape(pres.ShapeType.roundRect, {
-    x: 8.75, y: 1.95, w: 3.88, h: 4.4,
+    x: 8.75, y: 1.78, w: 3.88, h: 4.64,
     rectRadius: 0.05,
     fill: { color: CRIMSON }, line: { color: CRIMSON, width: 0 },
   });
   s.addText("Nie jest produkcyjne", {
-    x: 9.05, y: 2.18, w: 3.3, h: 0.4, margin: 0,
+    x: 9.05, y: 2.05, w: 3.3, h: 0.4, margin: 0,
     fontFace: H_FONT, fontSize: 19, bold: true, color: PAPER, valign: "middle",
   });
   s.addText(
@@ -760,136 +1043,97 @@ function footer(slide, text) {
       { text: "HMAC to mechanizm referencyjny, lokalny — nie podpis asymetryczny", options: { bullet: true } },
     ],
     {
-      x: 9.05, y: 2.7, w: 3.3, h: 2.9, margin: 0,
+      x: 9.05, y: 2.6, w: 3.3, h: 3.0, margin: 0,
       fontFace: B_FONT, fontSize: 12, color: PAPER,
       paraSpaceAfter: 8, valign: "top",
     }
   );
   s.addText("security/THREAT_MODEL.md", {
-    x: 9.05, y: 5.78, w: 3.3, h: 0.3, margin: 0,
+    x: 9.05, y: 5.9, w: 3.3, h: 0.3, margin: 0,
     fontFace: M_FONT, fontSize: 10, color: "F2C9CB", valign: "middle",
   });
 
-  s.addNotes("Uczciwość co do dojrzałości jest sama w sobie wymogiem konstytucyjnym " +
-    "(GEN-015, transparentność wpływu i ograniczeń).");
+  s.addNotes("Jawność ograniczeń nie jest tu skromnością, tylko wymogiem konstytucyjnym " +
+    "(GEN-015, transparentność wpływu).");
 }
 
-/* ================================================= 12. STAN W LICZBACH == */
+/* ======================================== 19. GDZIE JESTEŚMY ============ */
 {
   const s = pres.addSlide();
   darkBg(s);
-  title(s, "Stan implementacji", true, "Silnik referencyjny, stan na sierpień 2026");
+  title(s, "Gdzie jesteśmy dzisiaj", true,
+    "Osiem etapów zamkniętych, jeden otwarty — i jeden, który jest celem");
 
   const stats = [
     ["36", "modułów silnika", "hos_engine/"],
     ["166", "testów automatycznych", "Python 3.11 / 3.12 / 3.13"],
-    ["9", "testów konstytucyjnych", "Proof Kernel"],
-    ["15", "genów konstytucyjnych", "genome.registry.json"],
-    ["14", "schematów JSON", "Draft 2020-12"],
     ["67", "rekordów decyzji (ADR)", "docs/adr/"],
   ];
   stats.forEach((st, i) => {
-    const c = i % 3, r = Math.floor(i / 3);
-    const x = M + c * 4.03;
-    const y = 2.05 + r * 2.15;
-    card(s, x, y, 3.83, 1.85, true);
+    const x = M + i * 4.03;
+    card(s, x, 1.9, 3.83, 1.65, true);
     s.addText(st[0], {
-      x: x + 0.3, y: y + 0.18, w: 3.2, h: 0.85, margin: 0,
-      fontFace: H_FONT, fontSize: 48, bold: true, color: GOLD, valign: "middle",
+      x: x + 0.3, y: 2.02, w: 3.2, h: 0.75, margin: 0,
+      fontFace: H_FONT, fontSize: 40, bold: true, color: GOLD, valign: "middle",
     });
     s.addText(st[1], {
-      x: x + 0.3, y: y + 1.05, w: 3.25, h: 0.34, margin: 0,
-      fontFace: B_FONT, fontSize: 14, bold: true, color: PAPER, valign: "middle",
+      x: x + 0.3, y: 2.8, w: 3.25, h: 0.32, margin: 0,
+      fontFace: B_FONT, fontSize: 13.5, bold: true, color: PAPER, valign: "middle",
     });
     s.addText(st[2], {
-      x: x + 0.3, y: y + 1.38, w: 3.25, h: 0.3, margin: 0,
+      x: x + 0.3, y: 3.12, w: 3.25, h: 0.3, margin: 0,
       fontFace: M_FONT, fontSize: 10, color: GREY_LT, valign: "middle",
     });
   });
 
-  footer(s, "Zerowy dług mypy w silniku. CI: ruff + pytest na trzech wersjach Pythona.");
-  s.addNotes("Liczby policzone z repozytorium: moduły, metody testowe, schematy, ADR-y.");
-}
-
-/* ==================================================== 13. ROADMAPA ======= */
-{
-  const s = pres.addSlide();
-  lightBg(s);
-  title(s, "Droga do 1.0", false, "Osiem etapów zamkniętych, jeden otwarty, jeden przed nami");
-
-  const done = [
-    ["0.1", "Formalny rdzeń"], ["0.2", "Specyfikacja maszynowa"], ["0.3", "Silnik polityk"],
-    ["0.4", "Trwały i audytowalny rdzeń"], ["0.5", "Graf wiedzy i proweniencja"],
-    ["0.6", "Runtime agentów i granice"], ["0.7", "Symulacje i scenariusze"],
-    ["0.8", "Model człowieka i zgoda"],
-  ];
-
-  done.forEach((d, i) => {
-    const c = i % 4, r = Math.floor(i / 4);
-    const x = M + c * 3.03;
-    const y = 1.95 + r * 0.95;
-    s.addShape(pres.ShapeType.roundRect, {
-      x, y, w: 2.85, h: 0.78,
-      rectRadius: 0.05,
-      fill: { color: PAPER_ALT }, line: { color: "DFE3EE", width: 1 },
-    });
-    s.addText(d[0], {
-      x: x + 0.2, y, w: 0.55, h: 0.78, margin: 0,
-      fontFace: M_FONT, fontSize: 13, bold: true, color: TEAL, valign: "middle",
-    });
-    s.addText(d[1], {
-      x: x + 0.8, y, w: 1.95, h: 0.78, margin: 0,
-      fontFace: B_FONT, fontSize: 11.5, color: INK, valign: "middle",
-    });
+  s.addText("0.1 – 0.8   formalny rdzeń · specyfikacja · silnik polityk · trwały audyt · graf wiedzy · " +
+    "runtime agentów · symulacje · model człowieka", {
+    x: M, y: 3.85, w: 11.93, h: 0.5, margin: 0,
+    fontFace: B_FONT, fontSize: 12, color: GREY_LT, valign: "middle",
   });
 
   s.addShape(pres.ShapeType.roundRect, {
-    x: M, y: 4.0, w: 11.93, h: 1.15,
+    x: M, y: 4.45, w: 11.93, h: 1.1,
     rectRadius: 0.05,
     fill: { color: GOLD }, line: { color: GOLD, width: 0 },
   });
   s.addText("0.9", {
-    x: M + 0.3, y: 4.0, w: 0.8, h: 1.15, margin: 0,
+    x: M + 0.3, y: 4.45, w: 0.8, h: 1.1, margin: 0,
     fontFace: M_FONT, fontSize: 24, bold: true, color: INK, valign: "middle",
   });
   s.addText("Interoperacyjność protokołu i przegląd bezpieczeństwa — OTWARTE", {
-    x: M + 1.15, y: 4.16, w: 10.4, h: 0.36, margin: 0,
+    x: M + 1.15, y: 4.6, w: 10.4, h: 0.34, margin: 0,
     fontFace: B_FONT, fontSize: 15, bold: true, color: INK, valign: "middle",
   });
-  s.addText(
-    "Warstwy wykonawcze i plastry warstw 2–6 powstały równolegle do tej osi i nie zastępują punktu 0.9.",
-    {
-      x: M + 1.15, y: 4.54, w: 10.4, h: 0.4, margin: 0,
-      fontFace: B_FONT, fontSize: 12, color: "5A4212", valign: "middle",
-    }
-  );
+  s.addText("Warstwy wykonawcze i plastry warstw 2–6 powstały równolegle i nie zastępują tego punktu.", {
+    x: M + 1.15, y: 4.96, w: 10.4, h: 0.36, margin: 0,
+    fontFace: B_FONT, fontSize: 12, color: "5A4212", valign: "middle",
+  });
 
   s.addShape(pres.ShapeType.roundRect, {
-    x: M, y: 5.35, w: 11.93, h: 1.15,
+    x: M, y: 5.7, w: 11.93, h: 1.1,
     rectRadius: 0.05,
-    fill: { color: INK }, line: { color: INK, width: 0 },
+    fill: { color: INK_SOFT }, line: { color: INK_LINE, width: 1 },
   });
   s.addText("1.0", {
-    x: M + 0.3, y: 5.35, w: 0.8, h: 1.15, margin: 0,
+    x: M + 0.3, y: 5.7, w: 0.8, h: 1.1, margin: 0,
     fontFace: M_FONT, fontSize: 24, bold: true, color: GOLD, valign: "middle",
   });
   s.addText("Stabilny protokół, silnik i runtime referencyjny", {
-    x: M + 1.15, y: 5.5, w: 10.4, h: 0.36, margin: 0,
+    x: M + 1.15, y: 5.85, w: 10.4, h: 0.34, margin: 0,
     fontFace: B_FONT, fontSize: 15, bold: true, color: PAPER, valign: "middle",
   });
-  s.addText(
-    "Warunki: stabilna Konstytucja i model obiektów · wersjonowany protokół · migracje · udokumentowany " +
-    "przegląd bezpieczeństwa · pełna przenośność danych · mierzalna możliwość wyjścia.",
-    {
-      x: M + 1.15, y: 5.88, w: 10.4, h: 0.45, margin: 0,
-      fontFace: B_FONT, fontSize: 11.5, color: GREY_LT, valign: "middle",
-    }
-  );
+  s.addText("Warunki: stabilna Konstytucja · wersjonowany protokół · migracje · udokumentowany przegląd " +
+    "bezpieczeństwa · pełna przenośność danych · mierzalna możliwość wyjścia.", {
+    x: M + 1.15, y: 6.21, w: 10.4, h: 0.36, margin: 0,
+    fontFace: B_FONT, fontSize: 11.5, color: GREY_LT, valign: "middle",
+  });
 
-  s.addNotes("ROADMAP.md; kryterium 0.9 zmienione decyzją foundera 2026-08-17 (DD-008).");
+  s.addNotes("Zerowy dług mypy w silniku; CI uruchamia ruff i pytest na trzech wersjach Pythona. " +
+    "Kryterium 0.9 zmienione decyzją foundera 2026-08-17 (DD-008).");
 }
 
-/* ==================================================== 14. ZAMKNIĘCIE ===== */
+/* ==================================================== 20. ZAMKNIĘCIE ===== */
 {
   const s = pres.addSlide();
   darkBg(s);
@@ -921,27 +1165,32 @@ function footer(slide, text) {
     });
   });
 
-  s.addText("System, który chce być\ncoraz mniej potrzebny.", {
-    x: M, y: 2.3, w: 7.6, h: 1.7, margin: 0,
-    fontFace: H_FONT, fontSize: 40, bold: true, color: PAPER,
-    lineSpacing: 50, valign: "middle",
+  s.addText("Kto jest autorem twojego dnia?", {
+    x: M, y: 2.05, w: 7.6, h: 0.6, margin: 0,
+    fontFace: B_FONT, fontSize: 20, italic: true, color: GREY_LT, valign: "middle",
+  });
+  s.addText("Ty.\nSystem ma tylko pilnować,\nżeby tak zostało.", {
+    x: M, y: 2.75, w: 7.7, h: 2.35, margin: 0,
+    fontFace: H_FONT, fontSize: 32, bold: true, color: PAPER,
+    lineSpacing: 44, valign: "top",
   });
   s.addText(
-    "Human OS mierzy się nie tym, jak długo ktoś w nim zostaje, lecz tym, ile autonomii " +
-    "z niego wynosi. Każdy mechanizm w tym repozytorium — bramy, poświadczenia, tryby " +
-    "awaryjne, eksport — służy temu jednemu kryterium.",
+    "Każdy mechanizm z tej opowieści — bramy, odmowa, abstencja, korekta, hamulec, eksport — " +
+    "służy jednemu kryterium: żeby po roku korzystania człowiek był bardziej samodzielny, " +
+    "a nie bardziej związany.",
     {
-      x: M, y: 4.15, w: 7.4, h: 1.2, margin: 0,
-      fontFace: B_FONT, fontSize: 14, color: GREY_LT, lineSpacing: 22, valign: "top",
+      x: M, y: 5.25, w: 7.5, h: 1.05, margin: 0,
+      fontFace: B_FONT, fontSize: 13.5, color: GREY_LT, lineSpacing: 21, valign: "top",
     }
   );
-  chip(s, M, 5.6, "GEN-012", { w: 1.25, fill: GOLD });
+  chip(s, M, 6.5, "GEN-012", { w: 1.25, fill: GOLD });
   s.addText("github.com/dudsi101-svg/human-os", {
-    x: M + 1.45, y: 5.6, w: 6.0, h: 0.28, margin: 0,
+    x: M + 1.45, y: 6.5, w: 6.0, h: 0.28, margin: 0,
     fontFace: M_FONT, fontSize: 12, color: GREY_LT, valign: "middle",
   });
 
-  s.addNotes("Slajd zamykający: wracamy do kryterium sukcesu ze slajdu 3.");
+  s.addNotes("Klamra: wracamy do pytania ze slajdu 3. Odpowiedź jest jednozdaniowa i celowo " +
+    "nie mówi o technologii.");
 }
 
 pres.writeFile({ fileName: OUT }).then(() => console.log("OK:", OUT));
