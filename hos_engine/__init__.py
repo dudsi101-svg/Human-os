@@ -34,6 +34,7 @@ from .authority import *
 from .consent import *
 from .decision_engine import *
 from .decision_scales import *
+from .emergency_root import *
 from .execution_loop import *
 from .graph_store import SQLiteGraphStore
 from .hos_core import *
