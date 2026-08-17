@@ -170,3 +170,34 @@ class DecisionEngineInvariantTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EvidenceScaleAndCriticalTests(unittest.TestCase):
+    """Regression: 10k-iteration user simulation (2026-08-17) found that an
+    out-of-range evidence_level (>=6) let an R-KRYTYCZNE candidate clear the
+    'never admissible' threshold and be recommended."""
+
+    def _cand(self, **over):
+        base = {
+            "candidate_id": "C", "description": "d", "source": "s",
+            "risk_class": RiskReactionClass.NISKIE, "evidence_level": 1,
+        }
+        base.update(over)
+        return DecisionCandidate(**base)
+
+    def test_evidence_level_must_be_on_0_5_scale(self):
+        for bad in (-1, 6, 99):
+            with self.assertRaises(ValueError):
+                self._cand(evidence_level=bad)
+
+    def test_krytyczne_is_never_recommended_even_with_max_evidence(self):
+        cand = self._cand(risk_class=RiskReactionClass.KRYTYCZNE, evidence_level=5)
+        req = DecisionRequest(
+            request_id="R", owner_id="O", content="c", domain="d",
+            goal=Goal(owner_id="O", outcome="o", horizon="h", success_criterion="s"),
+            candidates=(cand,), consent_granted=True,
+        )
+        out = DecisionEngine().decide(req)
+        self.assertNotEqual(out.kind, DecisionOutcomeKind.RECOMMENDATION)
+        self.assertIsNone(out.chosen)
+        self.assertIn("C", out.excluded)
