@@ -56,6 +56,18 @@ Human OS Lab (ADR-LAB), czy pozostać poza repo?
 o statusie „UX-only prototype" (spójnie z ADR-LAB-006 localStorage).
 **Tymczasowo:** poza repo (punkt powrotu utrzymany).
 
+## DD-007 · Parametry Emergency Root (OPEN)
+Sześć kontraktów Hub jest zaimplementowanych; pozostaje infrastruktura
+klucza awaryjnego. Źródło (ADR-RECOVERY-003) wprost nie podaje: wartości
+TTL, wymaganej siły uwierzytelnienia, biblioteki/schematu podziału
+progowego (np. 2-z-3). ADR-RECOVERY-005 klasyfikuje to jako otwarte
+pozycje wdrożeniowe — implementacja bez decyzji wypełniałaby luki po cichu.
+**Rekomendacja:** szkielet typów (deskryptor klucza, deklaracja silnego
+uwierzytelnienia) z parametrami jako argumenty konstruktora bez wartości
+domyślnych; konkretne TTL/schemat — decyzja założyciela.
+**Tymczasowo:** kontrola dwukluczowa oparta o role (RECOVERY_CUSTODIAN),
+jawnie oznaczona jako mechanizm referencyjny.
+
 ## DD-006 · Skale DI/IQ/AR i profil §18 (OPEN)
 Layer 5 digest opisuje skale DI/IQ/AR i dziesięcioosiowy profil §18;
 implementacja wymaga interpretacji progów, których źródło nie podaje
