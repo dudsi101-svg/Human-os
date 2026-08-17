@@ -208,10 +208,55 @@
       "id": "CAP-043",
       "name": "Security gateway",
       "status": "BETA"
+    },
+    {
+      "id": "CAP-044",
+      "name": "Immutable context snapshots and minimum execution contract",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-045",
+      "name": "Authority roles separated from identity",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-046",
+      "name": "End-to-end execution loop with refusal as a first-class outcome",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-047",
+      "name": "Hub entity and relation registries with attributed merges",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-048",
+      "name": "Decision Engine hard gates, abstention and escalation",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-049",
+      "name": "Sovereign Recovery Kernel emergency modes",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-050",
+      "name": "Conversational Living Self Model with epistemic classes",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-051",
+      "name": "SQLite persistence for Hub and Self Model",
+      "status": "BETA"
+    },
+    {
+      "id": "CAP-052",
+      "name": "Deferred decisions queue for founder governance",
+      "status": "BETA"
     }
   ],
   "ecosystem": {
-    "constitution": "0.3.0-draft",
+    "constitution": "0.2-rozszerzona (2026-08-15)",
     "protocol": "0.2.0-draft",
     "specification": "0.2.0-draft",
     "sdk_python": "0.2.0-alpha",
