@@ -197,6 +197,13 @@
   .chat-msg .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .mode-chip { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2); cursor: pointer; }
   .mode-chip.on { border-color: var(--accent); color: var(--ink); box-shadow: var(--glow-accent); }
+  .chat-suggest { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .sug-chip { font-size: 12.5px; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--line);
+    border-bottom-left-radius: 4px; background: var(--surface-2); color: var(--ink-2); cursor: pointer;
+    text-align: left; line-height: 1.35; max-width: 100%; }
+  .sug-chip:hover { border-color: var(--accent); color: var(--ink); }
+  .sug-chip.ask { border-style: dashed; }
+  #chatInput { resize: none; min-height: 44px; max-height: 160px; overflow-y: auto; }
   .sm-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: var(--surface-2); }
   .sm-item .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
   .sm-item .val { font-size: 14.5px; }
@@ -583,8 +590,11 @@
           <div style="display:flex;gap:6px;flex-wrap:wrap" id="chatModes"></div>
         </div>
         <div id="chatWin" class="chat-win"></div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <input type="text" id="chatInput" placeholder="Napisz jednym zdaniem albo bardzo szeroko…" onkeydown="if(event.key==='Enter')sendChat()">
+        <div id="chatSuggest" class="chat-suggest"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:flex-end">
+          <textarea id="chatInput" rows="2" placeholder="Napisz jednym zdaniem albo bardzo szeroko… (Enter wysyła, Shift+Enter = nowa linia)"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px'"></textarea>
           <button class="btn primary" onclick="sendChat()">Wyślij</button>
         </div>
         <p class="note" style="margin-top:8px">Rozmowa jest interakcją, nie bazą danych. Do modelu trafia tylko to, co system jawnie z niej wydobędzie — a każda taka pozycja niesie źródło („skąd to wiem”) i status epistemiczny.</p>
@@ -2902,6 +2912,65 @@ function chatSetMode(mode){ smState().mode=mode; save();
     : `Tryb: ${label}. `+smNextQuestion());
   renderChat();
 }
+/* chmurki z podpowiedziami: startery dobrane do braków w modelu — łatwo zacząć, łatwo odpowiedzieć obszernie.
+   Chmurka tylko wypełnia pole (nic nie wysyła za użytkownika); starter jest tak sformułowany,
+   żeby wydobycie (smExtract) rozpoznało odpowiedź i zapisało ją do modelu ze źródłem. */
+const CHAT_TOPICS=[
+  { label:"★ Co jest dla mnie ważne", kind:"value",
+    starter:"Najważniejsza jest dla mnie … (np. wolność, rodzina, spokój, rozwój), bo … . Widać to po tym, że …" },
+  { label:"◎ Do czego zmierzam", kind:"goal",
+    starter:"Chcę … . Gdyby się udało, w mojej codzienności zmieniłoby się …" },
+  { label:"⚒ Czym się zajmuję", kind:"project",
+    starter:"Pracuję jako … . Zajmuje mi to około … godzin tygodniowo, a najwięcej energii zabiera mi …" },
+  { label:"⏳ Co mnie ogranicza", kind:"constraint",
+    starter:"Najbardziej brakuje mi … — zwłaszcza wtedy, gdy … . Przez to odkładam …" },
+  { label:"# Moje liczby", kind:"observation",
+    starter:"Średnio śpię … godzin, ruszam się … razy w tygodniu, a na ekranach spędzam … godzin dziennie." },
+  { label:"♥ Zdrowie (wrażliwe)", kind:"health",
+    starter:"Ze zdrowia istotne jest u mnie: … (np. migrena, nadciśnienie, bezsenność, kontuzja). Obecnie wygląda to tak: …" },
+];
+const CHAT_DEEPEN=[
+  "Od kiedy tak jest i co się od tego czasu zmieniło: …",
+  "Konkretny przykład z ostatniego tygodnia: …",
+  "Jak często to się zdarza i po czym to poznaję: …",
+];
+let CHAT_ASKBANK=[];
+function chatFillInput(text,append){
+  const inp=$("chatInput"); if(!inp) return;
+  const cur=append?inp.value.trim():"";
+  inp.value=(cur?cur+"\n":"")+text;
+  inp.style.height="auto"; inp.style.height=Math.min(inp.scrollHeight,160)+"px";
+  inp.focus();
+  const c=inp.value.indexOf("…");
+  if(c>=0&&inp.setSelectionRange) inp.setSelectionRange(c,c+1);
+}
+function chatUseStarter(i){ if(CHAT_TOPICS[i]) chatFillInput(CHAT_TOPICS[i].starter,false); }
+function chatDeepen(i){ if(CHAT_DEEPEN[i]!==undefined) chatFillInput(CHAT_DEEPEN[i],true); }
+function chatAsk(i){
+  const q=CHAT_ASKBANK[i]; if(!q) return;
+  smAddMsg("sys",q); save(); renderChat();
+  const inp=$("chatInput"); if(inp) inp.focus();
+}
+function renderChatSuggest(){
+  const host=$("chatSuggest"); if(!host) return;
+  const m=smState();
+  const chips=[];
+  const lastUser=[...m.msgs].reverse().find(x=>x.who==="user");
+  /* po krótkiej wypowiedzi: chmurki pogłębiające — dopisują wątek do pola, użytkownik kończy własnymi słowami */
+  if(lastUser && lastUser.text.length<60 && lastUser.day===S.day){
+    CHAT_DEEPEN.slice(0,2).forEach((d,i)=>chips.push(`<button class="sug-chip" onclick="chatDeepen(${i})">✎ ${esc(d.replace(": …",""))}</button>`));
+  }
+  const missing=CHAT_TOPICS.map((t,i)=>({t,i})).filter(({t})=>!m.items.some(x=>x.kind===t.kind&&x.status==="ACTIVE"));
+  missing.slice(0,Math.max(1,4-chips.length)).forEach(({t,i})=>
+    chips.push(`<button class="sug-chip" onclick="chatUseStarter(${i})">${t.label}</button>`));
+  /* wszystko pokryte → chmurki-pytania z banków trybów (nie zadane dotąd) */
+  if(!missing.length){
+    CHAT_ASKBANK=SM_QUESTIONS.DEEP_DISCOVERY.concat(SM_QUESTIONS.EXPLORATORY)
+      .filter(q=>!m.msgs.some(x=>x.who==="sys"&&x.text===q)).slice(0,2);
+    CHAT_ASKBANK.forEach((q,i)=>chips.push(`<button class="sug-chip ask" onclick="chatAsk(${i})">? ${esc(q)}</button>`));
+  }
+  host.innerHTML=chips.join("");
+}
 function renderChat(){
   const m=smState();
   if(!m.msgs.length){
@@ -2918,6 +2987,7 @@ function renderChat(){
       <button class="btn small ghost" onclick="smCheckpointAnswer('no')">Nie</button>
       <button class="btn small ghost" onclick="smCheckpointAnswer('more')">Dopowiem coś</button></div></div>`:"");
   win.scrollTop=win.scrollHeight;
+  renderChatSuggest();
 }
 
 /* przejścia sterowane wyłącznie przez użytkownika — historia nigdy nie znika */
