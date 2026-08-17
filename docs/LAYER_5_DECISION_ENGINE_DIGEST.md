@@ -6,6 +6,14 @@
 `ADR-DECISION-001..005` sformułowanych na podstawie tego rozbioru. Oryginalny plik DOCX
 pozostaje jedynym rozstrzygającym źródłem w razie wątpliwości (`02_Source_Truth_Protocol`).
 
+> **Weryfikacja względem bajtów źródła (2026-08-17):** founder dostarczył
+> oryginalny DOCX do sesji roboczej. Sekcje 5.2 (IQ0–IQ5), 6.1 (klasy
+> intencji DI-1..DI-8) i 8.2 (AR0–AR5) odczytano bezpośrednio ze źródła —
+> pełne tabele semantyk przeniesiono do
+> `docs/DI_IQ_AR_CALIBRATION_PROPOSAL.md` (v0.2). Digest w tych punktach
+> był poprawny, lecz niekompletny (streszczał skraje). Pozostałe sekcje
+> digestu nie były w tym przebiegu weryfikowane linia po linii.
+
 Źródło: ekstrakcja pandoc z DOCX,
 plik `warstwa5.txt` (3048 linii tekstu jawnego). Cały plik został przeczytany od
 początku do końca (linie 1–3047) w sześciu blokach, dodatkowo zweryfikowany

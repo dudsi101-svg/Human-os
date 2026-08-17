@@ -148,6 +148,13 @@ w trybie fazy cienia (`policies/scale.interpretation.policies.json`);
 ścieżka uzupełnienia DI = odczyt sekcji 6.1 źródłowego DOCX (czeka na
 źródło). Przejście polityk z fazy cienia na tryb operacyjny — osobna
 decyzja po przeglądzie korpusu pomiarów.
+**2026-08-17 (źródło dostarczone):** founder wgrał DOCX Warstwy 5 do
+sesji; sekcje 5.2/6.1/8.2 odczytane z bajtów. Pełne semantyki źródłowe
+wszystkich trzech skal w `DI_IQ_AR_CALIBRATION_PROPOSAL.md` v0.2 wraz
+z tabelą rozbieżności v0.1→v0.2 (m.in. AR1: źródło surowsze niż
+interpolacja). Polityki v0.2.0 (IQ/AR/DI, reguły dosłownie ze źródła)
+czekają na podpis foundera; po podpisie v0.1.0 przechodzi do sekcji
+superseded w konfiguracji.
 
 ## DD-008 · Model przeglądów bezpieczeństwa i kryterium zamknięcia 0.9 (RESOLVED 2026-08-17)
 Decyzja z 2026-08-17 (pkt 5) zakładała przegląd etapu pierwszego przez
