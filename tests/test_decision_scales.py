@@ -163,9 +163,10 @@ if __name__ == "__main__":
 
 
 class ApprovedShadowPolicyTests(unittest.TestCase):
-    """The founder-signed v0.1.0 shadow policies (2026-08-17) must load
-    into the engine's types and interpret every code of their scales.
-    DI stays CONFIGURATION_REQUIRED until the source section arrives."""
+    """The founder-signed v0.2.0 shadow policies (2026-08-17, rules taken
+    verbatim from the Layer 5 source DOCX sections 5.2/6.1/8.2) must load
+    into the engine's types and interpret every code of all three scales.
+    The v0.1.0 interpolations stay recorded as superseded history."""
 
     @classmethod
     def setUpClass(cls):
@@ -192,24 +193,39 @@ class ApprovedShadowPolicyTests(unittest.TestCase):
         self.assertTrue(self.raw["approved_by"].strip())
         self.assertTrue(self.raw["approved_at"].strip())
 
-    def test_iq_and_ar_policies_cover_every_code(self):
+    def test_all_three_scales_have_a_signed_policy(self):
+        self.assertEqual(set(self.policies), {"IQ", "AR", "DI"})
+        for policy in self.policies.values():
+            self.assertEqual(policy.version, "0.2.0")
+
+    def test_policies_cover_every_code_of_their_scale(self):
         for scale_name, policy in self.policies.items():
             definition = SCALE_DEFINITIONS[ScaleKind(scale_name)]
             self.assertEqual(set(policy.rules), set(definition.codes()))
 
-    def test_signed_policy_interprets(self):
+    def test_signed_policy_interprets_with_source_wording(self):
         m = ScaleMeasurement(
             scale=ScaleKind.INPUT_QUALITY, code="IQ0",
             declared_by="HOS-HUM-000001", basis=SYNTHETIC_BASIS,
         )
         outcome = ScaleInterpreter(self.policies["IQ"]).interpret(m)
         self.assertEqual(outcome.kind, InterpretationOutcomeKind.INTERPRETED)
-        self.assertEqual(outcome.result, "tylko-pytania-lub-eskalacja")
-        self.assertEqual(outcome.policy_version, "0.1.0")
+        self.assertEqual(outcome.result, "tylko-pytania-bezpieczenstwo-eskalacja")
+        self.assertEqual(outcome.policy_version, "0.2.0")
 
-    def test_di_remains_configuration_required(self):
-        scales_with_policy = {e["scale"] for e in self.raw["policies"]}
-        self.assertNotIn("DI", scales_with_policy)
+    def test_di_interprets_via_signed_source_policy(self):
+        m = ScaleMeasurement(
+            scale=ScaleKind.DECISION_INTENT, code="DI-8",
+            declared_by="HOS-HUM-000001", basis=SYNTHETIC_BASIS,
+        )
+        outcome = ScaleInterpreter(self.policies["DI"]).interpret(m)
+        self.assertEqual(outcome.kind, InterpretationOutcomeKind.INTERPRETED)
+        self.assertEqual(
+            outcome.result, "priorytet-bezpieczenstwa-i-kontakt-z-pomoca",
+        )
+
+    def test_no_policy_still_means_configuration_required(self):
+        # the safe-refusal mechanism is untouched by the sign-off
         m = ScaleMeasurement(
             scale=ScaleKind.DECISION_INTENT, code="DI-1",
             declared_by="HOS-HUM-000001", basis=SYNTHETIC_BASIS,
@@ -218,3 +234,11 @@ class ApprovedShadowPolicyTests(unittest.TestCase):
         self.assertEqual(
             outcome.kind, InterpretationOutcomeKind.CONFIGURATION_REQUIRED,
         )
+
+    def test_superseded_v010_is_preserved_as_history(self):
+        superseded = self.raw.get("superseded", [])
+        versions = {(e["policy_id"], e["version"]) for e in superseded}
+        self.assertIn(("HOS-POL-IQ-001", "0.1.0"), versions)
+        self.assertIn(("HOS-POL-AR-001", "0.1.0"), versions)
+        for entry in superseded:
+            self.assertEqual(entry["superseded_by"], "0.2.0")

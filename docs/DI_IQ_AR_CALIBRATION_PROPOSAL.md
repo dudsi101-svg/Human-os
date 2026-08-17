@@ -181,11 +181,16 @@ zastąpiona — nigdy nie była użyta do blokowania (faza cienia).
 
 ### Do podpisu foundera (v0.2)
 
-- [ ] polityki `HOS-POL-IQ-001`, `HOS-POL-AR-001`, `HOS-POL-DI-001`
+- [x] polityki `HOS-POL-IQ-001`, `HOS-POL-AR-001`, `HOS-POL-DI-001`
       w wersji **0.2.0**, z regułami dosłownie ze źródła (§2–§4),
       w trybie fazy cienia — zastępują v0.1.0,
-- [ ] semantyki poziomów wszystkich trzech skal = brzmienie źródłowe
+- [x] semantyki poziomów wszystkich trzech skal = brzmienie źródłowe
       (status ŹRÓDŁO; nic do korekty redakcyjnej — to cytaty).
 
-Po podpisie: aktualizacja `policies/scale.interpretation.policies.json`
-(v0.1.0 → sekcja `superseded`, v0.2.0 aktywne w SHADOW) + testy.
+**Podpis foundera: 2026-08-17** — zgoda wyrażona wprost w sesji roboczej
+(„Podpisuję"). Wykonane: `policies/scale.interpretation.policies.json`
+zaktualizowane (v0.2.0 aktywne w SHADOW dla IQ/AR/DI; v0.1.0 w sekcji
+`superseded` z pełnymi regułami i notą o rozbieżnościach). Kalibracja
+startowa wszystkich trzech skal jest tym samym **zamknięta**; następny
+krok to faza cienia → przegląd korpusu → decyzja o trybie operacyjnym
+(§5).
