@@ -31,6 +31,27 @@ obecnie testowanego artefaktu jako punkt odniesienia).
 
 Otwórz `human_os_app.html` w przeglądarce. Bez budowania, bez zależności.
 
+## PWA (przygotowanie do wydania sklepowego, ADR-APP-001 §5)
+
+Katalog jest kompletną aplikacją PWA: `manifest.webmanifest` (standalone,
+ikony zwykłe i maskable, po polsku), `sw.js` (offline-first: powłoka
+z cache, ciche odświeżenie w tle, wyłącznie własny origin — zero żądań na
+zewnątrz) oraz ikony w `icons/`. Rejestracja service workera w
+`human_os_app.html` jest osłonięta — aktywuje się tylko przy serwowaniu
+przez http/https, więc ten sam plik działa bez zmian jako artefakt
+i po otwarciu z dysku.
+
+Test lokalny:
+
+```bash
+cd apps/user-demo && python3 -m http.server 8080
+# http://localhost:8080/ → instalacja „Dodaj do ekranu głównego”, działa offline
+```
+
+Ścieżka sklepowa (kierunek wg ADR-APP-001, finalizacja w DD-011):
+hosting statyczny → TWA (Google Play) / cienki wrapper (App Store).
+Przy każdej zmianie plików powłoki podbij `CACHE` w `sw.js`.
+
 ## Co implementuje (po stronie klienta, jako demo wzorców)
 
 - pulpit równowagi 5 domen i „odprawę dnia",

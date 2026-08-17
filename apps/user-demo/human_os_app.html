@@ -1,4 +1,12 @@
 <title>Human OS</title>
+<!-- PWA (aktywne tylko przy serwowaniu http/https — w artefakcie i z pliku to nieszkodliwe no-op) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F2EFE7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161812" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Human OS">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 <style>
   :root {
     color-scheme: light;
@@ -1973,6 +1981,13 @@ function renderCommunity(){
       <p class="note" style="margin-top:8px">Scalanie jest addytywne: dochodzą uczestnicy i wpisy; nic Twojego nie znika. Iskry łączą się jako suma unikalnych osób.</p>
     </div>`;
 }
+
+/* ---------- PWA: rejestracja service workera (tylko http/https) ---------- */
+try{
+  if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
+    window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+  }
+}catch(e){}
 
 /* ---------- wersje: bezpłatna / Premium ---------- */
 const APP_VERSION="1.0.0";
