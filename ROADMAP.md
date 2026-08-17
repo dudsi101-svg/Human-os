@@ -11,12 +11,33 @@
 - [ ] 0.9 Protocol Interoperability and Security Review
 - [ ] 1.0 Stable Protocol, Engine and Reference Runtime
 
+## Zrealizowane poza numeracją 0.x (sierpień 2026)
+
+Fazy 3–4 fundamentu wykonawczego oraz pierwsze plastry warstw powstały
+równolegle do powyższej osi i nie zamykają punktu 0.9:
+
+- [x] pętla wykonawcza (identity, authority, consent, entity, constitution),
+- [x] Decision Engine MVP z twardymi bramami, abstencją i eskalacją,
+- [x] Sovereign Recovery Kernel: siedem trybów awaryjnych, dual-key,
+      sześć kontraktów Hub,
+- [x] konwersacyjny Living Self Model z klasami epistemicznymi
+      i persystencją SQLite,
+- [x] zerowy dług mypy w silniku,
+- [x] kolejka odłożonych decyzji (`docs/DEFERRED_DECISIONS.md`).
+
+Punkt 0.9 (interoperacyjność protokołu i niezależny przegląd
+bezpieczeństwa) pozostaje otwarty — żaden z powyższych plastrów go nie
+zastępuje.
+
 ## Warunki 1.0
 
 - stabilna Konstytucja i Object Model,
 - wersjonowany Human OS Protocol,
 - migracje i kompatybilność,
-- niezależne testy bezpieczeństwa,
+- udokumentowany przegląd bezpieczeństwa według powtarzalnego protokołu
+  wewnętrznego, z usunięciem problemów krytycznych i wysokich, zapisem
+  ryzyk zaakceptowanych przez foundera i testem regresji zabezpieczeń
+  (kryterium zmienione decyzją foundera 2026-08-17 — patrz DD-008),
 - przegląd governance,
 - pełna przenośność danych,
 - mierzalna możliwość wyjścia,
