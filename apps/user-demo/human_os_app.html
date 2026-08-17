@@ -2127,6 +2127,31 @@ const AGENT_SYSTEM=[
   "5. Przy objawach alarmowych (ból w klatce, myśli samobójcze, stany nagłe) kierujesz do lekarza lub pomocy doraźnej i nie proponujesz nic innego.",
   "6. Opierasz się wyłącznie na danych przekazanych w wiadomości. Niczego o użytkowniku nie zmyślasz i nie dopowiadasz.",
 ].join("\n");
+/* trzy silniki (decyzja foundera 2026-08-17): local | key | backend */
+let LOCAL_AI=false;
+function localAIApi(){ return window.LanguageModel || (window.ai && window.ai.languageModel) || null; }
+async function probeLocalAI(){
+  const api=localAIApi();
+  if(!api){ LOCAL_AI=false; return; }
+  try{
+    if(api.availability){ const a=await api.availability(); LOCAL_AI=(a==="available"||a==="downloadable"||a==="readily"); }
+    else if(api.capabilities){ const c=await api.capabilities(); LOCAL_AI=(c.available!=="no"); }
+    else LOCAL_AI=true;
+  }catch(e){ LOCAL_AI=false; }
+  renderAgent();
+}
+try{ probeLocalAI(); }catch(e){}
+function agentEngine(){
+  let e="auto"; try{ e=localStorage.getItem("human-os-agent-engine")||"auto"; }catch(x){}
+  if(e==="local"&&!LOCAL_AI) e="auto";
+  if(e==="auto") return LOCAL_AI?"local":"key";
+  return e;
+}
+function setAgentEngine(v){
+  try{ localStorage.setItem("human-os-agent-engine",v); }catch(e){}
+  logEvent("AGENT","agent_engine",`Silnik Przewodnika: ${v==="local"?"na urządzeniu":"chmura (własny klucz)"}`);
+  renderAgent();
+}
 function agentKey(){ try{ return localStorage.getItem("human-os-agent-key")||""; }catch(e){ return ""; } }
 function agentModel(){ try{ return localStorage.getItem("human-os-agent-model")||"claude-opus-5"; }catch(e){ return "claude-opus-5"; } }
 function saveAgentCfg(){
@@ -2153,7 +2178,20 @@ function agentPayload(){
       uzaleznienia:p.addictions, przewlekle:p.chronic, dlaczego:p.why },
     model_potwierdzony:items, aktywne_eksperymenty:exps };
 }
+async function agentCallLocal(userText){
+  const api=localAIApi();
+  const opts={ systemPrompt:AGENT_SYSTEM, initialPrompts:[{role:"system", content:AGENT_SYSTEM}] };
+  const session=await api.create(opts);
+  const txt=await session.prompt(userText);
+  try{ if(session.destroy) session.destroy(); }catch(e){}
+  return { model:"model lokalny (na urządzeniu)", stop_reason:"end_turn",
+    content:[{type:"text", text:String(txt||"")}] };
+}
 async function agentCall(userText, format){
+  if(agentEngine()==="local"){
+    const extra=format?"\nOdpowiedz WYŁĄCZNIE poprawnym JSON w formacie {\"pomysly\":[{\"nazwa\":\"...\",\"opis\":\"...\",\"dlaczego_pasuje\":\"...\"}]} — bez żadnego tekstu poza JSON.":"";
+    return agentCallLocal(userText+extra);
+  }
   const body={ model:agentModel(), max_tokens:2048, system:AGENT_SYSTEM,
     messages:[{role:"user", content:userText}] };
   if(format) body.output_config={format:format};
@@ -2167,7 +2205,9 @@ async function agentCall(userText, format){
 function agentReady(){
   if(!isPremium()){ toast("Przewodnik AI to funkcja Premium."); showView("konstytucja"); openSub("konstytucja","premium"); return false; }
   if(!S.consents.C5){ toast("Przewodnik wymaga zgody C5 — włączysz ją w karcie Przewodnika lub w Konstytucji."); return false; }
-  if(!agentKey()){ toast("Podaj klucz API w konfiguracji Przewodnika."); renderAgent(); return false; }
+  const eng=agentEngine();
+  if(eng==="key" && !agentKey()){ toast("Podaj klucz API w konfiguracji Przewodnika (albo wybierz silnik lokalny, jeśli dostępny)."); renderAgent(); return false; }
+  if(eng==="local" && !LOCAL_AI){ toast("Wbudowane AI nie jest dostępne w tej przeglądarce — wybierz silnik chmurowy."); renderAgent(); return false; }
   return true;
 }
 function agentRefusalNote(out){
@@ -2180,7 +2220,7 @@ function agentErrorNote(e,out){
 async function agentExplain(){
   if(!agentReady()) return;
   const out=$("agentOut"); out.innerHTML=`<div class="quiet">Przewodnik analizuje Twoje dane…</div>`;
-  logEvent("AGENT","agent_invoked","Objaśnienie sytuacji — wysłano zminimalizowany pakiet (profil, cel, domeny, potwierdzony model, eksperymenty); nigdy: hipotezy, rejestr, Wspólnota",{scope:"profil"});
+  logEvent("AGENT","agent_invoked",`Objaśnienie sytuacji [silnik: ${agentEngine()==="local"?"na urządzeniu — dane nie wychodzą":"chmura, własny klucz"}] — pakiet zminimalizowany (profil, cel, domeny, potwierdzony model, eksperymenty); nigdy: hipotezy, rejestr, Wspólnota`,{scope:"profil"});
   try{
     const r=await agentCall("Objaśnij moją obecną sytuację na podstawie poniższych danych. Zwięźle, w trzech częściach: (1) co widać w danych, (2) co może to znaczyć — wyraźnie jako hipotezy, (3) na co zwrócić uwagę w najbliższych dniach.\nDane:\n"+JSON.stringify(agentPayload()));
     if(r.stop_reason==="refusal"){ logEvent("AGENT","agent_refused","Model odmówił (klasyfikator bezpieczeństwa)"); agentRefusalNote(out); return; }
@@ -2206,7 +2246,10 @@ async function agentIdeas(){
   try{
     const r=await agentCall(`Zaproponuj 6–8 zróżnicowanych pomysłów na poprawę domeny „${dn}”, dopasowanych do danych użytkownika. Każdy pomysł: jeden konkretny codzienny krok, możliwy do przetestowania w 7-dniowym eksperymencie, bez substancji, suplementów i leków. W polu dlaczego_pasuje odwołaj się do konkretnych danych użytkownika.\nDane:\n`+JSON.stringify(agentPayload()), AGENT_IDEAS_SCHEMA);
     if(r.stop_reason==="refusal"){ logEvent("AGENT","agent_refused","Model odmówił (klasyfikator bezpieczeństwa)"); agentRefusalNote(out); return; }
-    const txt=((r.content||[]).find(b=>b.type==="text")||{}).text||"{}";
+    let txt=((r.content||[]).find(b=>b.type==="text")||{}).text||"{}";
+    txt=txt.replace(/```json|```/g,"").trim();
+    const a=txt.indexOf("{"), z=txt.lastIndexOf("}");
+    if(a>0||z<txt.length-1){ if(a>=0&&z>a) txt=txt.slice(a,z+1); }
     let data; try{ data=JSON.parse(txt); }catch(e){ data={pomysly:[]}; }
     AGENT_IDEAS=(data.pomysly||[]).slice(0,8);
     logEvent("AGENT","agent_response",`Otrzymano ${AGENT_IDEAS.length} pomysłów dla „${dn}” (model ${r.model})`,{scope:domain});
@@ -2251,14 +2294,15 @@ function toggleConsentC5(){
   save();
 }
 function renderAgent(){
-  const host=$("agentHost"); if(!host) return;
-  const c5=S.consents.C5, key=agentKey();
+  const host=$("agentHost"); if(!host||!S) return;
+  const c5=S.consents.C5, key=agentKey(), eng=agentEngine();
+  const engReady = eng==="local" ? LOCAL_AI : !!key;
   const domOpts=DOMAINS.map(d=>`<option value="${d.id}">${d.name}</option>`).join("");
   host.innerHTML=`<div class="card" style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
       <h3 style="font-size:16px">✳ Przewodnik AI</h3>
-      <span class="pill ${c5&&key?"verd":"neutral"}">${!c5?"wymaga zgody C5":!key?"wymaga klucza API":"gotowy"}</span></div>
-    <p class="note" style="margin:6px 0 10px">Prawdziwy model AI (Claude), który objaśnia Twoją sytuację i podsuwa pomysły na podstawie Twoich danych. Reguły Konstytucji: AI proponuje wyłącznie hipotezy — nigdy samo nie zapisuje Twojego modelu ani planu; dane wychodzą tylko po zgodzie C5, w zminimalizowanym pakiecie, przez Twój własny klucz API.</p>
+      <span class="pill ${c5&&engReady?"verd":"neutral"}">${!c5?"wymaga zgody C5":!engReady?(eng==="key"?"wymaga klucza API":"silnik niedostępny"):(eng==="local"?"gotowy · na urządzeniu":"gotowy · chmura")}</span></div>
+    <p class="note" style="margin:6px 0 10px">Model AI, który objaśnia Twoją sytuację i podsuwa pomysły na podstawie Twoich danych — z wymiennym silnikiem: na urządzeniu (nic nie wychodzi), w chmurze na Twoim kluczu, a docelowo w cenie subskrypcji. Reguły Konstytucji: AI proponuje wyłącznie hipotezy — nigdy samo nie zapisuje Twojego modelu ani planu; poza urządzenie dane wychodzą tylko po zgodzie C5, w zminimalizowanym pakiecie.</p>
     ${!c5?`<button class="btn primary" onclick="toggleConsentC5()">Włącz zgodę C5 (Przewodnik AI)</button>
       <p class="note" style="margin-top:8px">Zgoda C5: przy każdym Twoim pytaniu do Przewodnika wysyłane są — do API Anthropic, Twoim kluczem — profil „O mnie”, cel, wartości domen, potwierdzone pozycje modelu i aktywne eksperymenty. Nigdy: hipotezy, rejestr zdarzeń, dane Wspólnoty. Klucz nie wchodzi do eksportu ani stanu aplikacji.</p>`
     :`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
@@ -2267,14 +2311,21 @@ function renderAgent(){
         <button class="btn" onclick="agentIdeas()">Pomysły na tę domenę</button>
         <button class="btn small ghost" onclick="agentShowPayload()">Co wysyłam?</button>
       </div>
-      <details ${key?"":"open"}><summary>Konfiguracja (klucz API, model)</summary>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
+      <details ${engReady?"":"open"}><summary>Konfiguracja (silnik, klucz, model)</summary>
+        <div style="margin-top:8px"><label for="agEngine">Silnik AI</label>
+        <select id="agEngine" onchange="setAgentEngine(this.value)" style="max-width:340px">
+          <option value="local"${eng==="local"?" selected":""}${LOCAL_AI?"":" disabled"}>Na urządzeniu — wbudowane AI przeglądarki${LOCAL_AI?" · nic nie wychodzi na zewnątrz":" (niedostępne w tej przeglądarce)"}</option>
+          <option value="key"${eng==="key"?" selected":""}>Chmura — Claude, Twój własny klucz API</option>
+          <option value="backend" disabled>Chmura — w cenie subskrypcji (etap sklepowy, DD-013)</option>
+        </select></div>
+        ${eng==="key"?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
           <input type="password" id="agKey" placeholder="sk-ant-…" value="${esc(key)}" style="max-width:250px">
           <select id="agModel" style="max-width:230px">${AGENT_MODELS.map(([id,n])=>`<option value="${id}"${agentModel()===id?" selected":""}>${n}</option>`).join("")}</select>
           <button class="btn small" onclick="saveAgentCfg()">Zapisz</button>
           ${key?`<button class="btn small ghost" onclick="clearAgentKey()">Usuń klucz</button>`:""}
         </div>
-        <p class="note" style="margin-top:6px">Klucz zostaje wyłącznie na tym urządzeniu — poza stanem aplikacji i poza eksportem. Za użycie płacisz bezpośrednio u Anthropic (console.anthropic.com). W wydaniu sklepowym docelowo zastąpi to backend aplikacji (DD-013).</p></details>`}
+        <p class="note" style="margin-top:6px">Klucz zostaje wyłącznie na tym urządzeniu — poza stanem aplikacji i poza eksportem. Za użycie płacisz bezpośrednio u Anthropic (console.anthropic.com).</p>`
+        :`<p class="note" style="margin-top:6px">Silnik lokalny działa w całości na Twoim urządzeniu — żadne dane nie wychodzą na zewnątrz, bez kont i kluczy. Jakość odpowiedzi jest niższa niż w chmurze; modele będą się zmieniać, silniki można przełączać w każdej chwili.</p>`}</details>`}
     <div id="agentOut"></div></div>`;
 }
 
