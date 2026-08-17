@@ -1038,7 +1038,8 @@ function freshState(name, domains, goal){
     v:2, name, day:1, epoch:1,
     domains, history:hist,
     consents:{ C0:true, C1:true, C2:true, C4:false, C5:false },
-    goal, decisions:[], experiments:[], pastExperiments:[],
+    goal, goals:[goal], activeGoal:0,
+    decisions:[], experiments:[], pastExperiments:[],
     modes:{ SAFE_MODE:false, READ_ONLY:false },
     log:[],
     profile: emptyProfile(), briefDismissedDay: 0,
@@ -1077,6 +1078,10 @@ function migrateState(s){
   /* migracja: pojedynczy eksperyment -> tablica równoległych */
   if(s.consents && s.consents.C4===undefined) s.consents.C4=false;
   if(s.consents && s.consents.C5===undefined) s.consents.C5=false;
+  /* wiele celów: goals[] + aktywny; S.goal zawsze wskazuje aktywny obiekt z tablicy */
+  if(!Array.isArray(s.goals)) s.goals = s.goal ? [s.goal] : [];
+  if(typeof s.activeGoal!=="number" || s.activeGoal<0 || s.activeGoal>=s.goals.length) s.activeGoal=0;
+  if(s.goals.length) s.goal = s.goals[s.activeGoal];
   if(!s.community) s.community={ pid:"P-"+Math.random().toString(36).slice(2,8), pseudonym:"", challenges:[], experiences:[] };
   if(!s.community.circles) s.community.circles=[];
   if(!s.community.help) s.community.help=[];
@@ -1245,10 +1250,32 @@ function renderPulpit(){
   }).join("");
   DOMAINS.forEach(d=>drawSpark("spark-"+d.id, S.history[d.id]));
   const left = g.createdDay + g.horizon - S.day;
+  const domOptsGoal=DOMAINS.map(d=>`<option value="${d.id}">${d.name}</option>`).join("");
   $("goalBox").innerHTML = `
     <p style="font-size:14.5px;margin-bottom:6px">„${esc(g.text)}"</p>
     <p class="note">Domena: ${gd.name} · horyzont: ${g.horizon} dni · ${left>0? "pozostało "+left+" dni":"horyzont minął — czas na przegląd celu"}</p>
-    <p class="note">Właścicielem celu jesteś Ty — system go nie przepisze.</p>`;
+    <p class="note">Właścicielem celu jesteś Ty — system go nie przepisze.</p>
+    ${S.goals.length>1?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      ${S.goals.map((x,i)=>i===S.activeGoal
+        ?`<span class="pill verd">aktywny: ${esc(x.text.slice(0,26))}${x.text.length>26?"…":""}</span>`
+        :`<button class="day-chip" onclick="setActiveGoal(${i})" title="Przełącz na ten cel">${esc(x.text.slice(0,26))}${x.text.length>26?"…":""}</button>`).join("")}
+    </div>`:""}
+    <div style="margin-top:10px"><button class="btn small" onclick="toggleGoalForm()">＋ Dodaj kolejny cel</button></div>
+    <div id="newGoalForm" style="display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
+      <label for="ngDomain">Domena nowego celu</label>
+      <select id="ngDomain" style="margin-bottom:8px">${domOptsGoal}</select>
+      <label for="ngText">Co chcesz zmienić lub zrozumieć? (rezultat, nie metoda)</label>
+      <input type="text" id="ngText" placeholder="np. spokojniejsze wieczory z rodziną" style="margin-bottom:8px">
+      <label for="ngHorizon">Horyzont</label>
+      <select id="ngHorizon" style="margin-bottom:10px">
+        <option value="14">14 dni</option><option value="30" selected>30 dni</option><option value="60">60 dni</option>
+      </select>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary small" onclick="addGoal()">Utwórz cel</button>
+        <button class="btn ghost small" onclick="toggleGoalForm()">Anuluj</button>
+      </div>
+      <p class="note" style="margin-top:8px">Nowy cel staje się aktywny — odprawa dnia i rekomendacje pójdą za nim. Między celami przełączasz się tutaj jednym dotknięciem; żaden nie znika.</p>
+    </div>`;
   const running=runningExps();
   $("expSummary").innerHTML = running.length
     ? running.map(e=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">${expRing(e,40)}
@@ -2061,6 +2088,30 @@ function renderCommunity(){
     </div>`;
 }
 
+/* ---------- wiele celów ---------- */
+function toggleGoalForm(){
+  const f=$("newGoalForm"); if(!f) return;
+  f.style.display = f.style.display==="none" ? "block" : "none";
+  if(f.style.display==="block"){ $("ngText").focus(); }
+}
+function setActiveGoal(i){
+  if(!S.goals[i]) return;
+  S.activeGoal=i; S.goal=S.goals[i];
+  logEvent("CEL","CEL-AKTYWNY",`Przełączono aktywny cel na „${S.goal.text}” — poprzednie cele zostają, nic nie znika`,{scope:S.goal.domain});
+  toast("Cel aktywny: „"+S.goal.text.slice(0,40)+(S.goal.text.length>40?"…":"")+"”");
+  const dd=$("decDomain"); if(dd) dd.value=S.goal.domain;
+  save(); renderPulpit();
+}
+function addGoal(){
+  const text=($("ngText").value||"").trim();
+  if(!text){ toast("Opisz rezultat, do którego zmierzasz."); return; }
+  if(S.goals.length>=5){ toast("Maksymalnie 5 celów naraz — uwaga rozproszona na więcej przestaje być uwagą. Zamknij któryś przegląd celu."); return; }
+  const g={ domain:$("ngDomain").value, text:text.slice(0,140), horizon:Number($("ngHorizon").value), createdDay:S.day };
+  S.goals.push(g);
+  logEvent("CEL","NOWY-CEL",`Utworzono cel „${g.text}” (${DOMAINS.find(d=>d.id===g.domain).name}, ${g.horizon} dni)`,{scope:g.domain});
+  setActiveGoal(S.goals.length-1);
+}
+
 /* ---------- Przewodnik AI: agent LLM w aplikacji (ADR-APP-002) ---------- */
 const AGENT_MODELS=[["claude-opus-5","Claude Opus — najzdolniejszy"],["claude-sonnet-5","Claude Sonnet — szybszy"],["claude-haiku-4-5","Claude Haiku — ekonomiczny"]];
 const AGENT_SYSTEM=[
@@ -2094,7 +2145,7 @@ function agentPayload(){
   const exps=S.experiments.filter(e=>["baseline","active","HOLD"].includes(e.phase))
     .map(e=>({nazwa:e.name, domena:e.domain, faza:e.phase, dzien_w_fazie:e.dayIn}));
   const p=S.profile||{};
-  return { dzien:S.day, imie:S.name, cel:S.goal, domeny:S.domains,
+  return { dzien:S.day, imie:S.name, cel:S.goal, cele_pozostale:S.goals.filter((g,i)=>i!==S.activeGoal).map(g=>g.text), domeny:S.domains,
     profil:{ wiek:p.age, sen:p.sleep, cialo:p.body, psychika:p.mind, rutyna:p.routine,
       uzaleznienia:p.addictions, przewlekle:p.chronic, dlaczego:p.why },
     model_potwierdzony:items, aktywne_eksperymenty:exps };
