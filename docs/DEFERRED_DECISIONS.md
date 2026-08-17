@@ -122,6 +122,16 @@ testowe wyraźnie syntetyczne, nieprzedstawiane jako rekomendowane;
 rozdzielenie struktury skali, wartości pomiaru i polityki interpretacji.
 Konkretne progi liczbowe — osobna decyzja foundera po kalibracji
 i walidacji.
+**Wdrożone 2026-08-17:** `hos_engine/decision_scales.py` — struktura
+(zamknięte listy kodów DI-1..8/IQ0..5/AR0..5 z Załącznika I), pomiar
+(`ScaleMeasurement`: kod + podstawa + tożsamość, wg §18.2), polityka
+interpretacji (`InterpretationPolicy`: jawna, wersjonowana, z aprobatą,
+bez żadnej domyślnej instancji) i `ScaleInterpreter` zwracający
+`CONFIGURATION_REQUIRED` jako wynik pierwszej klasy przy braku lub
+niekompletności konfiguracji. 14 testów; fixtures jawnie syntetyczne.
+Semantyka poszczególnych poziomów i progi — nadal otwarte (decyzja
+foundera po kalibracji). Profil dziesięcioosiowy §18 nie wchodzi w zakres
+tego szkieletu (zgoda obejmowała DI/IQ/AR).
 
 ## DD-008 · Model przeglądów bezpieczeństwa i kryterium zamknięcia 0.9 (RESOLVED 2026-08-17)
 Decyzja z 2026-08-17 (pkt 5) zakładała przegląd etapu pierwszego przez
