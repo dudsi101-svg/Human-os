@@ -176,6 +176,7 @@ Opt-in collaboration module: shared challenges, circles, experience cards, feder
 |---|---|---|
 | [ADR-COMMONS-001](ADR-COMMONS-001-wspolnie-principles-and-structure.md) | Accepted direction | "Wspólnie" (Commons/Collaboration Module) — Principles, Structure, Rollout |
 | [ADR-COMMONS-002](ADR-COMMONS-002-entities-events-privacy.md) | Accepted direction | Commons Entities, Events, Privacy and Safety Contract |
+| [ADR-COMMONS-003](ADR-COMMONS-003-canonical-commons-events.md) | Accepted, implemented | Canonical `commons_*` Event Types (DD-009 part 1) |
 
 ## Applications
 
