@@ -1,7 +1,7 @@
 {
   "engine": "Human OS Engine",
   "version": "0.9.0",
-  "status": "BETA",
+  "status": "ALPHA (reference implementation)",
   "runtime": "Signed protocol, identity, trust and replay-protection reference runtime",
   "capabilities": [
     {

@@ -21,7 +21,7 @@ Pozostawała decyzja: czy dodać `mypy hos_engine` do CI jako bramkę?
 krok `python -m mypy hos_engine` dodany do `.github/workflows/ci.yml`
 między ruff a pytest, zgodnie z rekomendacją.
 
-## DD-002 · Promocja pozycji self-modelu do encji Hub (OPEN)
+## DD-002 · Promocja pozycji self-modelu do encji Hub (RESOLVED 2026-08-17)
 Potwierdzone pozycje Living Self Model (wartości, cele) mogłyby stawać się
 encjami Hub (`GOAL`, `KNOWLEDGE_CLAIM`) z relacjami. Wymaga decyzji
 o semantyce: czy potwierdzenie = automatyczna promocja, czy osobny,
@@ -30,8 +30,12 @@ sugerują jawny akt.)
 **Rekomendacja:** osobny jawny akt („dodaj do Hub") + relacja
 `DOTYCZY`/`NALEZY_DO`; bez automatu.
 **Tymczasowo:** brak promocji; feed `decision_inputs()` wystarcza.
+**Rozstrzygnięcie foundera (2026-08-17):** potwierdzenie w Living Self
+Model NIE oznacza automatycznej promocji do Hub. Promocja wymaga
+osobnego, jawnego działania użytkownika („Dodaj do Hub"); operacja musi
+być wersjonowana, audytowalna i odwracalna.
 
-## DD-003 · `recovery_*` w kanonicznym słowniku zdarzeń (OPEN)
+## DD-003 · `recovery_*` w kanonicznym słowniku zdarzeń (RESOLVED 2026-08-17)
 ADR-RECOVERY przewiduje docelowe typy zdarzeń `recovery_*`;
 dziś zdarzenia trwałe idą jako `STATE_OBSERVED`. Dodanie nowych typów
 zmienia kanoniczny `event.types.json` + enum w `schemas/event.schema.json`
@@ -39,8 +43,13 @@ zmienia kanoniczny `event.types.json` + enum w `schemas/event.schema.json`
 **Rekomendacja:** dodać `recovery_activated`, `recovery_deactivated`,
 `recovery_refused`, `entity_frozen` w jednej zmianie ze schematem i testami.
 **Tymczasowo:** `STATE_OBSERVED` (zgodnie z ADR-RECOVERY-006 notą).
+**Rozstrzygnięcie foundera (2026-08-17):** zatwierdzone zgodnie
+z rekomendacją — cztery typy (`recovery_activated`, `recovery_deactivated`,
+`recovery_refused`, `entity_frozen`) w jednej, osobnej zmianie ze schematem,
+walidacją, mapowaniem, dokumentacją i testami. Historycznych zdarzeń nie
+przepisujemy — stara historia jako `STATE_OBSERVED` pozostaje czytelna.
 
-## DD-004 · HYPOTHESIS vs AI_INFERENCE (OPEN)
+## DD-004 · HYPOTHESIS vs AI_INFERENCE (RESOLVED 2026-08-17)
 `EvidenceType` ma oba; ADR-SELFMODEL-001 przyjął konwencję
 (HYPOTHESIS = interpretacje konwersacyjne czekające na potwierdzenie,
 AI_INFERENCE = wnioski z danych). Czy docelowo scalić w jedną klasę
@@ -48,8 +57,13 @@ z polem `method`?
 **Rekomendacja:** zostawić dwa (różne źródła epistemiczne), doprecyzować
 w schemacie Layer 2 przy najbliższej rewizji.
 **Tymczasowo:** konwencja z ADR-SELFMODEL-001 obowiązuje.
+**Rozstrzygnięcie foundera (2026-08-17):** zachowujemy dwie osobne klasy
+(HYPOTHESIS = interpretacja/możliwość oczekująca na potwierdzenie,
+AI_INFERENCE = wniosek obliczony z danych). Nie scalać. Pole `method`
+może później zostać dodane jako metadana sposobu powstania wniosku,
+ale nie zastępuje różnicy epistemicznej.
 
-## DD-005 · Relacja aplikacji demo do repo (OPEN)
+## DD-005 · Relacja aplikacji demo do repo (RESOLVED 2026-08-17)
 Aplikacja użytkownika (artefakt, single-file) implementuje wzorce silnika
 po stronie klienta (self-model, bramy, recovery) jako demo produktowe.
 Czy ma trafić do repo (np. `apps/user-demo/`) jako artefakt referencyjny
@@ -57,8 +71,16 @@ Human OS Lab (ADR-LAB), czy pozostać poza repo?
 **Rekomendacja:** dodać do repo jako `apps/user-demo/` z README
 o statusie „UX-only prototype" (spójnie z ADR-LAB-006 localStorage).
 **Tymczasowo:** poza repo (punkt powrotu utrzymany).
+**Rozstrzygnięcie foundera (2026-08-17):** włączyć do repo jako
+`apps/user-demo/` — najpierw dokładna, niezmodyfikowana wersja obecnie
+testowanego artefaktu jako punkt odniesienia. Oznaczenia obowiązkowe:
+UX-ONLY PROTOTYPE, brak produkcyjnego backendu i uwierzytelniania, dane
+syntetyczne domyślnie, localStorage ≠ trwały User Model, brak
+automatycznej promocji do Core/Hub, żadnych prawdziwych danych
+użytkownika w repo. README ma rozróżniać prototyp, konsolę Proof Kernel
+w `app/` i silnik `hos_engine`.
 
-## DD-007 · Parametry Emergency Root (OPEN)
+## DD-007 · Parametry Emergency Root (RESOLVED 2026-08-17 — szkielet; parametry liczbowe nadal otwarte)
 Sześć kontraktów Hub jest zaimplementowanych; pozostaje infrastruktura
 klucza awaryjnego. Źródło (ADR-RECOVERY-003) wprost nie podaje: wartości
 TTL, wymaganej siły uwierzytelnienia, biblioteki/schematu podziału
@@ -69,8 +91,17 @@ uwierzytelnienia) z parametrami jako argumenty konstruktora bez wartości
 domyślnych; konkretne TTL/schemat — decyzja założyciela.
 **Tymczasowo:** kontrola dwukluczowa oparta o role (RECOVERY_CUSTODIAN),
 jawnie oznaczona jako mechanizm referencyjny.
+**Rozstrzygnięcie foundera (2026-08-17):** zatwierdzony szkielet:
+deskryptor klucza awaryjnego, wersjonowana polityka (wymagany TTL,
+deklaracja siły uwierzytelnienia, konfigurowalny schemat k-z-n, role
+kustoszy, zakres, id i wersja konfiguracji), pełny audyt aktywacji,
+odmowy, wykorzystania i wygaśnięcia. Bez wartości domyślnych (TTL,
+uwierzytelnienie, schemat); brak konfiguracji blokuje mechanizm; wartości
+testowe nie mogą trafić do konfiguracji produkcyjnej. Rzeczywisty magazyn
+kluczy i kryptografia progowa — dopiero po osobnej decyzji i threat
+modelu wdrożenia.
 
-## DD-006 · Skale DI/IQ/AR i profil §18 (OPEN)
+## DD-006 · Skale DI/IQ/AR i profil §18 (RESOLVED 2026-08-17 — szkielet; progi liczbowe nadal otwarte)
 Layer 5 digest opisuje skale DI/IQ/AR i dziesięcioosiowy profil §18;
 implementacja wymaga interpretacji progów, których źródło nie podaje
 liczbowo. Wdrożyć z progami roboczymi (oznaczonymi PROVISIONAL), czy
@@ -78,3 +109,11 @@ czekać na doprecyzowanie założyciela?
 **Rekomendacja:** wdrożyć szkielet typów bez progów liczbowych;
 progi jako parametry konstruktora bez wartości domyślnych.
 **Tymczasowo:** nie implementowane.
+**Rozstrzygnięcie foundera (2026-08-17):** zatwierdzony szkielet typów
+bez progów liczbowych i wartości domyślnych; progi wyłącznie przez jawną,
+wersjonowaną konfigurację; brak konfiguracji => CONFIGURATION_REQUIRED,
+abstencja albo bezpieczna odmowa — nigdy ciche przyjęcie progów; fixtures
+testowe wyraźnie syntetyczne, nieprzedstawiane jako rekomendowane;
+rozdzielenie struktury skali, wartości pomiaru i polityki interpretacji.
+Konkretne progi liczbowe — osobna decyzja foundera po kalibracji
+i walidacji.
