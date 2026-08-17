@@ -382,7 +382,10 @@ will flag it as an unused import.
 - `docs/runtime-contract.md` and `docs/simulation-contract.md` predate this session's audit work —
   short, standalone I/O contracts for `evaluate_action` (inputs/outputs/non-goals) and the
   simulation engine (`docs/adr/ADR-0006-simulation-laboratory.md`'s scenario/invariant/score-
-  distribution shape) respectively. Check both before changing either code path's public shape.
+  distribution shape) respectively. `docs/self-model-contract.md` and `docs/recovery-contract.md`
+  (added 2026-08-16) do the same for `self_model.py` and `recovery.py` — including the per-mode
+  risk/auto-trigger/dual-key table. Check the relevant contract doc before changing any of these
+  code paths' public shape.
 
 ## Licensing
 
