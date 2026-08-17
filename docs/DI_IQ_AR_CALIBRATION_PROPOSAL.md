@@ -1,4 +1,10 @@
-# Propozycja kalibracji skal DI / IQ / AR (v0.1)
+# Propozycja kalibracji skal DI / IQ / AR (v0.2 — po odczycie źródła)
+
+> **Aktualizacja 2026-08-17 (v0.2):** founder dostarczył źródłowy DOCX
+> Warstwy 5 (`Human_OS_Warstwa_5_Silnik_Decyzji_i_Rekomendacji_v0_1.docx`)
+> do tej sesji. Sekcje 5.2, 6.1 i 8.2 zostały odczytane z oryginalnych
+> bajtów — wszystkie trzy skale mają teraz **pełną semantykę źródłową**
+> i status ŹRÓDŁO. Interpolacje z v0.1 (§7 niżej) są zastąpione.
 
 **Status: PROPOZYCJA — czeka na podpis foundera.**
 Nic z tego dokumentu nie jest aktywną konfiguracją. Silnik
@@ -29,71 +35,95 @@ ma jeden z trzech statusów:
 
 ## 2. Skala IQ — jakość wejścia (IQ0..IQ5)
 
-Skraje są zdefiniowane w źródle (digest, §5.2, linie 513–545 źródła):
+Pełna semantyka źródłowa (DOCX §5.2, tabela „Poziom / Opis / Dozwolony
+wynik", odczyt z bajtów 2026-08-17):
 
-| Poziom | Semantyka | Status |
+| Poziom | Opis (ŹRÓDŁO) | Dozwolony wynik (ŹRÓDŁO) |
 |---|---|---|
-| IQ0 | Brak istotnych danych lub dane sprzeczne → wyłącznie pytania, bezpieczeństwo lub eskalacja | **ŹRÓDŁO** |
-| IQ1 | Pojedyncze, niezweryfikowane deklaracje; kontekst szczątkowy → proste pytania doprecyzowujące, edukacja, bez rekomendacji działania | PROPOZYCJA |
-| IQ2 | Spójne deklaracje bez weryfikacji; podstawowy kontekst → rekomendacje niskiego ryzyka z zastrzeżeniem niepewności | PROPOZYCJA |
-| IQ3 | Deklaracje + częściowe dane pomiarowe (samoopis w czasie); brak sprzeczności → proste decyzje i eksperymenty osobiste niskiego ryzyka | PROPOZYCJA |
-| IQ4 | Dane wielokrotne, spójne, częściowo zweryfikowane → decyzje umiarkowanego ryzyka z monitorowaniem | PROPOZYCJA |
-| IQ5 | Zweryfikowany kontekst, specjalista lub dane wysokiej jakości → złożona decyzja z audytem i nadzorem | **ŹRÓDŁO** |
+| IQ0 | brak istotnych danych albo dane sprzeczne bez możliwości rozstrzygnięcia | wyłącznie pytania, bezpieczeństwo lub eskalacja |
+| IQ1 | pojedyncza deklaracja bez kontekstu | ogólna edukacja i niskiego ryzyka sugestie |
+| IQ2 | cel i podstawowy kontekst, ale brak bazy lub historii | krótki, odwracalny krok z dużym marginesem |
+| IQ3 | spójny profil, kilka źródeł danych i znane ograniczenia | personalizowana rekomendacja średniej złożoności |
+| IQ4 | dobry punkt odniesienia, historia odpowiedzi i wiarygodne pomiary | zaawansowana sekwencja i eksperyment N-of-1 |
+| IQ5 | zweryfikowany kontekst, specjalista lub wysokiej jakości dane dla decyzji wysokiego wpływu | złożona decyzja z audytem i nadzorem |
 
-**Szkic polityki interpretacji IQ** (do instancjonowania jako
-`InterpretationPolicy` po podpisie):
+**Polityka `HOS-POL-IQ-001` v0.2.0** (reguły = „Dozwolony wynik" ze
+źródła; do podpisu, §7):
 
 ```
-policy_id: HOS-POL-IQ-001
-version:   0.1.0-proposal          # po podpisie: 0.1.0, approved_by: <founder>
-scale:     IQ
-rules:
-  IQ0: "tylko-pytania-lub-eskalacja"
-  IQ1: "edukacja-bez-rekomendacji"        # PROPOZYCJA
-  IQ2: "rekomendacje-niskiego-ryzyka"     # PROPOZYCJA
-  IQ3: "eksperymenty-niskiego-ryzyka"     # PROPOZYCJA
-  IQ4: "decyzje-umiarkowane-z-monitoringiem"  # PROPOZYCJA
-  IQ5: "zlozona-decyzja-z-audytem"
+IQ0: "tylko-pytania-bezpieczenstwo-eskalacja"
+IQ1: "ogolna-edukacja-i-sugestie-niskiego-ryzyka"
+IQ2: "krotki-odwracalny-krok-z-marginesem"
+IQ3: "personalizowana-rekomendacja-sredniej-zlozonosci"
+IQ4: "zaawansowana-sekwencja-i-eksperyment-n-of-1"
+IQ5: "zlozona-decyzja-z-audytem-i-nadzorem"
 ```
 
 ## 3. Skala AR — gotowość (AR0..AR5)
 
-Źródło definiuje tytuł sekcji (§8.2 „Gotowość AR0–AR5") i zasadę
-ramową §8.3: **„Niewykonanie nie jest etykietą"** — poziom gotowości
-opisuje warunki wykonania, nigdy wartość osoby (ŹRÓDŁO). Pełna semantyka
-poziomów nie jest obecna w digescie.
+Pełna semantyka źródłowa (DOCX §8.2, tabela „Poziom / Stan / Odpowiedź
+systemu"). Zasada ramowa §8.3 pozostaje wiążąca: **„Niewykonanie nie
+jest etykietą"** — poziom gotowości opisuje warunki wykonania, nigdy
+wartość osoby.
 
-| Poziom | Semantyka | Status |
+| Poziom | Stan (ŹRÓDŁO) | Odpowiedź systemu (ŹRÓDŁO) |
 |---|---|---|
-| AR0 | Brak warunków wykonania (czas/zasoby/stan) → nie rekomendować działania; zaproponować zmniejszenie zakresu | PROPOZYCJA |
-| AR1 | Warunki szczątkowe → wyłącznie mikro-kroki odwracalne | PROPOZYCJA |
-| AR2 | Warunki częściowe, niestabilne → działania krótkiego horyzontu z łatwym przerwaniem | PROPOZYCJA |
-| AR3 | Warunki wystarczające dla prostych protokołów → standardowe eksperymenty osobiste | PROPOZYCJA |
-| AR4 | Warunki stabilne + doświadczenie wykonawcze → protokoły wieloetapowe | PROPOZYCJA |
-| AR5 | Pełna gotowość (zasoby, kompetencje, wsparcie) → protokoły złożone, w tym wymagające nadzoru | PROPOZYCJA |
+| AR0 | brak zgody lub brak zdolności do bezpiecznej decyzji | wstrzymanie i ewentualna pomoc bezpieczeństwa |
+| AR1 | zainteresowanie bez gotowości do działania | edukacja i refleksja, bez protokołu |
+| AR2 | gotowość do małego kroku | jedna prosta, odwracalna interwencja |
+| AR3 | gotowość do regularnego eksperymentu | protokół, pomiar i przegląd |
+| AR4 | wysoka dyscyplina i zdolność monitorowania | złożona sekwencja przy zachowaniu minimalizmu |
+| AR5 | zaawansowany użytkownik z odpowiednim nadzorem | kontrolowane działania wysokiej złożoności |
 
-**Szkic polityki interpretacji AR** — analogiczny kształt jak IQ
-(`HOS-POL-AR-001`, `0.1.0-proposal`); mapowanie kodów na nazwy klas
-działań powyżej.
+**Polityka `HOS-POL-AR-001` v0.2.0** (do podpisu, §7):
 
-## 4. Skala DI — klasa intencji (DI-1..DI-8): BRAK ŹRÓDŁA
+```
+AR0: "wstrzymanie-i-pomoc-bezpieczenstwa"
+AR1: "edukacja-i-refleksja-bez-protokolu"
+AR2: "jedna-prosta-odwracalna-interwencja"
+AR3: "protokol-pomiar-i-przeglad"
+AR4: "zlozona-sekwencja-przy-minimalizmie"
+AR5: "kontrolowane-dzialania-wysokiej-zlozonosci"
+```
 
-Digest potwierdza istnienie ośmiu klas (§6.1) oraz dwóch zasad ramowych:
-intencje mieszane są dopuszczalne (§6.2), a system ma rozpoznawać
-„presję na potwierdzenie" (§6.3) — ale **nie zawiera nazw ani definicji
-poszczególnych klas DI-1..DI-8**.
+## 4. Skala DI — klasa intencji (DI-1..DI-8)
 
-Ta propozycja świadomie nie wymyśla ośmiu klas intencji. Wypełnienie
-tej tabeli wymaga jednego z dwóch kroków (decyzja foundera):
+**Ścieżka 1 wykonana 2026-08-17**: founder dostarczył źródłowy DOCX;
+sekcja 6.1 odczytana z bajtów. Pełna tabela źródłowa („Kod / Intencja /
+Odpowiedź domyślna"):
 
-1. dostarczenie/odczyt sekcji 6.1 źródłowego DOCX Warstwy 5 i digest
-   uzupełniający (preferowane — zachowuje wierność źródłu), albo
-2. autorska definicja ośmiu klas przez foundera jako nowa decyzja
-   projektowa.
+| Kod | Intencja (ŹRÓDŁO) | Odpowiedź domyślna (ŹRÓDŁO) |
+|---|---|---|
+| DI-1 | zrozumienie | wyjaśnienie pojęcia i niepewności |
+| DI-2 | porównanie | warianty z profilami kompromisów |
+| DI-3 | wybór następnego kroku | jedna rekomendacja plus alternatywa |
+| DI-4 | projekt eksperymentu | hipoteza, protokół, pomiary, kryteria przerwania |
+| DI-5 | kontynuacja lub przerwanie | analiza wyniku i aktualizacja decyzji |
+| DI-6 | decyzja refleksyjna | pytania i hipotezy do samoweryfikacji |
+| DI-7 | działanie regulowane lub wysokiego ryzyka | brama bezpieczeństwa i możliwa eskalacja |
+| DI-8 | stan pilny | priorytet bezpieczeństwa i kontakt z właściwą pomocą |
 
-Do tego czasu pomiary na skali DI są możliwe (kody istnieją w
-strukturze), ale żadna polityka interpretacji DI nie powinna być
-zatwierdzana.
+Zasady ramowe źródła pozostają wiążące dla implementacji: intencje
+mieszane należy rozdzielić i nazwać konflikt (§6.2 — „zgoda na edukację
+nie jest traktowana jak zgoda na spersonalizowane działanie"), a reguła
+niezależności (§6.3) mówi wprost: determinacja użytkownika „nie może
+podnieść oceny dowodów, usunąć przeciwwskazań ani wymusić stworzenia
+procedury, której głównym efektem byłoby zwiększenie ryzyka ciężkiej
+szkody".
+
+**Polityka `HOS-POL-DI-001` v0.2.0** (reguły = „Odpowiedź domyślna" ze
+źródła; do podpisu, §7):
+
+```
+DI-1: "wyjasnienie-pojecia-i-niepewnosci"
+DI-2: "warianty-z-profilami-kompromisow"
+DI-3: "jedna-rekomendacja-plus-alternatywa"
+DI-4: "hipoteza-protokol-pomiary-kryteria-przerwania"
+DI-5: "analiza-wyniku-i-aktualizacja-decyzji"
+DI-6: "pytania-i-hipotezy-do-samoweryfikacji"
+DI-7: "brama-bezpieczenstwa-i-mozliwa-eskalacja"
+DI-8: "priorytet-bezpieczenstwa-i-kontakt-z-pomoca"
+```
 
 ## 5. Plan kalibracji i walidacji (PROPOZYCJA)
 
@@ -129,3 +159,33 @@ Zatwierdzenie tej propozycji oznacza dokładnie:
 cienia; przejście na tryb operacyjny wymaga osobnej decyzji po
 przeglądzie korpusu (§5.2–5.3). Interpretacja DI pozostaje
 `CONFIGURATION_REQUIRED` do czasu dostarczenia sekcji 6.1 źródła.
+
+---
+
+## 7. Korekta v0.1 → v0.2 i podpis polityk źródłowych
+
+Polityki v0.1.0 (podpisane 2026-08-17 rano, przed dostępem do źródła)
+były interpolacjami. Odczyt źródła pokazał rozbieżności — najistotniejsze:
+
+| Kod | v0.1.0 (interpolacja, podpisana) | v0.2.0 (ŹRÓDŁO) | Różnica |
+|---|---|---|---|
+| IQ1 | edukacja **bez** rekomendacji | edukacja **i sugestie niskiego ryzyka** | źródło łagodniejsze |
+| IQ3 | eksperymenty niskiego ryzyka | personalizowana rekomendacja **średniej** złożoności | źródło szersze |
+| IQ4 | decyzje umiarkowane z monitoringiem | zaawansowana sekwencja i eksperyment N-of-1 | źródło szersze |
+| AR0 | brak warunków (czas/zasoby) → zmniejsz zakres | **brak zgody lub zdolności** → wstrzymanie i pomoc bezpieczeństwa | źródło surowsze i o czym innym |
+| AR1 | mikro-kroki odwracalne | edukacja i refleksja, **bez protokołu** | źródło surowsze |
+
+Wniosek zgodny z etosem projektu: **źródło zastępuje interpolację**.
+Wersja v0.1.0 pozostaje w historii konfiguracji jako podpisana, ale
+zastąpiona — nigdy nie była użyta do blokowania (faza cienia).
+
+### Do podpisu foundera (v0.2)
+
+- [ ] polityki `HOS-POL-IQ-001`, `HOS-POL-AR-001`, `HOS-POL-DI-001`
+      w wersji **0.2.0**, z regułami dosłownie ze źródła (§2–§4),
+      w trybie fazy cienia — zastępują v0.1.0,
+- [ ] semantyki poziomów wszystkich trzech skal = brzmienie źródłowe
+      (status ŹRÓDŁO; nic do korekty redakcyjnej — to cytaty).
+
+Po podpisie: aktualizacja `policies/scale.interpretation.policies.json`
+(v0.1.0 → sekcja `superseded`, v0.2.0 aktywne w SHADOW) + testy.
