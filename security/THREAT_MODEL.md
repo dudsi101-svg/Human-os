@@ -29,15 +29,20 @@ Current mitigations: capability grants, human approval gates, delegation
 auditing, action receipts, simulation gates, extraction and dependency
 policy limits (POL-002, POL-004).
 
-Known gap: capability grants authorize which tools an agent may call, not
-whether a specific call, with its actual arguments, in its actual delegation
-context, should be allowed. Per-call authorization is not yet implemented
-and remains the most significant open item in this section.
+Per-call authorization (closed 2026-08-17): `call_authorization.py`
+supplies declarative per-capability rules — closed argument-key sets,
+required keys, closed value vocabularies, payload size bounds, and
+delegation-context limits (direct-holder-only, maximum chain length) —
+evaluated by `AgentRuntime` on every invocation before the tool executes.
+The authorizer's stance toward unruled capabilities must be declared
+explicitly (ALLOW or DENY); a denied verdict is a first-class DENIED
+receipt. Rules judge the call as declared; they cannot verify the
+declaration's honesty.
 
-Not yet mitigated: memory/knowledge-graph poisoning detection, per-call
-authorization bound to delegation-chain context, cryptographic provenance
-for generated or transformed content, and independent measurement of
-degrading-dependency scores (currently self-reported, not observed).
+Not yet mitigated: memory/knowledge-graph poisoning detection,
+cryptographic provenance for generated or transformed content, and
+independent measurement of degrading-dependency scores (currently
+self-reported, not observed).
 
 ## Sovereignty and recovery mechanisms
 

@@ -255,7 +255,12 @@ uses, don't mix:
 (the check pipeline matching `protocol/security-profile.md`'s 10-step order: resolve identity →
 verify active → validate key binding → verify signature → reject expired/replayed → trust policy
 → consent → capability checks → execute/deny → issue receipt), `key_rotation.py`, and now
-`authority.py::RoleGrantRegistry` (a separate axis from identity, see above).
+`authority.py::RoleGrantRegistry` (a separate axis from identity, see above) and
+`call_authorization.py::CallAuthorizer` (per-call authorization closing AR-003's gap, 2026-08-17:
+declarative per-capability `CallRule`s — argument key/value/size constraints plus
+delegation-context limits — consulted by `AgentRuntime.evaluate` before tool execution; the
+stance toward unruled capabilities (`UnruledPolicy.ALLOW/DENY`) must be declared explicitly,
+never defaulted; conventional style, unlike the dense group).
 
 `security/THREAT_MODEL.md` states explicitly that the current HMAC implementation is a **local
 reference mechanism only** — production would need asymmetric signatures, protected key storage,

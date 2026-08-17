@@ -7,6 +7,8 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
+from .call_authorization import CallAuthorizer
+
 
 class RiskLevel(str, Enum):
     LOW="LOW"; MEDIUM="MEDIUM"; HIGH="HIGH"; CRITICAL="CRITICAL"
@@ -66,8 +68,10 @@ class AgentRegistry:
         return [d for d in self._delegations.values() if d.delegate_id==aid]
 
 class AgentRuntime:
-    def __init__(self,capabilities:CapabilityRegistry,agents:AgentRegistry)->None:
+    def __init__(self,capabilities:CapabilityRegistry,agents:AgentRegistry,
+                 call_authorizer:CallAuthorizer | None=None)->None:
         self.capabilities=capabilities; self.agents=agents
+        self._call_authorizer=call_authorizer
         self._tools:dict[str,Callable[[dict[str,Any]],Any]]={}; self._receipts:list[ActionReceipt]=[]
     def register_tool(self,cid:str,fn:Callable[[dict[str,Any]],Any])->None:
         self.capabilities.get(cid); self._tools[cid]=fn
@@ -85,6 +89,13 @@ class AgentRuntime:
         if cap.approval_mode==ApprovalMode.FORBIDDEN: return self._receipt(r,"DENIED","Forbidden by policy")
         if cap.approval_mode==ApprovalMode.HUMAN_REQUIRED and not r.human_approval_id:
             return self._receipt(r,"REQUIRES_HUMAN_APPROVAL","Human approval required")
+        # Per-call authorization (AR-003): the grant said "may use this
+        # tool"; the authorizer judges *this* call -- its arguments and its
+        # delegation context. A denied verdict is a DENIED receipt.
+        if self._call_authorizer is not None:
+            verdict=self._call_authorizer.authorize(capability_id=r.capability_id,
+                arguments=r.arguments,delegation_chain_length=len(r.delegation_chain))
+            if not verdict.allowed: return self._receipt(r,"DENIED",f"Call refused: {verdict.reason}")
         if r.capability_id not in self._tools: return self._receipt(r,"DENIED","No tool implementation")
         try: result=self._tools[r.capability_id](r.arguments)
         except Exception as exc: return self._receipt(r,"FAILED",f"Tool failed: {exc}")  # noqa: BLE001 -- any tool failure must degrade to a FAILED receipt, never propagate

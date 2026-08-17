@@ -48,6 +48,13 @@ i podpisem).
 - **Warunki ponownego rozpatrzenia:** przy dodaniu agentów o wyższym
   ryzyku lub argumentów wpływających na zakres skutku.
 - **Status:** ZAAKCEPTOWANE · **Podpis:** founder (dudsi101-svg) — zgoda wyrażona wprost 2026-08-17 w sesji roboczej („Masz moją zgodę, podpisuję się") · **Data:** 2026-08-17
+- **Aktualizacja 2026-08-17 (później tego samego dnia):** mechanizm
+  wdrożony za zgodą foundera („Tak, należy wdrożyć te rozszerzenia") —
+  `hos_engine/call_authorization.py` + brama w `AgentRuntime.evaluate`
+  (reguły per-capability: argumenty, słowniki wartości, rozmiar ładunku,
+  kontekst delegacji; postawa wobec capability bez reguły deklarowana
+  jawnie, nigdy domyślna). Ryzyko zawęża się do pokrycia regułami
+  konkretnych wdrożeń — samo istnienie mechanizmu nie konfiguruje reguł.
 
 ## AR-004 · Brak produkcyjnego uwierzytelniania i szyfrowania w spoczynku
 - **Waga pierwotna:** WYSOKIE (dla wdrożenia produkcyjnego).
