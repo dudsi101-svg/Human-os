@@ -34,7 +34,10 @@ zastępuje.
 - stabilna Konstytucja i Object Model,
 - wersjonowany Human OS Protocol,
 - migracje i kompatybilność,
-- niezależne testy bezpieczeństwa,
+- udokumentowany przegląd bezpieczeństwa według powtarzalnego protokołu
+  wewnętrznego, z usunięciem problemów krytycznych i wysokich, zapisem
+  ryzyk zaakceptowanych przez foundera i testem regresji zabezpieczeń
+  (kryterium zmienione decyzją foundera 2026-08-17 — patrz DD-008),
 - przegląd governance,
 - pełna przenośność danych,
 - mierzalna możliwość wyjścia,

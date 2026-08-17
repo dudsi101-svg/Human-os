@@ -17,7 +17,7 @@ The engine is a reference implementation of the Human OS protocol and
 constitution. Individual components carry their own maturity statuses in
 `manifest.json`; none of them implies the product as a whole is a
 production-ready beta. Roadmap item 0.9 (protocol interoperability and
-independent security review) remains open.
+a documented security review per DD-008) remains open.
 
 ### Implemented
 

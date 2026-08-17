@@ -117,3 +117,19 @@ testowe wyraźnie syntetyczne, nieprzedstawiane jako rekomendowane;
 rozdzielenie struktury skali, wartości pomiaru i polityki interpretacji.
 Konkretne progi liczbowe — osobna decyzja foundera po kalibracji
 i walidacji.
+
+## DD-008 · Model przeglądów bezpieczeństwa i kryterium zamknięcia 0.9 (RESOLVED 2026-08-17)
+Decyzja z 2026-08-17 (pkt 5) zakładała przegląd etapu pierwszego przez
+osobę lub zespół niezależny od autorów kodu i używanych agentów AI.
+Tego samego dnia founder rozstrzygnął, że przeglądy będą wykonywane
+własnymi siłami, i zatwierdził zmianę kryterium zamknięcia punktu 0.9.
+**Rozstrzygnięcie foundera (2026-08-17):** kryterium zamknięcia 0.9
+zmienione z „niezależny raport zewnętrzny" na: udokumentowany przegląd
+bezpieczeństwa według powtarzalnego protokołu wewnętrznego (zakres
+komponentów wg decyzji pkt 5), usunięcie problemów krytycznych
+i wysokich, zapis ryzyk zaakceptowanych przez foundera oraz test
+regresji zabezpieczeń. Świadomie zaakceptowana granica tej decyzji:
+przegląd nie będzie niezależny od autorów kodu ani od agentów AI
+uczestniczących w rozwoju — ta granica jest zapisana jako ryzyko
+zaakceptowane, a powrót do przeglądu zewnętrznego pozostaje możliwy
+w przyszłości bez zmiany protokołu.
