@@ -2305,7 +2305,40 @@ function agentRefusalNote(out){
 }
 function agentErrorNote(e,out){
   logEvent("AGENT","agent_error",String(e&&e.message||e).slice(0,160));
-  out.innerHTML=`<div class="quiet">Nie udało się połączyć z API: ${esc(String(e&&e.message||e))}.<br>Uwaga: w podglądzie artefaktu połączenia zewnętrzne są zablokowane — Przewodnik działa w wersji PWA i sklepowej aplikacji.</div>`;
+  const msg=String(e&&e.message||e);
+  const isNet=/load failed|failed to fetch|networkerror|typeerror/i.test(msg);
+  const inApp=/^https?:$/.test(location.protocol);
+  const hint = !inApp
+    ? "Uwaga: w podglądzie artefaktu połączenia zewnętrzne są zablokowane — Przewodnik działa w wersji zainstalowanej (PWA)."
+    : isNet
+      ? "To błąd sieciowy — połączenie nie doszło do dostawcy. Najczęstsze przyczyny: słaby zasięg / przerwane połączenie, VPN lub blokada treści (AdGuard itp.) blokująca api dostawcy, albo zapora dostawcy dla żądań z przeglądarki. Użyj „Test połączenia” w Konfiguracji, żeby to rozstrzygnąć."
+      : "Sprawdź w Konfiguracji, czy klucz jest kompletny (klucze OpenAI mają ~150+ znaków) i czy konto ma środki.";
+  out.innerHTML=`<div class="quiet">Nie udało się połączyć z API: ${esc(msg)}.<br>${hint}</div>`;
+}
+/* diagnostyka: rozstrzyga, czy problem to sieć, zapora dostawcy, czy klucz */
+async function agentTestConnection(){
+  const out=$("agentOut"); if(!out) return;
+  if(!/^https?:$/.test(location.protocol)){ out.innerHTML=`<div class="quiet">Test działa w wersji zainstalowanej (PWA) — podgląd artefaktu blokuje wszystkie połączenia.</div>`; return; }
+  out.innerHTML=`<div class="quiet">Testuję połączenie…</div>`;
+  const pr=agentProvider();
+  const lines=[];
+  /* 1. czy w ogóle jest internet (neutralny cel bez klucza) */
+  try{ await fetch("https://api.github.com/zen",{cache:"no-store"}); lines.push("✅ Internet działa (test neutralny przeszedł)."); }
+  catch(e){ lines.push("❌ Brak dostępu do internetu z aplikacji — sprawdź zasięg/VPN/blokadę treści."); }
+  /* 2. czy dostawca odpowiada z przeglądarki, z Twoim kluczem */
+  try{
+    let res;
+    if(pr==="openai") res=await fetch("https://api.openai.com/v1/models",{ headers:{ "authorization":"Bearer "+agentKey() } });
+    else res=await fetch("https://api.anthropic.com/v1/models",{ headers:{ "x-api-key":agentKey(), "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" } });
+    if(res.ok) lines.push(`✅ ${AGENT_PROVIDERS[pr].name}: połączenie i klucz działają (HTTP ${res.status}). Przewodnik powinien odpowiadać.`);
+    else if(res.status===401) lines.push(`⚠️ ${AGENT_PROVIDERS[pr].name}: połączenie działa, ale klucz odrzucony (HTTP 401) — sprawdź, czy wkleiłeś CAŁY klucz (OpenAI: ~150+ znaków) i czy nie został unieważniony.`);
+    else if(res.status===429) lines.push(`⚠️ ${AGENT_PROVIDERS[pr].name}: klucz działa, ale limit/brak środków (HTTP 429) — doładuj konto u dostawcy.`);
+    else lines.push(`⚠️ ${AGENT_PROVIDERS[pr].name}: odpowiedź HTTP ${res.status}.`);
+  }catch(e){
+    lines.push(`❌ ${AGENT_PROVIDERS[pr].name}: żądanie nie doszło (${esc(String(e&&e.message||e))}) — najpewniej zapora dostawcy dla przeglądarek albo blokada sieciowa tej domeny. ${pr==="openai"?"Spróbuj dostawcy Claude (Anthropic) — ma oficjalne wsparcie wywołań z przeglądarki.":""}`);
+  }
+  logEvent("AGENT","agent_test",lines.join(" | ").slice(0,200));
+  out.innerHTML=`<div class="card" style="margin-top:12px"><h3 style="font-size:14px;margin-bottom:6px">Test połączenia</h3>${lines.map(l=>`<p style="font-size:14px;margin-bottom:6px">${l}</p>`).join("")}</div>`;
 }
 async function agentExplain(){
   if(!agentReady()) return;
@@ -2417,6 +2450,7 @@ function renderAgent(){
           <select id="agModel" style="max-width:230px">${AGENT_PROVIDERS[agentProvider()].models.map(([id,n])=>`<option value="${id}"${agentModel()===id?" selected":""}>${n}</option>`).join("")}</select>
           <button class="btn small" onclick="saveAgentCfg()">Zapisz</button>
           ${key?`<button class="btn small ghost" onclick="clearAgentKey()">Usuń klucz</button>`:""}
+          <button class="btn small ghost" onclick="agentTestConnection()">Test połączenia</button>
         </div>
         <p class="note" style="margin-top:6px">Klucz zostaje wyłącznie na tym urządzeniu — poza stanem aplikacji i poza eksportem. Za użycie płacisz bezpośrednio u dostawcy (${AGENT_PROVIDERS[agentProvider()].console}). Zasady Konstytucji egzekwuje aplikacja — są identyczne niezależnie od dostawcy.</p>`
         :`<p class="note" style="margin-top:6px">Silnik lokalny działa w całości na Twoim urządzeniu — żadne dane nie wychodzą na zewnątrz, bez kont i kluczy. Jakość odpowiedzi jest niższa niż w chmurze; modele będą się zmieniać, silniki można przełączać w każdej chwili.</p>`}</details>`}
