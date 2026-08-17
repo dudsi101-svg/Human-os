@@ -6,13 +6,15 @@ artefakt publiczny — historycznie nie miał tu żadnej reprezentacji. Ten
 katalog zaczął to zmieniać 15 sierpnia 2026, w miarę jak founder dostarczał
 kolejne oryginalne pliki.
 
-## Rozdział III — KOMPLETNY (od 15 sierpnia 2026)
+## Rozdział III — KOMPLETNY, rozszerzony o Część E (17 sierpnia 2026)
 
 Zgodnie z decyzją **Q3** w `docs/FOUNDER_REVIEW_2026-08-15.md`: docelowy
-Rozdział III ma składać się z czterech części (A–D) plus wersji głównej,
+Rozdział III miał składać się z czterech części (A–D) plus wersji głównej,
 zgodnie z zasadą projektu, że limit rozmiaru dzieli dokument, a nie go
 kompresuje. Wszystkie pięć segmentów zostało dostarczonych i dodanych tego
-samego dnia.
+samego dnia. **17 sierpnia 2026 founder dostarczył dodatkowo Część E
+(„Granice Human OS", wersja źródłowa 1.1, DOCX)** — rozdział liczy więc
+teraz sześć segmentów.
 
 | Plik | Zawartość | Status |
 |---|---|---|
@@ -21,6 +23,7 @@ samego dnia.
 | `rozdzial-III-czesc-B-technologia-jako-srodowisko-poznawcze.md` | Część B ("Technologia jako środowisko poznawcze"), sekcje 3B.1–3B.6 | OTRZYMANE |
 | `rozdzial-III-czesc-C-ai-jako-partner-poznawczy.md` | Część C ("AI jako partner poznawczy"), sekcje 3C.1–3C.7 | OTRZYMANE |
 | `rozdzial-III-czesc-D-nowy-kontrakt-czlowieka-z-technologia.md` | Część D ("Nowy kontrakt człowieka z technologią"), sekcje 3D.1–3D.7 | OTRZYMANE |
+| `rozdzial-III-czesc-E-granice-human-os.md` | Część E ("Granice Human OS"), sekcje 3E.1–3E.12 + podsumowanie; źródło: DOCX v1.1 (nie PDF) | OTRZYMANE |
 | `rozdzial-III-pelny.md` | Wszystkie pięć segmentów złączone w jeden plik do ciągłej lektury | ZŁĄCZONE (wygoda, nie osobna redakcja) |
 
 **Skorygowany stan Q3:** Rozdział III jest teraz kompletny — wszystkie

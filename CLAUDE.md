@@ -171,6 +171,26 @@ the decision record.
   only; DI/IQ/AR scales, the ten-axis §18 profile, and live Knowledge Map integration are not
   implemented. Not yet wired into `ExecutionLoop` — the two compose at the caller's discretion.
 
+- **`experiment_engine.py`** (added 2026-08-17, founder directive "działaj z tą warstwą") — the
+  first executable slice of Layer 6's Experiment Engine (`ADR-EXP-001..005`,
+  `docs/LAYER_6_EXPERIMENT_ENGINE_DIGEST.md`): Layer 6's own scales (`ProcessClass` XP-0..XP-8
+  with XP-8 rejected outright, `SafetySeverity` SE0–SE4 with default reactions SE2→HOLD,
+  SE3/SE4→STOP+escalate, `BaselineQuality` BL0–BL5 — all distinct from the Constitution's R0–R4),
+  the eight-question "test nadrzędny" launch gate (`MasterTest`), non-fungible gates per
+  ADR-EXP-002 (consent/guard-metric/stop-rules/baseline gate independently; no compensation
+  parameter exists), `AGENT`/`SERVICE`/`SYSTEM_PROCESS` structurally refused at launch/resume
+  (refusal logged), XP-7 requiring specialist approval+legality+monitoring with no
+  user-determination override, observations never merged across `ObservationSource`s,
+  post-result hypothesis amendments versioned and flagged exploratory, thresholds frozen at
+  launch (moving them forces an exploratory result), XP-6 forced into the `INTERPRETIVE`
+  evidence domain (`causal_evidence_eligible=False` — the epistemic firewall), and
+  `INCONCLUSIVE` as a first-class outcome. Refusals are outcome objects (`LaunchDecision`/
+  `TransitionResult`), never exceptions. Durable events use `STATE_OBSERVED` with
+  `experiment_*` payload kinds (same interim pattern as DD-003). Not yet implemented: adaptive
+  experiments, portfolio limits, trajectory model, community contribution, EC/MQ/PF/DQ/CA/PE
+  scales. **Distinct from `simulation.py`** (ADR-0006's what-if scenario engine) — do not
+  conflate the two. The app's client-side N-of-1 logic in `apps/user-demo` predates this module
+  and is not yet backed by it.
 - **`self_model.py`** (added 2026-08-16, founder implementation directive "Conversational About
   Me / Living Self Model", `ADR-SELFMODEL-001`) — the conversational-self-model slice, built **on
   top of `human_model.py`** (which already had the epistemic core: `EvidenceType`, confidence,
