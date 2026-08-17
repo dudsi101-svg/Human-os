@@ -133,3 +133,17 @@ przegląd nie będzie niezależny od autorów kodu ani od agentów AI
 uczestniczących w rozwoju — ta granica jest zapisana jako ryzyko
 zaakceptowane, a powrót do przeglądu zewnętrznego pozostaje możliwy
 w przyszłości bez zmiany protokołu.
+
+## DD-009 · Zdarzenia `commons_*` w kanonicznym słowniku + fundament moderacji (OPEN)
+Dyrektywa „Wspólnie" (ADR-COMMONS-001/002, digest
+`docs/COMMONS_MODULE_DIGEST.md`) wymienia 16 zdarzeń współpracy
+(challenge_created … moderation_case_resolved). Dodanie ich do
+`event.types.json` + enum schematu to zmiana materialna; źródło samo wymaga
+osobnego ADR, schematów i testów zgodności konstytucyjnej. Osobno:
+ModerationCase nie ma precedensu w silniku (historia działań moderatora,
+odwołania) i wymaga decyzji o minimalnym modelu ról moderacyjnych.
+**Rekomendacja:** jedna zmiana wprowadzająca komplet 16 typów ze schematem
+i mapowaniem na R0–R4 dla ryzyka wyzwań publicznych; ModerationCase jako
+druga, osobna zmiana po decyzji o rolach.
+**Tymczasowo:** demo aplikacji loguje te zdarzenia lokalnie w rejestrze
+klienta; silnik nie emituje żadnych `commons_*`.
