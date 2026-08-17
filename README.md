@@ -22,8 +22,11 @@ full delta since 0.9.0.
 The engine is a reference implementation of the Human OS protocol and
 constitution. Individual components carry their own maturity statuses in
 `manifest.json`; none of them implies the product as a whole is a
-production-ready beta. Roadmap item 0.9 (protocol interoperability and
-a documented security review per DD-008) remains open.
+production-ready beta. Roadmap item 0.9 was closed on 2026-08-17 per the
+DD-008 criterion (documented internal security review, founder-signed
+risk register, green security regression); an independent external
+security review remains a separate, open condition for 1.0 — see
+`ROADMAP.md`.
 
 ### Implemented
 
