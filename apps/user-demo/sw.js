@@ -2,7 +2,7 @@
    Wersję podbijaj przy każdej zmianie plików powłoki — stary cache jest
    sprzątany w `activate`. Brak sieci nigdy nie blokuje aplikacji: całość
    działa z cache; sieć służy tylko do cichej aktualizacji powłoki. */
-const CACHE = "human-os-v1";
+const CACHE = "human-os-v2";
 const SHELL = [
   "./human_os_app.html",
   "./manifest.webmanifest",
