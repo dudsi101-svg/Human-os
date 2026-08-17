@@ -242,3 +242,40 @@ class ApprovedShadowPolicyTests(unittest.TestCase):
         self.assertIn(("HOS-POL-AR-001", "0.1.0"), versions)
         for entry in superseded:
             self.assertEqual(entry["superseded_by"], "0.2.0")
+
+
+class PolicyLoaderTests(unittest.TestCase):
+    """load_policies_json turns the signed policy file into runtime
+    policies -- active section only, approver required."""
+
+    PATH = "policies/scale.interpretation.policies.json"
+
+    def test_loads_all_three_active_policies(self):
+        from hos_engine.decision_scales import load_policies_json
+        loaded = load_policies_json(self.PATH)
+        self.assertEqual(
+            {k.value for k in loaded}, {"IQ", "AR", "DI"},
+        )
+        for kind, policy in loaded.items():
+            self.assertIs(policy.scale, kind)
+            self.assertEqual(policy.version, "0.2.0")
+            self.assertTrue(policy.approved_by.strip())
+
+    def test_superseded_versions_are_never_loaded(self):
+        from hos_engine.decision_scales import load_policies_json
+        loaded = load_policies_json(self.PATH)
+        for policy in loaded.values():
+            self.assertNotEqual(policy.version, "0.1.0")
+
+    def test_unattributed_file_refuses_to_load(self):
+        import json
+        import tempfile
+
+        from hos_engine.decision_scales import load_policies_json
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8",
+        ) as handle:
+            json.dump({"policies": []}, handle)
+            path = handle.name
+        with self.assertRaises(ValueError):
+            load_policies_json(path)

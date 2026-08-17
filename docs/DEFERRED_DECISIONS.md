@@ -316,3 +316,25 @@ rozliczenia, klucze Przewodnika i Web Push; do tego czasu powiadomienia
 lokalne + poranna odprawa wystarczają dla wiernego użycia dziennego.
 **Tymczasowo:** Notification API bez backendu; kopia w aplikacji mówi to
 wprost.
+
+## DD-015 · Status publicznego deployu prototypu (GitHub Pages) (OPEN)
+**Zgłoszone:** 2026-08-17 (audyt „Audyt Human OS II", priorytet 0).
+**Kontekst:** `.github/workflows/pages.yml` publikuje `apps/user-demo/`
+pod publicznym adresem GitHub Pages. Aplikacja przyjmuje samoopisowe dane
+o zdrowiu/energii/śnie i — za zgodą C5, na kluczu własnym użytkownika —
+wywołuje zewnętrzne API (OpenAI/Anthropic). AR-002/AR-004 podpisano przy
+założeniu „brak danych produkcyjnych"; publiczny link to założenie
+osłabia (realna osoba, realne dane, niezabezpieczony prototyp).
+**Wdrożone niezależnie od decyzji (2026-08-17):** twarda bramka
+onboardingu — bez potwierdzenia „to prototyp, żadnych prawdziwych danych
+zdrowotnych" nie da się wejść; wpis AR-006 w rejestrze ryzyk
+(PROPONOWANE, czeka na podpis).
+**Do decyzji foundera (jedno z trzech):**
+(a) utrzymać publiczny deploy z bramką — wtedy podpis AR-006 i przegląd
+    prawny przed jakąkolwiek promocją linku;
+(b) ograniczyć widoczność (wyłączyć workflow Pages lub przenieść na
+    prywatny podgląd) do czasu przeglądu prawnego;
+(c) utrzymać deploy wyłącznie jako demo z danymi syntetycznymi
+    (tryb bez możliwości wpisywania własnych danych).
+**Blokuje:** promocję linku poza krąg testerów; nie blokuje prac nad
+silnikiem.

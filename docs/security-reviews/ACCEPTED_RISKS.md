@@ -70,3 +70,27 @@ i podpisem).
 - **Warunki ponownego rozpatrzenia:** wdrożenie wieloprocesowe lub
   restartowalne przetwarzające realne komunikaty.
 - **Status:** ZAAKCEPTOWANE · **Podpis:** founder (dudsi101-svg) — zgoda wyrażona wprost 2026-08-17 w sesji roboczej („Masz moją zgodę, podpisuję się") · **Data:** 2026-08-17
+
+## AR-006 · Publiczny deploy prototypu aplikacji (GitHub Pages)
+- **Waga pierwotna:** WYSOKIE.
+- **Opis:** aplikacja użytkownika (`apps/user-demo/`) jest publicznie
+  dostępna przez GitHub Pages, przyjmuje wpisy o zdrowiu/energii/śnie
+  i (za zgodą C5, klucz własny użytkownika) wywołuje zewnętrzne API
+  (OpenAI/Anthropic). AR-002 i AR-004 były akceptowane przy założeniu
+  „brak danych produkcyjnych" — publiczny link osłabia to założenie:
+  realna osoba może wpisać realne dane zdrowotne do niezabezpieczonego
+  prototypu (audyt „Audyt Human OS II", 2026-08-17).
+- **Mitygacje wdrożone:** twarda bramka wejściowa w onboardingu
+  („PROTOTYP — nie wprowadzaj prawdziwych danych zdrowotnych", wymagane
+  potwierdzenie, zdarzenie PROTOTYP_ACK w rejestrze aplikacji);
+  zastrzeżenie zdrowotne w ustawieniach; dane wyłącznie w `localStorage`
+  przeglądarki użytkownika — repozytorium i Pages nie przechowują żadnych
+  danych osób.
+- **Uzasadnienie akceptacji:** *(do wypełnienia przy podpisie — wymaga
+  decyzji DD-015: utrzymać deploy z bramką, czy ograniczyć widoczność do
+  czasu przeglądu prawnego)*.
+- **Warunki ponownego rozpatrzenia:** przegląd prawny (RODO/wyrób
+  medyczny/regulaminy dostawców API); dodanie jakiegokolwiek backendu lub
+  kont; udostępnianie linku poza krąg testerów.
+- **Status:** PROPONOWANE — **czeka na podpis foundera** (powiązane:
+  DD-015) · **Podpis:** — · **Data:** —
