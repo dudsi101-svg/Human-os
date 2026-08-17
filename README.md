@@ -104,6 +104,8 @@ Then open <http://127.0.0.1:5000>. It is a thin `Applications`-layer client of
 human-os/
 ├── hos_engine/
 ├── app/
+├── apps/
+│   └── user-demo/
 ├── schemas/
 ├── policies/
 ├── tests/

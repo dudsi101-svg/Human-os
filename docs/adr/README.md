@@ -168,6 +168,23 @@ Separate environment, synthetic data, traces, promotion gates.
 | [ADR-LAB-005](ADR-LAB-005-promotion-requires-explicit-gate.md) | Accepted direction | Promotion from Lab to Core Requires an Explicit, Reversible Gate |
 | [ADR-LAB-006](ADR-LAB-006-local-prototype-is-ux-stage.md) | Accepted direction | The Local Lab Prototype Is a UX Stage, Not a Backend |
 
+## Commons (Wspólnie)
+
+Opt-in collaboration module: shared challenges, circles, experience cards, federated exchange.
+
+| ADR | Status | Title |
+|---|---|---|
+| [ADR-COMMONS-001](ADR-COMMONS-001-wspolnie-principles-and-structure.md) | Accepted direction | "Wspólnie" (Commons/Collaboration Module) — Principles, Structure, Rollout |
+| [ADR-COMMONS-002](ADR-COMMONS-002-entities-events-privacy.md) | Accepted direction | Commons Entities, Events, Privacy and Safety Contract |
+
+## Applications
+
+The user-facing app layer (`apps/user-demo`), its distribution and monetization boundaries.
+
+| ADR | Status | Title |
+|---|---|---|
+| [ADR-APP-001](ADR-APP-001-store-distribution-and-freemium-boundaries.md) | Accepted | Store Distribution and the Constitutional Boundaries of a Freemium Model |
+
 ## Living Self Model
 
 Conversational self model with epistemic classes.
