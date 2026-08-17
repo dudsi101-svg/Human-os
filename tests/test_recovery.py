@@ -181,6 +181,121 @@ class AuditTests(unittest.TestCase):
             self.assertTrue(store.verify_chain())
 
 
+class SnapshotRollbackContractTests(unittest.TestCase):
+    def setUp(self):
+        self.entities = EntityRegistry()
+        self.entity = self.entities.register(
+            entity_type=HubEntityType.RESOURCE, working_name="Notatnik projektu",
+            responsibility_owner_id=OWNER, provenance_source="test",
+        )
+        self.roles = RoleGrantRegistry()
+        self.roles.grant(identity_id=OWNER, role=AuthorityRole.OWNER,
+                         scope="*", issued_by=OWNER)
+        self.roles.grant(identity_id=CUSTODIAN, role=AuthorityRole.RECOVERY_CUSTODIAN,
+                         scope="*", issued_by=OWNER)
+        self.kernel = SovereignRecoveryKernel(roles=None, entities=self.entities)
+
+    def snapshot(self):
+        return self.kernel.create_recovery_snapshot(
+            initiator_id=OWNER, initiator_role=AuthorityRole.OWNER,
+            scope="projekt", entity_ids=(self.entity.entity_id,),
+            reason="checkpoint before risky change", verification_method="recovery-key",
+        )
+
+    def test_snapshot_captures_state_and_is_audited(self):
+        snap = self.snapshot()
+        self.assertTrue(snap.snapshot_id.startswith("HOS-SNP-"))
+        self.assertEqual(snap.entity_states[0][1], "Notatnik projektu")
+        self.assertIn("SNAPSHOT_CREATED", [e.result for e in self.kernel.events()])
+
+    def test_agent_cannot_create_snapshot(self):
+        with self.assertRaises(RecoveryRefused):
+            self.kernel.create_recovery_snapshot(
+                initiator_id="HOS-AGT-1", initiator_role=AuthorityRole.AGENT,
+                scope="projekt", entity_ids=(self.entity.entity_id,),
+                reason="agent tries", verification_method="none",
+            )
+        self.assertTrue(self.kernel.events()[-1].result.startswith("REFUSED"))
+
+    def test_rollback_creates_new_version_and_keeps_history(self):
+        snap = self.snapshot()
+        self.entities.transition(self.entity.entity_id, HubEntityStatus.ACTIVE)
+        restored = self.kernel.rollback_entity(
+            snapshot_id=snap.snapshot_id, entity_id=self.entity.entity_id,
+            initiator_id=OWNER, initiator_role=AuthorityRole.OWNER,
+            custodian_approval_by=CUSTODIAN, reason="undo risky change",
+            expires_at=far_future(), verification_method="recovery-key+strong-auth",
+        )
+        self.assertNotEqual(restored.entity_id, self.entity.entity_id)
+        self.assertEqual(restored.working_name, "Notatnik projektu")
+        old = self.entities.get(self.entity.entity_id)
+        self.assertEqual(old.status, HubEntityStatus.SUPERSEDED)  # never deleted
+        merge = self.entities.merge_record_for(self.entity.entity_id)
+        self.assertIsNotNone(merge)
+        self.assertEqual(merge.evidence, snap.snapshot_id)  # provenance chain
+
+    def test_rollback_requires_dual_key(self):
+        snap = self.snapshot()
+        with self.assertRaises(RecoveryRefused):
+            self.kernel.rollback_entity(
+                snapshot_id=snap.snapshot_id, entity_id=self.entity.entity_id,
+                initiator_id=OWNER, initiator_role=AuthorityRole.OWNER,
+                custodian_approval_by=None, reason="no custodian",
+                expires_at=far_future(), verification_method="recovery-key",
+            )
+        self.assertEqual(self.entities.get(self.entity.entity_id).status,
+                         HubEntityStatus.PROPOSED)  # nothing changed
+
+
+class DisconnectExportContractTests(unittest.TestCase):
+    def setUp(self):
+        self.entities = EntityRegistry()
+        self.entity = self.entities.register(
+            entity_type=HubEntityType.RESOURCE, working_name="Dysk w chmurze",
+            responsibility_owner_id=OWNER, provenance_source="test",
+        )
+        self.kernel = SovereignRecoveryKernel(entities=self.entities)
+
+    def test_disconnect_preserves_historical_relation(self):
+        rec = self.kernel.disconnect_representation(
+            entity_id=self.entity.entity_id, representation="gdrive-sync",
+            initiator_id=OWNER, initiator_role=AuthorityRole.OWNER,
+            reason="suspected token leak", expires_at=far_future(),
+            verification_method="recovery-key",
+        )
+        kept = self.kernel.disconnected_representations(self.entity.entity_id)
+        self.assertEqual([r.disconnect_id for r in kept], [rec.disconnect_id])
+        self.assertTrue(self.kernel.is_active(
+            EmergencyMode.DISCONNECT,
+            scope=f"representation:{self.entity.entity_id}:gdrive-sync"))
+
+    def test_export_builds_portable_package_including_history(self):
+        self.kernel.create_recovery_snapshot(
+            initiator_id=OWNER, initiator_role=AuthorityRole.OWNER,
+            scope="system", entity_ids=(self.entity.entity_id,),
+            reason="pre-export checkpoint", verification_method="recovery-key",
+        )
+        pkg = self.kernel.export_sovereign_package(
+            initiator_id=OWNER, initiator_role=AuthorityRole.OWNER,
+            scope="system", reason="right to exit", expires_at=far_future(),
+            verification_method="recovery-key",
+        )
+        self.assertEqual(pkg["format"], "open-json")
+        self.assertEqual(len(pkg["entities"]), 1)
+        self.assertEqual(len(pkg["snapshots"]), 1)
+        self.assertTrue(pkg["emergency_events"])  # audit rides along
+
+    def test_export_never_auto_triggers(self):
+        with self.assertRaises(RecoveryRefused):
+            self.kernel.activate(
+                mode=EmergencyMode.EXPORT, initiator_id="HOS-SYS-MON",
+                initiator_role=AuthorityRole.OPERATOR, scope="system",
+                reason="auto export attempt", expires_at=far_future(),
+                verification_method="none", trigger=TriggerKind.AUTOMATIC_ANOMALY,
+                owner_notified=True,
+            )
+
+
 class FreezeContractTests(unittest.TestCase):
     def test_freeze_suspends_entity_without_destroying_it(self):
         entities = EntityRegistry()

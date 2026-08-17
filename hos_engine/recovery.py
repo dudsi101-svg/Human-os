@@ -140,6 +140,34 @@ class RecoveryActivation:
     deactivated_at: str | None = None
 
 
+@dataclass(frozen=True)
+class RecoverySnapshot:
+    """"Create Recovery Snapshot" contract (source SS9): a canonical
+    checkpoint with links to versions and representations. This slice
+    captures the declared entities' state verbatim; representation links
+    beyond the Hub registry are future work."""
+
+    snapshot_id: str
+    scope: str
+    created_at: str
+    created_by: str
+    entity_states: tuple[tuple[str, str, str], ...]  # (entity_id, working_name, status)
+
+
+@dataclass(frozen=True)
+class DisconnectedRepresentation:
+    """"Disconnect Representation" contract (source SS9): the location or
+    integration is detached while the historical relation is preserved --
+    this record IS that preserved relation."""
+
+    disconnect_id: str
+    entity_id: str
+    representation: str
+    disconnected_at: str
+    disconnected_by: str
+    activation_id: str
+
+
 class RecoveryRefused(Exception):
     """Raised for a refused activation/deactivation. Unlike ExecutionLoop's
     outcome-object style, refusal here is an exception on purpose: a caller
@@ -175,6 +203,8 @@ class SovereignRecoveryKernel:
         self._signing_secret = signing_secret
         self._activations: dict[str, RecoveryActivation] = {}
         self._events: list[EmergencyEvent] = []
+        self._snapshots: dict[str, RecoverySnapshot] = {}
+        self._disconnects: list[DisconnectedRepresentation] = []
 
     # -- activation ------------------------------------------------------
 
@@ -302,6 +332,204 @@ class SovereignRecoveryKernel:
             verification_method=verification_method,
         )
         return self._entities.transition(entity_id, HubEntityStatus.SUSPENDED)
+
+    def create_recovery_snapshot(
+        self,
+        *,
+        initiator_id: str,
+        initiator_role: AuthorityRole,
+        scope: str,
+        entity_ids: tuple[str, ...],
+        reason: str,
+        verification_method: str,
+    ) -> RecoverySnapshot:
+        """"Create Recovery Snapshot": non-destructive, so no dual key and no
+        mode activation -- but the excluded roles still cannot call it, and
+        the snapshot itself lands in the audit trail."""
+        if self._entities is None:
+            raise ValueError("No EntityRegistry wired into this kernel")
+        if initiator_role in _EXCLUDED_ROLES:
+            self._log(
+                initiator=initiator_id, mode=EmergencyMode.RECOVERY, reason=reason,
+                scope=scope, expiration_time=None,
+                verification_method=verification_method,
+                result="REFUSED: agents and automations cannot create recovery snapshots",
+            )
+            raise RecoveryRefused("Agents and automations cannot create recovery snapshots.")
+        states = tuple(
+            (e.entity_id, e.working_name, e.status.value)
+            for e in (self._entities.get(eid) for eid in entity_ids)
+        )
+        snapshot = RecoverySnapshot(
+            snapshot_id="HOS-SNP-" + uuid.uuid4().hex[:12].upper(),
+            scope=scope, created_at=_now(), created_by=initiator_id,
+            entity_states=states,
+        )
+        self._snapshots[snapshot.snapshot_id] = snapshot
+        self._log(
+            initiator=initiator_id, mode=EmergencyMode.RECOVERY, reason=reason,
+            scope=scope, actions_executed=("create_recovery_snapshot",),
+            data_accessed=entity_ids, changes_created=(snapshot.snapshot_id,),
+            expiration_time=None, verification_method=verification_method,
+            result="SNAPSHOT_CREATED",
+        )
+        return snapshot
+
+    def get_snapshot(self, snapshot_id: str) -> RecoverySnapshot:
+        return self._snapshots[snapshot_id]
+
+    def rollback_entity(
+        self,
+        *,
+        snapshot_id: str,
+        entity_id: str,
+        initiator_id: str,
+        initiator_role: AuthorityRole,
+        custodian_approval_by: str | None,
+        reason: str,
+        expires_at: str,
+        verification_method: str,
+    ) -> HubEntity:
+        """"Rollback Entity / Workflow": creates a NEW version based on the
+        snapshot state and records the provenance chain -- history is never
+        rewritten. Consequential: goes through the full ROLLBACK activation,
+        so dual-key sovereignty and the manual-only trigger rule apply."""
+        if self._entities is None:
+            raise ValueError("No EntityRegistry wired into this kernel")
+        snapshot = self._snapshots[snapshot_id]
+        captured = next(
+            (s for s in snapshot.entity_states if s[0] == entity_id), None,
+        )
+        if captured is None:
+            raise ValueError(f"Snapshot {snapshot_id} does not cover entity {entity_id}")
+        activation = self.activate(
+            mode=EmergencyMode.ROLLBACK,
+            initiator_id=initiator_id,
+            initiator_role=initiator_role,
+            scope=f"entity:{entity_id}",
+            reason=reason,
+            expires_at=expires_at,
+            verification_method=verification_method,
+            custodian_approval_by=custodian_approval_by,
+        )
+        current = self._entities.get(entity_id)
+        restored = self._entities.register(
+            entity_type=current.entity_type,
+            working_name=captured[1],
+            responsibility_owner_id=current.responsibility_owner_id,
+            provenance_source=f"rollback:{snapshot_id}:{entity_id}",
+        )
+        # The provenance chain: the old version is retired via the recorded,
+        # attributed merge -- never deleted (ADR-HUB-005 semantics reused).
+        self._entities.merge(
+            keep_entity_id=restored.entity_id,
+            retire_entity_id=entity_id,
+            reason=f"rollback to snapshot {snapshot_id}: {reason}",
+            evidence=snapshot_id,
+            approved_by=custodian_approval_by or initiator_id,
+        )
+        self._log(
+            initiator=initiator_id, mode=EmergencyMode.ROLLBACK, reason=reason,
+            scope=f"entity:{entity_id}",
+            actions_executed=("rollback_entity",),
+            data_accessed=(snapshot_id,),
+            changes_created=(restored.entity_id, activation.activation_id),
+            expiration_time=expires_at, verification_method=verification_method,
+            result="ROLLED_BACK",
+        )
+        return self._entities.get(restored.entity_id)
+
+    def disconnect_representation(
+        self,
+        *,
+        entity_id: str,
+        representation: str,
+        initiator_id: str,
+        initiator_role: AuthorityRole,
+        reason: str,
+        expires_at: str,
+        verification_method: str,
+        trigger: TriggerKind = TriggerKind.MANUAL_OWNER,
+        owner_notified: bool = False,
+    ) -> DisconnectedRepresentation:
+        """"Disconnect Representation": detaches a location/integration while
+        keeping the historical relation (the returned record). Protective
+        mode -- may auto-trigger with owner notification."""
+        activation = self.activate(
+            mode=EmergencyMode.DISCONNECT,
+            initiator_id=initiator_id,
+            initiator_role=initiator_role,
+            scope=f"representation:{entity_id}:{representation}",
+            reason=reason,
+            expires_at=expires_at,
+            verification_method=verification_method,
+            trigger=trigger,
+            owner_notified=owner_notified,
+        )
+        record = DisconnectedRepresentation(
+            disconnect_id="HOS-DSC-" + uuid.uuid4().hex[:12].upper(),
+            entity_id=entity_id, representation=representation,
+            disconnected_at=_now(), disconnected_by=initiator_id,
+            activation_id=activation.activation_id,
+        )
+        self._disconnects.append(record)
+        return record
+
+    def disconnected_representations(self, entity_id: str) -> tuple[DisconnectedRepresentation, ...]:
+        return tuple(d for d in self._disconnects if d.entity_id == entity_id)
+
+    def export_sovereign_package(
+        self,
+        *,
+        initiator_id: str,
+        initiator_role: AuthorityRole,
+        scope: str,
+        reason: str,
+        expires_at: str,
+        verification_method: str,
+    ) -> dict[str, object]:
+        """"Export Sovereign Package": a portable package of data, graph,
+        metadata and the change register. Consequential (manual-only) but
+        not dual-key -- EXPORT maps to R1 per ADR-RECOVERY-006."""
+        activation = self.activate(
+            mode=EmergencyMode.EXPORT,
+            initiator_id=initiator_id,
+            initiator_role=initiator_role,
+            scope=scope,
+            reason=reason,
+            expires_at=expires_at,
+            verification_method=verification_method,
+        )
+        entities: list[dict[str, str]] = []
+        if self._entities is not None:
+            entities = [
+                {"entity_id": e.entity_id, "entity_type": e.entity_type.value,
+                 "working_name": e.working_name, "status": e.status.value,
+                 "created_at": e.created_at}
+                for e in self._entities.all_entities()
+            ]
+        package: dict[str, object] = {
+            "package_version": "0.1",
+            "generated_at": _now(),
+            "scope": scope,
+            "activation_id": activation.activation_id,
+            "entities": entities,
+            "snapshots": [s.snapshot_id for s in self._snapshots.values()],
+            "disconnected_representations": [
+                d.disconnect_id for d in self._disconnects
+            ],
+            "emergency_events": [e.event_id for e in self._events],
+            "format": "open-json",
+        }
+        self._log(
+            initiator=initiator_id, mode=EmergencyMode.EXPORT, reason=reason,
+            scope=scope, actions_executed=("export_sovereign_package",),
+            data_accessed=("entities", "snapshots", "emergency_events"),
+            changes_created=(activation.activation_id,),
+            expiration_time=expires_at, verification_method=verification_method,
+            result="EXPORTED",
+        )
+        return package
 
     # -- audit -----------------------------------------------------------
 
