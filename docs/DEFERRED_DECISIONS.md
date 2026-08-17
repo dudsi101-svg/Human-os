@@ -105,6 +105,16 @@ uwierzytelnienie, schemat); brak konfiguracji blokuje mechanizm; wartości
 testowe nie mogą trafić do konfiguracji produkcyjnej. Rzeczywisty magazyn
 kluczy i kryptografia progowa — dopiero po osobnej decyzji i threat
 modelu wdrożenia.
+**Wdrożone 2026-08-17:** `hos_engine/emergency_root.py` —
+`EmergencyKeyDescriptor` (bez materiału klucza), `EmergencyRootPolicy`
+(wszystkie pola jawne, zero domyślnych; role AGENT/SERVICE/SYSTEM_PROCESS
+nigdy nie mogą być kustoszami), `EmergencyRootKernel` (konstrukcja bez
+polityki niemożliwa strukturalnie; referencyjny przepływ k-z-n na
+deklarowanych wejściach; jeden klucz na tożsamość; wygasanie TTL;
+append-only audyt wszystkich zdarzeń, opcjonalnie trwały na łańcuchu
+hashy jako `STATE_OBSERVED`). 13 testów, wartości syntetyczne jawnie
+oznaczone. Parametry produkcyjne (TTL, siła uwierzytelnienia, konkretne
+k-z-n) — nadal osobna decyzja foundera.
 
 ## DD-006 · Skale DI/IQ/AR i profil §18 (RESOLVED 2026-08-17 — szkielet; progi liczbowe nadal otwarte)
 Layer 5 digest opisuje skale DI/IQ/AR i dziesięcioosiowy profil §18;

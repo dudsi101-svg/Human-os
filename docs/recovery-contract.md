@@ -61,6 +61,27 @@ Historical events written before DD-003 stay as `STATE_OBSERVED` and are
 never rewritten; the full 13-field record remains in the payload in both
 generations, so old and new events read uniformly.
 
+## Emergency Root skeleton (DD-007, resolved 2026-08-17)
+`hos_engine/emergency_root.py` implements the shape of the emergency-key
+infrastructure without inventing its parameters:
+
+- `EmergencyRootPolicy` — versioned configuration; every field (TTL,
+  required authentication-strength declaration, k-of-n scheme, custodian
+  roles, scope, id/version/approver) is explicit with **no defaults**;
+  AGENT/SERVICE/SYSTEM_PROCESS can never be custodian roles.
+- `EmergencyRootKernel` — cannot be constructed without a policy
+  (missing configuration blocks the mechanism structurally); reference
+  k-of-n approval flow over declared inputs; one key per custodian
+  identity; TTL expiry; every request, approval, activation, refusal,
+  use and expiry lands in an append-only audit trail (no mutator API)
+  and optionally in a hash-chained event store as `STATE_OBSERVED`
+  usage records.
+- NOT included, per the founder resolution: key material, key storage,
+  threshold cryptography, real authentication — those require a separate
+  decision plus a deployment threat model. Test values are synthetic and
+  must never become production configuration.
+
 ## Non-goals
-- production key management (Emergency Root parameters are queued as DD-007),
+- real key storage and threshold cryptography (see above — separate
+  founder decision),
 - deciding for the owner when to recover.
