@@ -85,7 +85,7 @@ architecture. Store-required disclosures are already in-app under
 "O aplikacji i prywatność": local-only data (no server, no accounts, no
 telemetry), health disclaimer (not a medical device, not crisis
 intervention), license notices, and user-controlled deletion. Final choice
-of packaging, store accounts, and pricing is deferred — see DD-010.
+of packaging, store accounts, and pricing is deferred — see DD-011.
 
 ## Genome check
 
@@ -103,4 +103,4 @@ of packaging, store accounts, and pricing is deferred — see DD-010.
   the constitutional-guarantee and compliance screens.
 - Pricing, trial length beyond the prototype's 7 days, the final
   free/premium split, and the concrete packaging pipeline are open founder
-  decisions — queued as DD-010 in `docs/DEFERRED_DECISIONS.md`.
+  decisions — queued as DD-011 in `docs/DEFERRED_DECISIONS.md`.

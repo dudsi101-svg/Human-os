@@ -21,15 +21,25 @@ class SchemaRegistry:
 
     def validate(self, schema_name: str, instance: dict[str, Any]) -> None:
         schema = self.schemas[schema_name]
+        store: dict[str, dict[str, Any]] = {
+            (self.schema_dir / name).resolve().as_uri(): content
+            for name, content in self.schemas.items()
+        }
+        # A schema that declares an $id resolves its relative $refs against
+        # that $id, not against the local file path — register every schema
+        # under each declared $id base too, so sibling references like
+        # "common.schema.json" resolve offline.
+        id_bases = {
+            declared_id.rsplit("/", 1)[0] + "/"
+            for content in self.schemas.values()
+            if isinstance(declared_id := content.get("$id"), str) and "/" in declared_id
+        }
+        for base in id_bases:
+            for name, content in self.schemas.items():
+                store[base + name] = content
         resolver = RefResolver(
             base_uri=self.schema_dir.resolve().as_uri() + "/",
             referrer=schema,
-            store={
-                path.resolve().as_uri(): value
-                for path, value in [
-                    (self.schema_dir / name, content)
-                    for name, content in self.schemas.items()
-                ]
-            },
+            store=store,
         )
         Draft202012Validator(schema, resolver=resolver).validate(instance)

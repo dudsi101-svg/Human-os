@@ -45,7 +45,22 @@ Dual key = approval by a different identity holding an active
 - No AI model or external service in the code path — an AI outage cannot
   block manual recovery.
 
+## Durable event types (DD-003, resolved 2026-08-17)
+Durable recovery events map to the canonical vocabulary at the single
+`_log` chokepoint:
+
+| Outcome | Canonical `event_type` |
+|---|---|
+| activation, mode `FREEZE` | `ENTITY_FROZEN` |
+| activation, any other mode | `RECOVERY_ACTIVATED` |
+| deactivation | `RECOVERY_DEACTIVATED` |
+| refusal (result `REFUSED: …`) | `RECOVERY_REFUSED` |
+| usage records (snapshot / rollback / export) | `STATE_OBSERVED` |
+
+Historical events written before DD-003 stay as `STATE_OBSERVED` and are
+never rewritten; the full 13-field record remains in the payload in both
+generations, so old and new events read uniformly.
+
 ## Non-goals
 - production key management (Emergency Root parameters are queued as DD-007),
-- dedicated `recovery_*` event types (queued as DD-003; `STATE_OBSERVED` meanwhile),
 - deciding for the owner when to recover.
