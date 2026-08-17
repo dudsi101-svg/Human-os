@@ -43,8 +43,11 @@ approved by the founder on 2026-08-17.
    the digest's §7 constraints (sensitive-domain public challenges require
    risk classification; extreme actions are never published without
    additional control). Like `policies/constitutional.policies.json`, it
-   is a spec-ahead-of-code artifact: nothing interprets it yet, and its
-   class boundaries await founder confirmation before any operational use.
+   is a spec-ahead-of-code artifact: nothing interprets it yet.
+   **Update 2026-08-17 (later the same day):** the founder confirmed the
+   class boundaries — the full table was presented verbatim in-session and
+   approved („Tak, róbmy to") — so the mapping is signed, while remaining
+   documentation-only until Commons engine code exists.
 
 4. **No engine module emits any commons event yet.** The user-demo app
    keeps logging its client-side equivalents locally. Emission starts only

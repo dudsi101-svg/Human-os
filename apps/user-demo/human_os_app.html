@@ -450,7 +450,7 @@
       <p style="font-size:14px;margin-bottom:8px"><b>Nie wprowadzaj prawdziwych danych zdrowotnych ani innych danych wrażliwych.</b> Używaj danych przybliżonych lub fikcyjnych. Aplikacja nie jest wyrobem medycznym i nie udziela porad zdrowotnych.</p>
       <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer;margin-top:10px">
         <input type="checkbox" id="obProtoAck" style="margin-top:3px;width:18px;height:18px;flex:none">
-        <span>Rozumiem, że to prototyp — <b>nie będę wprowadzać prawdziwych danych zdrowotnych ani wrażliwych</b>.</span>
+        <span>Mam ukończone <b>16 lat</b> i rozumiem, że to prototyp — <b>nie będę wprowadzać prawdziwych danych zdrowotnych ani wrażliwych</b>.</span>
       </label>
     </div>
     <div class="covenant">
@@ -1228,7 +1228,7 @@ function finishOnboarding(){
   S.consents.C2 = $("cC2").checked;
   S.consents.C4 = $("cC4").checked;
   logEvent("SYSTEM","KONTRAKT","Kontrakt przyjęty; zgody: C0"+(S.consents.C1?", C1":"")+(S.consents.C2?", C2":""));
-  logEvent("SYSTEM","PROTOTYP_ACK","Użytkownik potwierdził: prototyp bez zaplecza produkcyjnego, bez prawdziwych danych zdrowotnych/wrażliwych");
+  logEvent("SYSTEM","PROTOTYP_ACK","Użytkownik potwierdził: ukończone 16 lat; prototyp bez zaplecza produkcyjnego, bez prawdziwych danych zdrowotnych/wrażliwych");
   save();
   enterApp();
 }
@@ -2405,6 +2405,7 @@ function renderAgent(){
         </div>
         <p class="note" style="margin-top:6px">Klucz zostaje wyłącznie na tym urządzeniu — poza stanem aplikacji i poza eksportem. Za użycie płacisz bezpośrednio u dostawcy (${AGENT_PROVIDERS[agentProvider()].console}). Zasady Konstytucji egzekwuje aplikacja — są identyczne niezależnie od dostawcy.</p>`
         :`<p class="note" style="margin-top:6px">Silnik lokalny działa w całości na Twoim urządzeniu — żadne dane nie wychodzą na zewnątrz, bez kont i kluczy. Jakość odpowiedzi jest niższa niż w chmurze; modele będą się zmieniać, silniki można przełączać w każdej chwili.</p>`}</details>`}
+    <p class="note" style="margin:8px 0 6px">Przewodnik to AI, nie lekarz: treści dotyczące zdrowia lub psychiki to hipotezy do ostrożnej samodzielnej weryfikacji, nie porady medyczne. W sprawach medycznych skonsultuj się z profesjonalistą, a w sytuacji kryzysowej — z pomocą doraźną.</p>
     <div id="agentOut"></div></div>`;
 }
 
@@ -2521,7 +2522,12 @@ function renderAbout(){
     </div>
     <div class="card" style="margin-bottom:14px">
       <h3 style="font-size:15px;margin-bottom:6px">Prywatność</h3>
-      <p style="font-size:14px;margin-bottom:6px">Wszystkie dane są przechowywane <b>wyłącznie lokalnie na Twoim urządzeniu</b> (pamięć przeglądarki). Aplikacja nie ma serwera, kont ani telemetrii; nic nie jest wysyłane nigdzie bez Twojego jawnego działania (np. samodzielnego przekazania pakietu „Wspólnie”).</p>
+      <p style="font-size:14px;margin-bottom:6px">Wszystkie dane są przechowywane <b>wyłącznie lokalnie na Twoim urządzeniu</b> (pamięć przeglądarki). Aplikacja nie ma serwera, kont, telemetrii ani analityki. Lokalna pamięć służy wyłącznie działaniu aplikacji, o które sam prosisz — nie ma tu żadnych cookies śledzących.</p>
+      <p style="font-size:14px;margin-bottom:6px">Dane mogą opuścić urządzenie tylko w <b>trzech przypadkach, o których każdorazowo decydujesz sam</b>:</p>
+      <p style="font-size:14px;margin-bottom:6px">1. <b>Przewodnik AI</b> (zgoda C5, silnik chmurowy): treść Twojego pytania i zminimalizowany pakiet danych trafiają do wybranego dostawcy (Anthropic lub OpenAI) na Twoim własnym kluczu i Twojej umowie z tym dostawcą — aplikacja nie pośredniczy i niczego nie widzi. Silnik lokalny nie wysyła nic.<br>
+      2. <b>Dyktowanie głosowe</b>: dźwięk może być przetwarzany przez mechanizm rozpoznawania mowy Twojej przeglądarki (zależnie od jej dostawcy) — informujemy o tym przy pierwszym użyciu.<br>
+      3. <b>„Wspólnie”</b> (zgoda C4): pakiety wymieniasz ręcznie i sam decydujesz, komu je przekazujesz.</p>
+      <p style="font-size:14px;margin-bottom:6px">Hosting: aplikację serwuje GitHub Pages jako pliki statyczne; standardowe logi serwera (np. adres IP) są po stronie GitHub i podlegają polityce prywatności GitHub — projekt nie ma do nich dostępu.</p>
       <p style="font-size:14px">Pełny eksport i nieodwracalne usunięcie danych znajdziesz w „Konstytucji”: <i>Eksport i import</i> oraz <i>Pamięć i usunięcie</i>. Odinstalowanie aplikacji lub wyczyszczenie danych przeglądarki również usuwa wszystko.</p>
     </div>
     <div class="card" style="margin-bottom:14px;border-color:var(--warn)">

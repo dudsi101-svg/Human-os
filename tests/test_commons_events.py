@@ -101,9 +101,12 @@ class ChallengeRiskMappingTests(unittest.TestCase):
             for event_type in entry["events"]:
                 self.assertIn(event_type, canonical)
 
-    def test_draft_status_names_the_pending_founder_confirmation(self):
-        self.assertIn("SZKIC", self.mapping["status"])
-        self.assertIn("foundera", self.mapping["status"])
+    def test_mapping_is_founder_approved_and_attributed(self):
+        # Signed 2026-08-17 ("Tak, róbmy to" -- class table shown verbatim);
+        # an unattributed mapping must never pass again.
+        self.assertIn("ZATWIERDZONE", self.mapping["status"])
+        self.assertEqual(self.mapping["approved_by"], "founder (dudsi101-svg)")
+        self.assertEqual(self.mapping["approved_at"], "2026-08-17")
 
 
 if __name__ == "__main__":

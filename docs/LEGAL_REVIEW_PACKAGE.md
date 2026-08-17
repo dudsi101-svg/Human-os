@@ -119,3 +119,53 @@ aktywnie rozwijana (kilkadziesiąt commitów dziennie), więc przegląd
 prawny powinien wskazać, które zmiany wymagają ponownej konsultacji.
 Autorzy pakietu nie są prawnikami; pominięcia są niezamierzone, ale
 możliwe — pakiet ma zaczynać rozmowę z prawnikiem, nie ją zastępować.
+
+---
+
+# Aneks A — wewnętrzna analiza prawna (AI, 2026-08-17)
+
+**Charakter:** analiza wewnętrzna sporządzona przez AI na polecenie
+foundera, w konwencji przeglądów wewnętrznych projektu (jak AR-001 dla
+bezpieczeństwa: brak niezależności jest jawnie zadeklarowany). **Nie jest
+poradą prawną i nie zastępuje kancelarii** — przy wydaniu sklepowym lub
+przed szeroką promocją pytania 1–9 powinny trafić do prawnika wraz z tym
+aneksem jako materiałem wejściowym.
+
+Skrót odpowiedzi (pełna treść w zapisie sesji roboczej 2026-08-17):
+
+1. **Role RODO:** przy architekturze bez backendu projekt najpewniej nie
+   jest administratorem danych użytkowników (przetwarzanie lokalne, użytek
+   osobisty — art. 2 ust. 2 lit. c RODO; dostarczanie oprogramowania to
+   nie przetwarzanie). Szare strefy: logi GitHub Pages (wskazać GitHub
+   w informacji o prywatności) i wywołania API na kluczu własnym
+   (umowa użytkownik–dostawca, projekt nie jest stroną).
+2. **Polityka prywatności:** formalnie niewymagana, praktycznie konieczna
+   — wdrożona (`apps/user-demo/PRIVACY.md` + karta w aplikacji).
+3. **MDR:** obecne funkcje po stronie wellness (MDCG 2019-11); granicy
+   pilnują: deklaracja przeznaczenia (`docs/INTENDED_PURPOSE.md`), zakazy
+   w regułach Przewodnika, dyscyplina języka marketingowego. Najwyższe
+   ryzyko regulacyjne z całej listy — mitygacje wdrożone.
+4. **Małoletni:** art. 8 RODO wprost nie obciąża (brak roli
+   administratora); dopisek „16+" dodany do bramki; klasyfikacja wiekowa
+   wróci przy sklepach.
+5. **BYO-key:** wzorzec co do zasady dopuszczalny (użytkownik korzysta
+   z własnego API); pilnować polityk użycia dostawców dla treści
+   zdrowotnych (ujawnienie AI — wdrożone dopiskiem) i ponawiać przegląd
+   przy każdym wydaniu (najbardziej zmienny punkt).
+6. **ePrivacy/localStorage:** wyjątek „ściśle niezbędne do usługi
+   zażądanej przez użytkownika" — baner zbędny; odnotowane w polityce.
+7. **Konsument/freemium:** obowiązki aktywują się przy sklepie
+   (dyrektywa 2019/770, odstąpienie, Omnibus); zasadę niepaywallowanej
+   suwerenności z ADR-APP-001 wpisać wtedy do regulaminu.
+8. **Odpowiedzialność:** Apache-2.0 §7–8 nie wyłączy odpowiedzialności
+   konsumenckiej; przy darmowym prototypie ekspozycja niska dzięki
+   bramce i polskim zastrzeżeniom przed użyciem; regulamin konieczny
+   dopiero przy płatnościach/backendzie.
+9. **Znak:** przed promocją marki badanie czystości, potem ewentualna
+   rejestracja słowna (UPRP/EUIPO, kl. 9 i 42; bez klasy medycznej —
+   spójnie z pkt 3); opisowość może wymusić znak słowno-graficzny.
+
+**Wdrożone mitygacje (2026-08-17):** deklaracja zamierzonego
+przeznaczenia; polityka prywatności (plik + karta w aplikacji z trzema
+wyjątkami); dopisek wiekowy 16+ w bramce wejściowej; stały dopisek
+„AI, nie lekarz" w interfejsie Przewodnika.
