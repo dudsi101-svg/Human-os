@@ -73,4 +73,5 @@ from .self_model import (
 from .self_model_store import SQLiteSelfModelStore
 from .simulation import *
 from .simulation_gate import GateDecision, SimulationGate
+from .state_checkpoint import *
 from .trust import *
