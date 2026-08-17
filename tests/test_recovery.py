@@ -314,5 +314,119 @@ class FreezeContractTests(unittest.TestCase):
         self.assertTrue(kernel.is_active(EmergencyMode.FREEZE, scope=f"entity:{entity.entity_id}"))
 
 
+class CanonicalEventTypeTests(unittest.TestCase):
+    """DD-003: recovery outcomes map to the canonical event vocabulary."""
+
+    def kernel_with_store(self, tmp):
+        store = SQLiteEventStore(str(Path(tmp) / "recovery.db"))
+        return store, SovereignRecoveryKernel(event_store=store)
+
+    def types_in(self, store):
+        return [e["event_type"] for e in store.all()]
+
+    def test_activation_maps_to_recovery_activated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store, kernel = self.kernel_with_store(tmp)
+            activate(kernel)
+            self.assertEqual(self.types_in(store), ["RECOVERY_ACTIVATED"])
+
+    def test_deactivation_maps_to_recovery_deactivated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store, kernel = self.kernel_with_store(tmp)
+            activation = activate(kernel)
+            kernel.deactivate(
+                activation.activation_id, initiator_id=OWNER,
+                initiator_role=AuthorityRole.OWNER, reason="threat cleared",
+            )
+            self.assertEqual(
+                self.types_in(store),
+                ["RECOVERY_ACTIVATED", "RECOVERY_DEACTIVATED"],
+            )
+
+    def test_refusal_maps_to_recovery_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store, kernel = self.kernel_with_store(tmp)
+            with self.assertRaises(RecoveryRefused):
+                activate(kernel, initiator_role=AuthorityRole.AGENT,
+                         initiator_id="HOS-AGT-000001")
+            self.assertEqual(self.types_in(store), ["RECOVERY_REFUSED"])
+
+    def test_freeze_maps_to_entity_frozen(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = SQLiteEventStore(str(Path(tmp) / "recovery.db"))
+            entities = EntityRegistry()
+            entity = entities.register(
+                entity_type=HubEntityType.RESOURCE, working_name="Notatnik",
+                responsibility_owner_id=OWNER, provenance_source="test",
+            )
+            kernel = SovereignRecoveryKernel(event_store=store, entities=entities)
+            kernel.freeze_entity(
+                entity.entity_id, initiator_id=OWNER,
+                initiator_role=AuthorityRole.OWNER, reason="containment",
+                expires_at=far_future(), verification_method="recovery-key",
+            )
+            self.assertEqual(self.types_in(store), ["ENTITY_FROZEN"])
+
+    def test_usage_records_stay_state_observed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = SQLiteEventStore(str(Path(tmp) / "recovery.db"))
+            entities = EntityRegistry()
+            entity = entities.register(
+                entity_type=HubEntityType.RESOURCE, working_name="Notatnik",
+                responsibility_owner_id=OWNER, provenance_source="test",
+            )
+            kernel = SovereignRecoveryKernel(event_store=store, entities=entities)
+            kernel.create_recovery_snapshot(
+                initiator_id=OWNER, initiator_role=AuthorityRole.OWNER,
+                scope="projekt", entity_ids=(entity.entity_id,),
+                reason="checkpoint", verification_method="recovery-key",
+            )
+            types = self.types_in(store)
+            # RECOVERY mode activation precedes the snapshot usage record
+            # only if snapshotting activates a mode; the usage record itself
+            # must remain STATE_OBSERVED.
+            self.assertIn("STATE_OBSERVED", types)
+            self.assertNotIn("RECOVERY_REFUSED", types)
+
+    def test_new_types_are_canonical_in_dictionary_and_schema(self):
+        import json
+        root = Path(__file__).parent.parent
+        dictionary = json.loads((root / "event.types.json").read_text())["event_types"]
+        schema = json.loads((root / "schemas" / "event.schema.json").read_text())
+        enum = schema["properties"]["event_type"]["enum"]
+        self.assertEqual(set(dictionary), set(enum))
+        with tempfile.TemporaryDirectory() as tmp:
+            store, kernel = self.kernel_with_store(tmp)
+            activation = activate(kernel)
+            kernel.deactivate(
+                activation.activation_id, initiator_id=OWNER,
+                initiator_role=AuthorityRole.OWNER, reason="threat cleared",
+            )
+            for event in store.all():
+                self.assertIn(event["event_type"], dictionary)
+                self.assertIn(event["event_type"], enum)
+
+    def test_historical_state_observed_events_remain_readable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = SQLiteEventStore(str(Path(tmp) / "recovery.db"))
+            # a pre-DD-003 durable recovery event, exactly as recovery.py
+            # wrote it before the canonical types existed
+            store.append({
+                "id": "HOS-EMG-LEGACY000001",
+                "event_type": "STATE_OBSERVED",
+                "occurred_at": "2026-08-15T10:00:00+00:00",
+                "actor_id": OWNER,
+                "subject_ids": ["system"],
+                "payload": {"recovery_mode": "SAFE_MODE", "result": "ACTIVATED"},
+                "correlation_id": "HOS-EMG-LEGACY000001",
+                "immutable": True,
+            })
+            kernel = SovereignRecoveryKernel(event_store=store)
+            activate(kernel)
+            types = self.types_in(store)
+            self.assertEqual(types, ["STATE_OBSERVED", "RECOVERY_ACTIVATED"])
+            self.assertTrue(store.verify_chain())
+
+
 if __name__ == "__main__":
     unittest.main()

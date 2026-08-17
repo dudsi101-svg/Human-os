@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "event_types": [
     "ENTITY_CREATED",
     "ENTITY_UPDATED",
@@ -15,6 +15,10 @@
     "STATE_OBSERVED",
     "PROOF_COMPLETED",
     "LIMITATION_DISCLOSED",
-    "VERSION_RELEASED"
+    "VERSION_RELEASED",
+    "RECOVERY_ACTIVATED",
+    "RECOVERY_DEACTIVATED",
+    "RECOVERY_REFUSED",
+    "ENTITY_FROZEN"
   ]
 }
