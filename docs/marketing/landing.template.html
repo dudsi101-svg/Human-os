@@ -1,0 +1,377 @@
+<title>Human OS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ---------------------------------------------------------------------------
+   Paleta i typografia są przepisane z samej aplikacji (apps/user-demo/) —
+   strona ma wyglądać jak produkt, nie jak osobna marka.
+   --------------------------------------------------------------------------- */
+:root{
+  --bg:#F2EFE7; --surface:#FBFAF4; --surface-2:#EDE9DD; --line:#DCD6C4;
+  --ink:#262A21; --ink-2:#555B4B; --ink-3:#878D7B;
+  --accent:#5F7F55; --accent-soft:#7C9370; --accent-tint:#E2E8D9;
+  --clay:#A9563C; --clay-tint:#F2DFD6; --warn:#8C6B2E; --warn-tint:#EFE6CE;
+  --band:#161812; --band-ink:#E8E6DA; --band-ink-2:#B3B8A6;
+  --band-accent:#A3B896; --band-line:#39402F; --band-surface:#1E211A;
+  --shadow:0 1px 2px rgba(38,42,33,.05), 0 14px 40px rgba(38,42,33,.09);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Bitstream Charter",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --measure:34rem;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131510; --surface:#1C1F17; --surface-2:#232719; --line:#39402F;
+    --ink:#E8E6DA; --ink-2:#B3B8A6; --ink-3:#828876;
+    --accent:#A3B896; --accent-soft:#8FAF7F; --accent-tint:#242E1E;
+    --clay:#D08A6E; --clay-tint:#31221B; --warn:#C6A362; --warn-tint:#2E2717;
+    --band:#0D0F0A; --band-surface:#171A12;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 18px 50px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131510; --surface:#1C1F17; --surface-2:#232719; --line:#39402F;
+  --ink:#E8E6DA; --ink-2:#B3B8A6; --ink-3:#828876;
+  --accent:#A3B896; --accent-soft:#8FAF7F; --accent-tint:#242E1E;
+  --clay:#D08A6E; --clay-tint:#31221B; --warn:#C6A362; --warn-tint:#2E2717;
+  --band:#0D0F0A; --band-surface:#171A12;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 18px 50px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:17px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%; display:block}
+h1,h2,h3{font-family:var(--serif); font-weight:600; letter-spacing:-.015em; text-wrap:balance; margin:0}
+p{margin:0}
+a{color:var(--accent); text-decoration-thickness:1px; text-underline-offset:3px}
+a:focus-visible, button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px}
+
+.wrap{max-width:76rem; margin:0 auto; padding:0 clamp(1.25rem,4vw,3rem)}
+section{padding:clamp(3.5rem,8vw,6.5rem) 0}
+
+/* plakietka — motyw przeniesiony wprost z interfejsu aplikacji */
+.pill{
+  display:inline-block; border-radius:999px; padding:.5rem 1rem;
+  font-family:var(--sans); font-size:.72rem; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase;
+  background:var(--accent-tint); color:var(--accent);
+}
+.pill.clay{background:var(--clay-tint); color:var(--clay)}
+.pill.warn{background:var(--warn-tint); color:var(--warn)}
+
+.card{
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:22px; padding:clamp(1.5rem,3vw,2.1rem); box-shadow:var(--shadow);
+}
+.muted{color:var(--ink-2)}
+.faint{color:var(--ink-3); font-size:.92rem}
+.lede{font-size:clamp(1.05rem,1.6vw,1.2rem); line-height:1.65; color:var(--ink-2); max-width:var(--measure)}
+
+/* --- nagłówek ------------------------------------------------------------ */
+.top{display:flex; align-items:center; justify-content:space-between; padding:1.6rem 0}
+.mark{font-family:var(--serif); font-size:1.35rem; font-weight:600}
+.mark span{color:var(--ink-3); font-family:var(--sans); font-size:.78rem; letter-spacing:.08em;
+  text-transform:uppercase; margin-left:.6rem}
+
+/* --- hero ---------------------------------------------------------------- */
+.hero{display:grid; grid-template-columns:1.15fr .85fr; gap:clamp(2rem,5vw,4rem); align-items:center;
+  padding-top:clamp(1rem,3vw,2.5rem)}
+.hero h1{font-size:clamp(2.6rem,5.6vw,4.1rem); line-height:1.04}
+.hero .chips{display:flex; flex-wrap:wrap; gap:.6rem; margin-top:2rem}
+.phone{
+  border-radius:36px; overflow:hidden; border:9px solid var(--ink);
+  box-shadow:0 30px 70px rgba(38,42,33,.26); background:var(--ink);
+  max-width:320px; margin-left:auto;
+}
+:root[data-theme="dark"] .phone, :root:not([data-theme="light"]) .phone{border-color:#0D0F0A}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .phone{border-color:var(--ink)}}
+
+/* --- filary -------------------------------------------------------------- */
+.pillars{display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem}
+.pillars h3{font-size:1.35rem; margin:1rem 0 .55rem}
+
+/* --- ciemny pas: teza ---------------------------------------------------- */
+.band{background:var(--band); color:var(--band-ink)}
+.band h2{color:var(--band-ink); font-size:clamp(3rem,8vw,5.5rem); line-height:1}
+.band .lede{color:var(--band-ink-2)}
+.reasons{display:flex; flex-wrap:wrap; gap:.55rem; margin-top:2.4rem}
+.reasons span{
+  border:1px solid var(--band-line); background:var(--band-surface); color:var(--band-ink-2);
+  border-radius:999px; padding:.5rem 1rem; font-size:.85rem;
+}
+.reasons span.hot{background:var(--band-accent); border-color:var(--band-accent); color:#161812; font-weight:600}
+
+/* --- naprzemienne sekcje funkcji ---------------------------------------- */
+.feature{display:grid; grid-template-columns:1fr 1fr; gap:clamp(2rem,6vw,4.5rem); align-items:center}
+.feature + .feature{margin-top:clamp(3rem,7vw,5.5rem)}
+.feature h2{font-size:clamp(1.8rem,3.3vw,2.5rem); margin:.9rem 0 1rem}
+.feature.flip .shot{order:-1}
+.shot{display:flex; justify-content:center}
+.rows{display:flex; flex-direction:column; gap:.9rem; margin-top:1.6rem}
+.row{display:flex; gap:1rem; align-items:baseline}
+.row .k{flex:none; width:8.5rem}
+.row .v{color:var(--ink-2); font-size:.97rem}
+
+/* --- wersje -------------------------------------------------------------- */
+.tiers{display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-top:2rem}
+.tier h3{font-size:1.5rem}
+.tier ul{list-style:none; padding:0; margin:1.2rem 0 0; display:flex; flex-direction:column; gap:.7rem}
+.tier li{display:flex; gap:.7rem; align-items:flex-start; color:var(--ink-2); font-size:.97rem}
+.tier li::before{content:"—"; color:var(--accent); flex:none}
+.guarantee{margin-top:1.25rem; background:var(--accent-tint); border:1px solid var(--accent-soft);
+  border-radius:22px; padding:1.5rem 1.75rem}
+.guarantee strong{font-family:var(--serif); font-size:1.15rem; font-weight:600}
+
+/* --- pytania ------------------------------------------------------------- */
+.qa{display:grid; grid-template-columns:repeat(2,1fr); gap:1.25rem 2.5rem; margin-top:2rem}
+.qa h3{font-size:1.1rem; font-family:var(--sans); font-weight:700; letter-spacing:0}
+.qa p{color:var(--ink-2); font-size:.97rem; margin-top:.45rem}
+
+/* --- stan / stopka ------------------------------------------------------- */
+.status{border:1px dashed var(--line); border-radius:22px; padding:1.6rem 1.9rem; background:transparent}
+footer{border-top:1px solid var(--line); padding:2.5rem 0 3.5rem; color:var(--ink-3); font-size:.9rem}
+footer .cols{display:flex; justify-content:space-between; gap:2rem; flex-wrap:wrap}
+
+@media (max-width:860px){
+  .hero,.feature,.pillars,.tiers,.qa{grid-template-columns:1fr}
+  .feature.flip .shot{order:0}
+  .phone{margin:0 auto}
+  .row .k{width:7rem}
+}
+@media (prefers-reduced-motion: no-preference){
+  .reveal{opacity:0; transform:translateY(14px); animation:rise .7s ease forwards}
+  @keyframes rise{to{opacity:1; transform:none}}
+}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="mark">Human OS <span>aplikacja osobista</span></div>
+    <span class="pill">Wersja przedpremierowa</span>
+  </div>
+
+  <section class="hero">
+    <div>
+      <h1>Aplikacja, która chce być coraz mniej potrzebna.</h1>
+      <p class="lede" style="margin-top:1.5rem">
+        Pięć domen życia w jednym widoku. Rekomendacje, które przyznają się do niewiedzy.
+        I przycisk „zabierz wszystko i odejdź”, który naprawdę działa.
+      </p>
+      <div class="chips">
+        <span class="pill">Bez konta</span>
+        <span class="pill clay">Bez serwera</span>
+        <span class="pill warn">Eksport zawsze bezpłatny</span>
+      </div>
+    </div>
+    <div><div class="phone"><img src="data:image/jpeg;base64,{{PULPIT}}" alt="Pulpit aplikacji: pięć domen życia w układzie pentagramu, z wynikami dla zdrowia, psychiki, relacji, sprawczości i rozwoju."></div></div>
+  </section>
+
+  <section>
+    <div class="pillars">
+      <div class="card">
+        <span class="pill">Widzi całość</span>
+        <h3>Pięć domen naraz</h3>
+        <p class="muted">Zdrowie, psychika, relacje, sprawczość i rozwój w jednym układzie.
+        Wzmocnienie jednej kosztem pozostałych widać od razu — bo tak działa życie,
+        a nie osobne liczniki.</p>
+      </div>
+      <div class="card">
+        <span class="pill clay">Nie udaje</span>
+        <h3>Trzy kolory prawdy</h3>
+        <p class="muted">To, co powiedziałeś, nigdy nie miesza się z tym, co system zaobserwował,
+        ani z tym, czego się domyśla. Przy każdym zapisie działa pytanie „skąd to wiesz?”.</p>
+      </div>
+      <div class="card">
+        <span class="pill warn">Nie zamyka</span>
+        <h3>Wyjście w cenie zera</h3>
+        <p class="muted">Eksport, import, korekta modelu, tryby awaryjne i usunięcie wszystkiego.
+        Zawsze, bezwarunkowo i poza jakąkolwiek płatnością.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="band">
+  <div class="wrap">
+    <section>
+      <span class="pill" style="background:var(--band-accent); color:#161812">Uczciwa abstencja</span>
+      <h2 style="margin-top:1.5rem">„Nie wiem.”</h2>
+      <p class="lede" style="margin-top:1.75rem; max-width:44rem">
+        Zapytaj dowolną aplikację o radę — zawsze coś odpowie, nawet bez podstaw.
+        Ta czasem odpowie inaczej: wstrzyma się i poda powód. Powodów jest osiem
+        i każdy ma nazwę, więc można go pokazać, sprawdzić i zakwestionować.
+      </p>
+      <div class="reasons">
+        <span>brak jasnego celu</span>
+        <span>za mało danych</span>
+        <span>konflikt wartości</span>
+        <span class="hot">sprzeczne przesłanki</span>
+        <span>nie da się monitorować</span>
+        <span>zbyt duże ryzyko</span>
+        <span>poza kompetencją</span>
+        <span>podejrzenie kryzysu</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="wrap">
+  <section>
+    <div class="feature">
+      <div>
+        <span class="pill">O mnie</span>
+        <h2>Model siebie, który się tłumaczy</h2>
+        <p class="muted">Human OS poznaje Cię przez rozmowę, nie przez formularz. Pod spodem
+        powstaje wersjonowana mapa — a każdy jej element wie, skąd pochodzi.</p>
+        <div class="rows">
+          <div class="row"><span class="k"><strong>Deklaracja</strong></span><span class="v">Twoje własne słowa. Tylko Ty je zmieniasz.</span></div>
+          <div class="row"><span class="k"><strong>Obserwacja</strong></span><span class="v">Wzorzec w danych, które sam powierzyłeś.</span></div>
+          <div class="row"><span class="k"><strong>Hipoteza</strong></span><span class="v">Domysł — musi pokazać przesłanki i nigdy nie udaje faktu.</span></div>
+        </div>
+        <p class="faint" style="margin-top:1.5rem">Poprawka tworzy nową wersję, poprzednia zostaje widoczna.
+        Odrzucenie oznacza „sporne”, nie usunięcie.</p>
+      </div>
+      <div class="shot"><div class="phone"><img src="data:image/jpeg;base64,{{OMNIE}}" alt="Karta „O mnie” w aplikacji: rozmowa, żywy model siebie i formularz danych."></div></div>
+    </div>
+
+    <div class="feature flip">
+      <div>
+        <span class="pill clay">Decyzje</span>
+        <h2>Rada, która zna swoje granice</h2>
+        <p class="muted">Zamiast jednej „najlepszej” odpowiedzi dostajesz spektrum wariantów
+        wraz z tym, czego o nich nie wiadomo. Warianty odrzucone na twardych warunkach
+        nie wracają później z wysokim wynikiem.</p>
+        <div class="rows">
+          <div class="row"><span class="k"><strong>Spektrum</strong></span><span class="v">kilka dróg zamiast jednej rekomendacji</span></div>
+          <div class="row"><span class="k"><strong>Abstencja</strong></span><span class="v">„wstrzymuję się” z nazwanym powodem</span></div>
+          <div class="row"><span class="k"><strong>Eskalacja</strong></span><span class="v">decyzja wraca do Ciebie, gdy przekracza kompetencje aplikacji</span></div>
+        </div>
+      </div>
+      <div class="shot"><div class="phone"><img src="data:image/jpeg;base64,{{DECYZJE}}" alt="Karta „Decyzje”: silnik decyzji z wariantami i uczciwą abstencją."></div></div>
+    </div>
+
+    <div class="feature">
+      <div>
+        <span class="pill warn">Konstytucja</span>
+        <h2>Twoje prawa w menu, nie w regulaminie</h2>
+        <p class="muted">Osobna karta, w której każde prawo jest przyciskiem: wgląd w surowe dane,
+        ręczna korekta modelu, przełączanie zgód, eksport i import całości, nowa epoka profilu
+        albo nieodwracalne usunięcie wszystkiego.</p>
+        <div class="rows">
+          <div class="row"><span class="k"><strong>Eksport</strong></span><span class="v">otwarty JSON — dane, powiązania, historia i ślad decyzji</span></div>
+          <div class="row"><span class="k"><strong>Import</strong></span><span class="v">powrót z tym samym plikiem, także po przerwie</span></div>
+          <div class="row"><span class="k"><strong>Tryby awaryjne</strong></span><span class="v">tryb bezpieczny, tylko odczyt, wymazanie</span></div>
+        </div>
+      </div>
+      <div class="shot"><div class="phone"><img src="data:image/jpeg;base64,{{KONSTYTUCJA}}" alt="Karta „Konstytucja i Twoje prawa”: prawa i zgody, eksport i import, pamięć i usunięcie."></div></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="pill">Wersje</span>
+    <h2 style="font-size:clamp(1.8rem,3.3vw,2.5rem); margin-top:1rem">Premium dodaje moc, nie odbiera praw</h2>
+    <div class="tiers">
+      <div class="card tier">
+        <h3>Bezpłatna</h3>
+        <ul>
+          <li>pulpit pięciu domen i dzienna odprawa</li>
+          <li>żywy model siebie z pełną proweniencją</li>
+          <li>rekomendacje z abstencją i eskalacją</li>
+          <li>jeden eksperyment naraz</li>
+          <li>eksport, import, tryby awaryjne, usunięcie</li>
+        </ul>
+      </div>
+      <div class="card tier">
+        <h3>Premium</h3>
+        <ul>
+          <li>wszystko z wersji bezpłatnej</li>
+          <li>trzy równoległe eksperymenty z prognozą zbiorczą</li>
+          <li>rozbudowany symulator scenariuszy</li>
+          <li>szersza wymiana Kart Doświadczeń w kręgach</li>
+        </ul>
+      </div>
+    </div>
+    <div class="guarantee">
+      <strong>Gwarancja konstytucyjna.</strong>
+      <p class="muted" style="margin-top:.5rem">Eksport, import, Twój model, tryby awaryjne i usunięcie danych
+      nigdy nie będą funkcją płatną. To nie jest obietnica marketingowa — to zasada zapisana
+      w konstytucji aplikacji, której nie może zmienić żadna aktualizacja cennika.</p>
+    </div>
+  </section>
+
+  <section>
+    <span class="pill">Pytania, które padają najczęściej</span>
+    <div class="qa">
+      <div>
+        <h3>Kolejna apka do porzucenia po tygodniu?</h3>
+        <p>Ta jest zaprojektowana tak, żeby ją porzucić — gdy przestanie być potrzebna.
+        Nie ma serii do utrzymania ani powiadomień karzących za przerwę.</p>
+      </div>
+      <div>
+        <h3>Skoro nie ma serwera, gdzie są moje dane?</h3>
+        <p>W Twojej przeglądarce. Eksport to jeden plik, który możesz zabrać, wczytać
+        gdzie indziej albo po prostu skasować.</p>
+      </div>
+      <div>
+        <h3>Czym to się różni od notatnika?</h3>
+        <p>Notatnik nie powie Ci, że Twoje własne zapisy sobie przeczą, i nie wstrzyma się
+        od rady, gdy nie ma podstaw.</p>
+      </div>
+      <div>
+        <h3>Jak zarabiacie, skoro wyjście jest darmowe?</h3>
+        <p>Na funkcjach zaawansowanych w wersji Premium. Prawa użytkownika nie są towarem
+        i nigdy nie trafią za płatną barierę.</p>
+      </div>
+      <div>
+        <h3>Czy to zastąpi terapeutę albo lekarza?</h3>
+        <p>Nie. Aplikacja nie stawia diagnoz, nie zastępuje opieki specjalisty i mówi to wprost
+        w swoim zastrzeżeniu zdrowotnym.</p>
+      </div>
+      <div>
+        <h3>Czy aplikacja czyta moje rozmowy?</h3>
+        <p>Nie analizuje ich po swojej stronie. To Ty decydujesz, co z rozmowy staje się
+        zapisem w modelu — samo napisanie czegoś nie tworzy faktu o Tobie.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="status">
+      <span class="pill clay">Stan prac</span>
+      <p class="muted" style="margin-top:1rem; max-width:52rem">
+        Human OS w tej postaci jest <strong>prototypem interfejsu</strong>: działa w przeglądarce,
+        na danych syntetycznych, bez konta i bez serwera. Nie ma jeszcze wydania sklepowego,
+        niezależnego audytu bezpieczeństwa ani szyfrowania danych na dysku — piszemy o tym tutaj,
+        a nie drobnym drukiem, bo produkt oparty na jawności ograniczeń nie może zaczynać
+        od ich ukrywania.
+      </p>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap cols">
+    <div>
+      <div class="mark" style="font-size:1.1rem">Human OS</div>
+      <p style="margin-top:.4rem">Aplikacja osobista oparta na otwartym silniku referencyjnym.</p>
+    </div>
+    <div style="max-width:26rem">
+      <p>Kod silnika: Apache 2.0 · dokumentacja: CC BY 4.0.
+      Zrzuty ekranu pokazują dane syntetyczne. Human OS nie stawia diagnoz
+      i nie zastępuje opieki specjalisty.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // delikatne wejście sekcji — wyłączone przy prefers-reduced-motion (patrz CSS)
+  if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('reveal'); io.unobserve(e.target); } });
+    }, { rootMargin: '-40px' });
+    document.querySelectorAll('section > .pillars, .feature, .tiers, .qa, .status').forEach((el) => io.observe(el));
+  }
+</script>
