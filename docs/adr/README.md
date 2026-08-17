@@ -187,6 +187,7 @@ The user-facing app layer (`apps/user-demo`), its distribution and monetization 
 | [ADR-APP-001](ADR-APP-001-store-distribution-and-freemium-boundaries.md) | Accepted | Store Distribution and the Constitutional Boundaries of a Freemium Model |
 | [ADR-APP-002](ADR-APP-002-in-app-llm-guide.md) | Accepted | An In-App LLM Guide ("Przewodnik AI") Behind Constitutional Gates |
 | [ADR-APP-003](ADR-APP-003-pluggable-guide-engines.md) | Accepted | The Guide Has Swappable Engines — Local by Default, Cloud by Choice |
+| [ADR-APP-004](ADR-APP-004-biometric-data-boundaries.md) | Accepted | Biometric/Health Data — Local Import Only, C6 Consent, Explicit-Act Boundary |
 
 ## Living Self Model
 
