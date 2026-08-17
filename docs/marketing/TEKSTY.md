@@ -53,9 +53,9 @@ policzone i zmieszczone.
 > najpierw baza, potem próba, z możliwością zatrzymania w każdej chwili.
 > Aplikacja nie obiecuje wyniku — pomaga go rzetelnie zaobserwować.
 >
-> **Wspólnie, ale na Twoich zasadach.** Możesz wymienić się z zaufanym kręgiem
-> Kartami Doświadczeń — pakietami wniosków, nie surowymi danymi. Wymiana odbywa
-> się plikami, bez serwera pośredniczącego.
+> **Wspólnie, ale na Twoich zasadach** (Premium). Możesz wymienić się z zaufanym
+> kręgiem Kartami Doświadczeń — pakietami wniosków, nie surowymi danymi. Wymiana
+> odbywa się plikami, bez serwera pośredniczącego, i wymaga osobnej zgody.
 >
 > **Twoje dane zostają u Ciebie.** Bez konta, bez serwera, bez telemetrii.
 > Aplikacja działa lokalnie w Twojej przeglądarce.
@@ -75,8 +75,9 @@ policzone i zmieszczone.
 
 **„Co nowego” — pierwsze wydanie:**
 > Pierwsze wydanie. Pięć domen życia w jednym widoku, dzienna odprawa, żywy model
-> siebie z pełną proweniencją, rekomendacje z uczciwą abstencją, eksperymenty N-of-1,
-> tryby awaryjne oraz eksport i import całości danych.
+> siebie z pełną proweniencją, rekomendacje z uczciwą abstencją, symulator scenariuszy,
+> eksperymenty N-of-1, tryby awaryjne oraz eksport i import całości danych.
+> Premium dodaje trzy równoległe eksperymenty, plan z przypomnieniami i moduł „Wspólnie”.
 
 ---
 

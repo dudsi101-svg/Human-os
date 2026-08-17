@@ -156,8 +156,10 @@ Lista twarda. Złamanie któregokolwiek punktu = materiał do wycofania.
 3. **Żadnej zgodności z RODO/HIPAA i żadnych certyfikatów.** Nie mamy audytu.
 4. **Żadnej dostępności w sklepach**, dopóki wydania faktycznie nie ma.
 5. **Żadnych statystyk o użytkownikach** („90% osób zauważyło…”). Nie mamy badań.
-6. **Żadnego „AI, które Cię rozumie”.** Aplikacja nie analizuje treści rozmowy
-   po swojej stronie — rozpoznanie, co jest zapisem, należy do człowieka.
+6. **Żadnego „AI, które Cię rozumie”.** Aplikacja rozpoznaje kandydatów na zapisy
+   prostym dopasowaniem wzorców, lokalnie w przeglądarce — nie „rozumie” i nie wysyła
+   niczego na zewnątrz. Wolno mówić „analiza zostaje na Twoim urządzeniu”; nie wolno
+   sugerować, że nic nie jest analizowane, ani że stoi za tym model językowy.
 7. **Żadnych porównań z konkurencją po nazwie.**
 8. **Żadnej presji: sztucznego niedoboru, liczników czasu, „ostatnia szansa”.**
    Reklamowanie aplikacji o autonomii chwytami odbierającymi autonomię
