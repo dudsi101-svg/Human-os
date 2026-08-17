@@ -21,3 +21,4 @@ data/*.jsonl
 data/*.jsonl
 **/__pycache__/
 *.pyc
+docs/presentation/Human-OS-prezentacja-biznesowa.pptx

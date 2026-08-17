@@ -1,32 +1,75 @@
-# Prezentacja Human OS
+# Prezentacje Human OS
 
-`Human-OS-prezentacja.pptx` — dwudziestoslajdowa prezentacja narracyjna (język polski),
-przeznaczona do przedstawienia Human OS osobie, która nie zna repozytorium.
-To opowieść z łukiem dramaturgicznym, nie katalog funkcji: pytanie → stawka →
-reguły → jedna intencja prześledzona od początku do końca → uczciwy epilog.
+W katalogu są dwie niezależne prezentacje, przeznaczone dla różnych odbiorców.
+Obie są po polsku i obie generują się deterministycznie ze skryptów — plik
+wynikowy edytuje się przez skrypt, nie ręcznie.
 
-## Struktura
+| Plik | Format | Slajdów | Dla kogo |
+|---|---|---|---|
+| `Human-OS-prezentacja-biznesowa.pdf` | PDF | 22 | osoby decyzyjne, partnerzy, zespoły rozważające wdrożenie |
+| `Human-OS-prezentacja.pptx` | PowerPoint | 20 | prezentacja mówiona, spotkania, wykłady |
 
-**Akt I — Pytanie** (slajdy 2–5)
-Kto jest autorem twojego dnia · Dwie miary sukcesu (typowa metryka vs. GEN-012) ·
-Obietnica i granice.
+---
 
-**Akt II — Reguły** (slajdy 6–9)
-Pięć warstw i kierunek zależności · Genom konstytucyjny (15 genów) ·
-Proof Kernel (9 testów, 6 werdyktów).
+## 1. Prezentacja biznesowa (PDF)
 
-**Akt III — Podróż** (slajdy 10–17)
-Jedna intencja przechodzi przez cały system: intencja → sześć bram → odmowa
-i zgoda zakresowa → abstencja przy sprzecznych danych → korekta modelu siebie →
-hamulec awaryjny → suwerenny eksport.
+`Human-OS-prezentacja-biznesowa.pdf` — dokument przeglądowy pisany prostym
+językiem, bez żargonu i bez wewnętrznych identyfikatorów na slajdach. Ma być
+czytelny bez prelegenta: numeracja stron, stopka z wersją, jedna myśl na stronę.
 
-**Epilog** (slajdy 18–20)
-Czego jeszcze nie ma · Gdzie jesteśmy dzisiaj (liczby + roadmapa) · Klamra:
-powrót do pytania otwierającego.
+**Układ:** streszczenie w jednym akapicie · problem · pomysł (reguły wykonywalne) ·
+co z tego ma człowiek · co z tego ma organizacja · jak to działa (widok z góry) ·
+trzy kroki drogi żądania · wstrzymanie się · model wiedzy o użytkowniku · tryby
+awaryjne · wyjście i przenośność · z czego składa się system · czego nie ma w tym
+repozytorium · co działa dzisiaj · czego nie obiecujemy · licencje i zarządzanie ·
+droga do 1.0 · dla kogo to jest · zamknięcie.
 
-Każdy slajd ma notatki prelegenta (`Widok prelegenta` w PowerPoint).
+**Świadome decyzje redakcyjne — nie zmieniaj ich bez powodu:**
 
-## O bohaterce
+- **Brak liczb o świecie zewnętrznym.** Żadnych prognoz rynkowych, danych
+  finansowych ani statystyk o użytkownikach — nie ma dla nich podstaw w
+  repozytorium. Strony 2 i 3 mówią to wprost.
+- **Brak obietnic zgodności prawnej.** Strona o korzyściach dla organizacji
+  kończy się zastrzeżeniem, że to nie jest opinia prawna ani deklaracja
+  zgodności z regulacją; Human OS dostarcza mechanizmy i dowody, nie certyfikaty.
+- **Strona „Czego nie obiecujemy” jest obowiązkowa.** Wymienia brak logowania
+  i uprawnień, brak szyfrowania w spoczynku, brak niezależnego audytu, brak
+  kalibracji na danych, warstwy bez implementacji i dwa równoległe słowniki pojęć.
+  Nie usuwaj jej przy skracaniu — jawność ograniczeń jest wymogiem konstytucyjnym
+  (GEN-015).
+- **Strona „Czego nie ma w tym repozytorium”** istnieje po to, żeby nikt nie ocenił
+  całego przedsięwzięcia po zawartości jednego repozytorium — w żadną ze stron.
+
+### Jak wygenerować PDF
+
+```bash
+npm install pptxgenjs                              # jednorazowo, poza repozytorium
+node docs/presentation/build_business_deck.js      # -> .pptx (plik pośredni)
+soffice --headless --convert-to pdf \
+  --outdir docs/presentation \
+  docs/presentation/Human-OS-prezentacja-biznesowa.pptx
+```
+
+Plik `.pptx` jest artefaktem pośrednim i nie jest wersjonowany — w repozytorium
+trzymamy skrypt i gotowy PDF.
+
+---
+
+## 2. Prezentacja narracyjna (PowerPoint)
+
+`Human-OS-prezentacja.pptx` — dwudziestoslajpowa opowieść z łukiem
+dramaturgicznym, do prezentowania na żywo. Każdy slajd ma notatki prelegenta.
+
+**Trzy akty:**
+
+- **Akt I — Pytanie:** kto jest autorem twojego dnia · dwie miary sukcesu ·
+  obietnica i granice.
+- **Akt II — Reguły:** pięć warstw · genom konstytucyjny (15 genów) ·
+  Proof Kernel (9 testów, 6 werdyktów).
+- **Akt III — Podróż:** jedna intencja przechodzi przez cały system — sześć bram,
+  odmowa i zgoda zakresowa, wstrzymanie się przy sprzecznych danych, korekta
+  modelu siebie, hamulec awaryjny, suwerenny eksport.
+- **Epilog:** czego jeszcze nie ma · gdzie jesteśmy · powrót do pytania z Aktu I.
 
 „Marta” z Aktu III jest **przykładem ilustracyjnym, nie prawdziwym przypadkiem
 użytkownika** — slajd otwierający akt mówi to wprost i to zdanie musi tam zostać.
@@ -37,43 +80,26 @@ Każdy mechanizm, przez który przechodzi jej intencja, istnieje w kodzie:
 `reject`/`correct` przez łańcuch „supersedes” (`self_model.py`),
 tryby awaryjne i `export_sovereign_package()` (`recovery.py`).
 
-## Źródła treści
-
-Wszystkie liczby i sformułowania pochodzą z repozytorium, stan na 2026-08-17:
-`README.md`, `constitution/README.md`, `genome.registry.json`, `proof.rules.json`,
-`ECOSYSTEM.md`, `ROADMAP.md`, `security/THREAT_MODEL.md`, `hos_engine/` oraz
-`docs/adr/`. Liczby na slajdzie „Gdzie jesteśmy dzisiaj” policzono bezpośrednio
-z drzewa plików (moduły, metody testowe, ADR-y).
-
-Slajd „Hamulec, którego nie da się zabrać” podaje klasy ryzyka za mapowaniem
-z `hos_engine/recovery.py` (`SAFE_MODE`/`READ_ONLY` = R0, `FREEZE`/`DISCONNECT`/
-`EXPORT` = R1, `ROLLBACK` = R2, `RECOVERY` = R3 — żaden tryb nie sięga R4).
-Przy edycji sprawdź to mapowanie w kodzie, a nie w pamięci.
-
-Slajd „Czego jeszcze nie ma” celowo powtarza ostrzeżenie z `README.md`
-i `security/THREAT_MODEL.md`: wydanie **nie jest produkcyjne** (brak
-uwierzytelniania, autoryzacji, szyfrowania w spoczynku, niezależnego przeglądu
-bezpieczeństwa i kalibracji empirycznej). Nie usuwaj tego slajdu przy skracaniu
-prezentacji — jawność ograniczeń jest wymogiem konstytucyjnym (GEN-015), a w tej
-opowieści pełni też rolę dramaturgiczną.
-
-Prezentacja nie zawiera żadnych statystyk o świecie zewnętrznym — świadomie,
-bo nie dałoby się ich zweryfikować w repozytorium.
-
-## Ponowne wygenerowanie
-
-Plik `.pptx` jest generowany deterministycznie ze skryptu:
-
 ```bash
-npm install pptxgenjs          # jednorazowo, poza repozytorium
 node docs/presentation/build_presentation.js
 ```
 
-Edytuj `build_presentation.js`, nie sam `.pptx` — dzięki temu zmiany treści są
-widoczne w diffie.
+---
 
-## Uwaga o zakresie
+## Wspólne źródła i zasady
 
-Prezentacja opisuje **silnik referencyjny i protokół** z tego repozytorium.
+Wszystkie liczby i sformułowania pochodzą z repozytorium, stan na 2026-08-17:
+`README.md`, `constitution/README.md`, `genome.registry.json`, `proof.rules.json`,
+`ECOSYSTEM.md`, `ROADMAP.md`, `GOVERNANCE.md`, `CONTRIBUTING.md`, `SECURITY.md`,
+`LICENSE-DECISION.md`, `security/THREAT_MODEL.md`, `hos_engine/` oraz `docs/adr/`.
+Liczby (36 modułów, 166 testów, 9 testów zasad, 67 zapisów decyzji) policzono
+bezpośrednio z drzewa plików — przy edycji przelicz je, nie przepisuj.
+
+Klasy ryzyka trybów awaryjnych podawaj za mapowaniem z `hos_engine/recovery.py`
+(`SAFE_MODE`/`READ_ONLY` = R0, `FREEZE`/`DISCONNECT`/`EXPORT` = R1,
+`ROLLBACK` = R2, `RECOVERY` = R3 — żaden tryb nie sięga R4). Drugiego klucza
+wymagają wyłącznie `ROLLBACK` i `RECOVERY`.
+
+Obie prezentacje opisują **silnik referencyjny i protokół** z tego repozytorium.
 Szersza inicjatywa Human OS (Hub, Atlas, Lab/Forge, White Paper, governance,
 warstwy normatywne) wykracza poza to repo — patrz `docs/FOUNDER_REVIEW_2026-08-15.md`.
