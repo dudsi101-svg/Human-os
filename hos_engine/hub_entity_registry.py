@@ -148,6 +148,11 @@ class EntityRegistry:
     def get(self, entity_id: str) -> HubEntity:
         return self._entities[entity_id]
 
+    def all_entities(self) -> list[HubEntity]:
+        """Every entity regardless of status -- exports must carry retired
+        history too (nothing is ever physically erased)."""
+        return list(self._entities.values())
+
     def transition(self, entity_id: str, status: HubEntityStatus) -> HubEntity:
         current = self._entities[entity_id]
         updated = replace(current, status=status, updated_at=datetime.now(UTC).isoformat())
