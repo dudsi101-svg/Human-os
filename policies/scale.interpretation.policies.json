@@ -4,12 +4,58 @@
   "mode_note": "Faza cienia (propozycja kalibracji §5.1): interpretacje są zapisywane i oznaczane wersją polityki, ale nie służą do blokowania. Przejście na tryb operacyjny wymaga osobnej decyzji foundera po przeglądzie korpusu.",
   "approved_by": "founder (dudsi101-svg)",
   "approved_at": "2026-08-17",
-  "approval_record": "docs/DI_IQ_AR_CALIBRATION_PROPOSAL.md — checklist §6, pozycje 1–3; zgoda wyrażona wprost w sesji roboczej 2026-08-17",
+  "approval_record": "docs/DI_IQ_AR_CALIBRATION_PROPOSAL.md v0.2 — checklist §7; zgoda wyrażona wprost w sesji roboczej 2026-08-17 („Podpisuję\"). Reguły dosłownie z sekcji 5.2/6.1/8.2 źródłowego DOCX Warstwy 5.",
   "policies": [
+    {
+      "policy_id": "HOS-POL-IQ-001",
+      "version": "0.2.0",
+      "scale": "IQ",
+      "rules": {
+        "IQ0": "tylko-pytania-bezpieczenstwo-eskalacja",
+        "IQ1": "ogolna-edukacja-i-sugestie-niskiego-ryzyka",
+        "IQ2": "krotki-odwracalny-krok-z-marginesem",
+        "IQ3": "personalizowana-rekomendacja-sredniej-zlozonosci",
+        "IQ4": "zaawansowana-sekwencja-i-eksperyment-n-of-1",
+        "IQ5": "zlozona-decyzja-z-audytem-i-nadzorem"
+      }
+    },
+    {
+      "policy_id": "HOS-POL-AR-001",
+      "version": "0.2.0",
+      "scale": "AR",
+      "rules": {
+        "AR0": "wstrzymanie-i-pomoc-bezpieczenstwa",
+        "AR1": "edukacja-i-refleksja-bez-protokolu",
+        "AR2": "jedna-prosta-odwracalna-interwencja",
+        "AR3": "protokol-pomiar-i-przeglad",
+        "AR4": "zlozona-sekwencja-przy-minimalizmie",
+        "AR5": "kontrolowane-dzialania-wysokiej-zlozonosci"
+      }
+    },
+    {
+      "policy_id": "HOS-POL-DI-001",
+      "version": "0.2.0",
+      "scale": "DI",
+      "rules": {
+        "DI-1": "wyjasnienie-pojecia-i-niepewnosci",
+        "DI-2": "warianty-z-profilami-kompromisow",
+        "DI-3": "jedna-rekomendacja-plus-alternatywa",
+        "DI-4": "hipoteza-protokol-pomiary-kryteria-przerwania",
+        "DI-5": "analiza-wyniku-i-aktualizacja-decyzji",
+        "DI-6": "pytania-i-hipotezy-do-samoweryfikacji",
+        "DI-7": "brama-bezpieczenstwa-i-mozliwa-eskalacja",
+        "DI-8": "priorytet-bezpieczenstwa-i-kontakt-z-pomoca"
+      }
+    }
+  ],
+  "superseded": [
     {
       "policy_id": "HOS-POL-IQ-001",
       "version": "0.1.0",
       "scale": "IQ",
+      "superseded_by": "0.2.0",
+      "superseded_at": "2026-08-17",
+      "note": "Interpolacja ekspercka podpisana przed dostępem do źródła; zastąpiona brzmieniem źródłowym (rozbieżności: DI_IQ_AR_CALIBRATION_PROPOSAL.md §7). Nigdy nie użyta do blokowania (faza cienia).",
       "rules": {
         "IQ0": "tylko-pytania-lub-eskalacja",
         "IQ1": "edukacja-bez-rekomendacji",
@@ -23,6 +69,9 @@
       "policy_id": "HOS-POL-AR-001",
       "version": "0.1.0",
       "scale": "AR",
+      "superseded_by": "0.2.0",
+      "superseded_at": "2026-08-17",
+      "note": "Jak wyżej; m.in. AR1 w źródle surowsze (bez protokołu) niż interpolacja (mikro-kroki).",
       "rules": {
         "AR0": "nie-rekomendowac-zmniejszyc-zakres",
         "AR1": "mikro-kroki-odwracalne",
@@ -33,5 +82,5 @@
       }
     }
   ],
-  "di_note": "Skala DI celowo bez polityki: klasy DI-1..DI-8 nie mają semantyki w digescie Warstwy 5. Founder przyjął ścieżkę 1 (odczyt sekcji 6.1 źródłowego DOCX) — do czasu dostarczenia źródła interpretacja DI pozostaje CONFIGURATION_REQUIRED."
+  "di_note": "Skala DI ma politykę od v0.2.0 — semantyka ośmiu klas odczytana 2026-08-17 z sekcji 6.1 oryginalnego DOCX dostarczonego przez foundera."
 }
