@@ -72,7 +72,13 @@ class AgentRuntime:
     def register_tool(self,cid:str,fn:Callable[[dict[str,Any]],Any])->None:
         self.capabilities.get(cid); self._tools[cid]=fn
     def evaluate(self,r:InvocationRequest)->ActionReceipt:
-        agent=self.agents.get(r.agent_id); cap=self.capabilities.get(r.capability_id)
+        # An unknown agent or capability is a first-class DENIED receipt, not
+        # a KeyError -- callers (e.g. ExecutionLoop) treat evaluate() as a
+        # gate that refuses, never as something that raises.
+        try: agent=self.agents.get(r.agent_id)
+        except KeyError: return self._receipt(r,"DENIED","Unknown agent")
+        try: cap=self.capabilities.get(r.capability_id)
+        except KeyError: return self._receipt(r,"DENIED","Unknown capability")
         if r.action!=cap.action: return self._receipt(r,"DENIED","Action mismatch")
         if not self._has_cap(agent,r.capability_id,r.delegation_chain): return self._receipt(r,"DENIED","Missing capability")
         if not self._scope(cap.resource_scope,r.resource): return self._receipt(r,"DENIED","Resource outside scope")

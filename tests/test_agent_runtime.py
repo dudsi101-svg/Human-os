@@ -32,3 +32,38 @@ class AgentRuntimeTests(unittest.TestCase):
         r=self.rt.evaluate(InvocationRequest("4","DELEGATE","READ","read","knowledge/x",{"key":"x"},
                                             delegation_chain=["D1"]))
         self.assertEqual(r.status,"EXECUTED")
+
+
+class UnknownReferencesTests(unittest.TestCase):
+    """Regression: the 2026-08-17 simulation found an intent naming an
+    unknown capability crashed AgentRuntime.evaluate with KeyError instead
+    of returning a DENIED receipt (breaking ExecutionLoop's no-exception
+    contract)."""
+
+    def setUp(self):
+        self.caps = CapabilityRegistry()
+        self.caps.register(Capability(
+            capability_id="CAP-READ", action="read", resource_scope="*",
+            risk_level=RiskLevel.LOW, approval_mode=ApprovalMode.AUTOMATIC))
+        self.agents = AgentRegistry()
+        self.agents.register(AgentManifest(
+            agent_id="A", name="A", purpose="p", owner_id="O",
+            capabilities={"CAP-READ"}))
+        self.rt = AgentRuntime(self.caps, self.agents)
+        self.rt.register_tool("CAP-READ", lambda a: "ok")
+
+    def _req(self, **over):
+        base = {"request_id": "R", "agent_id": "A", "capability_id": "CAP-READ",
+                "action": "read", "resource": "x", "arguments": {}}
+        base.update(over)
+        return InvocationRequest(**base)
+
+    def test_unknown_capability_is_denied_not_raised(self):
+        receipt = self.rt.evaluate(self._req(capability_id="CAP-NONE"))
+        self.assertEqual(receipt.status, "DENIED")
+        self.assertEqual(receipt.reason, "Unknown capability")
+
+    def test_unknown_agent_is_denied_not_raised(self):
+        receipt = self.rt.evaluate(self._req(agent_id="A-NONE"))
+        self.assertEqual(receipt.status, "DENIED")
+        self.assertEqual(receipt.reason, "Unknown agent")

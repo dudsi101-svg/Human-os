@@ -134,6 +134,16 @@ class DecisionCandidate:
     burden: int = 0  # relative effort/cost, lower is lighter
     sponsored: bool = False  # never touches ranking (ADR-DECISION-005)
 
+    def __post_init__(self) -> None:
+        # The evidence-asymmetry gate and the "R-KRYTYCZNE never admissible"
+        # guarantee both rest on evidence_level living on Layer 3's 0-5
+        # scale. Enforce it here so an out-of-range value (e.g. 6) cannot
+        # clear a threshold it was never meant to reach.
+        if not 0 <= self.evidence_level <= 5:
+            raise ValueError(
+                f"evidence_level must be on the 0-5 scale, got {self.evidence_level}"
+            )
+
 
 @dataclass(frozen=True)
 class DecisionRequest:
@@ -289,6 +299,14 @@ class DecisionEngine:
         if candidate.contraindicated:
             return GateResult(DecisionGate.G4_CONTRAINDICATIONS, cid, False,
                               "Declared contraindication excludes the candidate.")
+        # ADR-DECISION-005: R-KRYTYCZNE is never admissible, unconditionally.
+        # Stated as its own gate rather than left to depend on the
+        # evidence-threshold arithmetic (defence in depth).
+        if candidate.risk_class == RiskReactionClass.KRYTYCZNE:
+            return GateResult(
+                DecisionGate.G5_EVIDENCE_THRESHOLD, cid, False,
+                "R-KRYTYCZNE candidates are never admissible (ADR-DECISION-005).",
+            )
         required = MINIMUM_EVIDENCE_FOR_RISK[candidate.risk_class]
         if candidate.evidence_level < required:
             return GateResult(

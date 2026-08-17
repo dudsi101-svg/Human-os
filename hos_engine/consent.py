@@ -21,7 +21,12 @@ class ConsentRegistry:
   for g in self._grants.values():
    if g.status!=ConsentStatus.ACTIVE or g.subject_id!=subject_id or g.grantee_id!=grantee_id: continue
    if g.expires_at and now>=g.expires_at: continue
-   if purpose not in g.purposes or (domain not in g.domains and '*' not in g.domains) or action not in g.actions: continue
+   # '*' is a wildcard for purpose, domain and action alike -- matching the
+   # TrustPolicy convention. Previously only domain honoured it, so a
+   # wildcard purpose/action grant silently failed to authorise.
+   if not self._covers(purpose,g.purposes) or not self._covers(domain,g.domains) or not self._covers(action,g.actions): continue
    if sensitive and not g.allow_sensitive: continue
    return True
   return False
+ @staticmethod
+ def _covers(value:str,allowed:set[str])->bool: return value in allowed or '*' in allowed
