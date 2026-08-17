@@ -38,9 +38,13 @@ równolegle do powyższej osi i nie zamykają punktu 0.9:
       prywatności, bramka wejściowa prototypu 16+, pakiet do przeglądu
       prawnego z aneksem analizy wewnętrznej.
 
-Punkt 0.9 (interoperacyjność protokołu i niezależny przegląd
-bezpieczeństwa) pozostaje otwarty — żaden z powyższych plastrów go nie
-zastępuje.
+Żaden z powyższych plastrów nie był podstawą zamknięcia punktu 0.9 —
+zamknęło go wyłącznie spełnienie kryterium DD-008 (przegląd
+`docs/security-reviews/REVIEW_2026-08-17.md`, podpisany rejestr ryzyk,
+zielona regresja zabezpieczeń). Uczciwe zastrzeżenie: był to przegląd
+**wewnętrzny według powtarzalnego protokołu**; niezależny przegląd
+zewnętrzny pozostaje osobnym warunkiem 1.0 (poniżej) i nie jest
+zamknięty.
 
 ## Warunki 1.0
 
