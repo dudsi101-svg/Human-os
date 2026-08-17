@@ -1,0 +1,231 @@
+{
+  "$comment": "Canonical Project State Registry (2026-08-17 full audit, §29). Single source of current state for every major Human OS artifact. README/ROADMAP/manifest/CHANGELOG must agree with this file; on divergence THIS FILE wins and the others are corrected. Maturity vocabulary: SOURCE_ONLY (spec exists, no code), DIGESTED (source digested + ADRs, no code), SKELETON (types/config-required, no behavior defaults), ALPHA_SLICE (bounded executable slice with tests), ALPHA (substantially implemented, not hardened), UX_PROTOTYPE (app-side mock), ABSENT (no confirmed canonical artifact). source_of_truth points at the artifact that governs meaning; implementation_modules at executable code.",
+  "registry_version": "0.1.0",
+  "updated_at": "2026-08-17",
+  "artifacts": [
+    {
+      "artifact_id": "constitution",
+      "name": "Konstytucja (Warstwa 1)",
+      "source_of_truth": "founder DOCX Human_OS_Warstwa_1_Konstytucja_i_Wartosci_v0_1.docx (v0.1, 'Projekt do iteracji i zatwierdzenia') — NOT yet in repo",
+      "repo_artifacts": ["constitution/README.md (v0.2 reconstruction, marked binding)"],
+      "status": "PROVENANCE_CONFLICT",
+      "maturity": "DIGESTED",
+      "open_gaps": [
+        "Constitution Source Conformance Audit (audit P0#3): transcribe source 1:1, hash, diff v0.1<->v0.2, classify every norm SOURCE/DERIVED/FOUNDER_DECISION/RECONSTRUCTION, founder sign-off as v0.3 VERIFIED",
+        "blocked on: founder supplying the source DOCX to this repo/session"
+      ],
+      "current_adrs": [],
+      "implementation_modules": ["hos_engine/policy.py (Proof Kernel, 9 tests)", "genome.registry.json"]
+    },
+    {
+      "artifact_id": "hoss-hosp",
+      "name": "HOSS spec + HOSP protocol",
+      "source_of_truth": "spec/, protocol/",
+      "status": "STABLE_DRAFT",
+      "maturity": "ALPHA",
+      "open_gaps": ["dual envelope versions: SDK HOSP/0.1 vs engine HOSP/0.2 (unreconciled)"],
+      "current_adrs": ["ADR-0008"],
+      "implementation_modules": ["hos_engine/protocol_security.py", "sdk/python/human_os_sdk/"]
+    },
+    {
+      "artifact_id": "proof-kernel",
+      "name": "Proof Kernel / policy engine",
+      "source_of_truth": "proof.rules.json + constitution",
+      "status": "IMPLEMENTED",
+      "maturity": "ALPHA",
+      "open_gaps": ["policies/constitutional.policies.json still has no interpreter (parallel spec artifact)"],
+      "current_adrs": ["ADR-0002"],
+      "implementation_modules": ["hos_engine/policy.py", "hos_engine/engine.py"]
+    },
+    {
+      "artifact_id": "hos-core",
+      "name": "HOS Core (execution kernel)",
+      "source_of_truth": "Rozszerzenie Architektury v0.2.1 (verified against source bytes)",
+      "status": "PARTIAL",
+      "maturity": "ALPHA_SLICE",
+      "open_gaps": ["2 of 8 specified sub-modules exist (Context Manager, Event Engine)"],
+      "current_adrs": ["ADR-CORE-001", "ADR-CORE-002"],
+      "implementation_modules": ["hos_engine/hos_core.py", "hos_engine/execution_loop.py"]
+    },
+    {
+      "artifact_id": "hub",
+      "name": "HOS Hub",
+      "source_of_truth": "hub/README.md + Hub Entity-First spec (ADR-HUB-001..006)",
+      "status": "SUBSET",
+      "maturity": "ALPHA_SLICE",
+      "open_gaps": [
+        "Location & Representation Registry absent",
+        "explicit Hub Orchestrator absent (ExecutionLoop covers part)",
+        "entity ontology is MVP subset (6 of 18+ types), never to be renamed canonical (audit §15)"
+      ],
+      "current_adrs": ["ADR-HUB-001..006"],
+      "implementation_modules": ["hos_engine/hub_entity_registry.py", "hos_engine/hub_store.py"]
+    },
+    {
+      "artifact_id": "authorization",
+      "name": "Identity / Authority / Permissions",
+      "source_of_truth": "source Permission Grant model (audit §12) + authority.py two-axis doc",
+      "status": "PARTIAL",
+      "maturity": "ALPHA",
+      "open_gaps": [
+        "RoleGrant lacks source fields (resource_selector, action, purpose, constraints, approval_policy, audit_reference, policy_version)",
+        "nine parallel mechanisms answer 'may this run?' - unified AuthorizationDecision composition is the P1 target (contract + skeleton in docs/authorization-decision-contract.md, hos_engine/authorization_decision.py)"
+      ],
+      "current_adrs": ["ADR-AGENT-001", "ADR-ARCH-003"],
+      "implementation_modules": [
+        "hos_engine/security_identity.py", "hos_engine/authority.py",
+        "hos_engine/call_authorization.py", "hos_engine/security_gateway.py",
+        "hos_engine/authorization_decision.py"
+      ]
+    },
+    {
+      "artifact_id": "knowledge",
+      "name": "Knowledge Map (Layer 3) / knowledge graph",
+      "source_of_truth": "docs/LAYER_3_KNOWLEDGE_MAP_DIGEST.md",
+      "status": "PARTIAL",
+      "maturity": "ALPHA_SLICE",
+      "open_gaps": ["signature vector, readiness gate, source-class taxonomy not implemented", "two relation vocabularies unreconciled (docs/RELATION_VOCABULARY_CROSSWALK.md)"],
+      "current_adrs": ["ADR-0004", "ADR-GRAPH-002", "ADR-KNOWLEDGE-001..005"],
+      "implementation_modules": ["hos_engine/knowledge_graph.py", "hos_engine/graph_store.py"]
+    },
+    {
+      "artifact_id": "decision-engine",
+      "name": "Decision Engine (Layer 5)",
+      "source_of_truth": "docs/LAYER_5_DECISION_ENGINE_DIGEST.md",
+      "status": "IMPLEMENTED_MVP",
+      "maturity": "ALPHA_SLICE",
+      "open_gaps": ["ten-axis §18 profile not implemented", "DI/IQ/AR scales SHADOW-only by design", "not wired into ExecutionLoop (composes at caller discretion)"],
+      "current_adrs": ["ADR-DECISION-001..005"],
+      "implementation_modules": ["hos_engine/decision_engine.py", "hos_engine/decision_scales.py"]
+    },
+    {
+      "artifact_id": "experiment-engine",
+      "name": "Experiment Engine (Layer 6)",
+      "source_of_truth": "docs/LAYER_6_EXPERIMENT_ENGINE_DIGEST.md",
+      "status": "IMPLEMENTED_MVP",
+      "maturity": "ALPHA_SLICE",
+      "open_gaps": [
+        "richer source input contract not yet met (goal, L5 recommendation, risk profile, contraindications, effect horizon - audit §3)",
+        "full §28.2 ban list and §29.1 portfolio limit await source bytes (DD-017)",
+        "adaptive stop rules §28.3, trajectory §30, community §38, EC/MQ/PF/DQ/CA/PE assignment configs absent",
+        "app N-of-1 not yet backed by this engine (mapping: docs/APP_NOF1_MAPPING.md)"
+      ],
+      "current_adrs": ["ADR-EXP-001..005"],
+      "implementation_modules": ["hos_engine/experiment_engine.py"]
+    },
+    {
+      "artifact_id": "recovery",
+      "name": "Sovereign Recovery / SAFE MODE",
+      "source_of_truth": "docs/RECOVERY_LAYER_DIGEST.md + ADR-RECOVERY-006 resolutions",
+      "status": "IMPLEMENTED_MVP",
+      "maturity": "ALPHA_SLICE",
+      "open_gaps": ["six contract surfaces have executable reference implementations - NOT 'fully implemented' (audit §21: sovereign export lacks full source richness: data+graph+metadata+change register)"],
+      "current_adrs": ["ADR-RECOVERY-001..006"],
+      "implementation_modules": ["hos_engine/recovery.py"]
+    },
+    {
+      "artifact_id": "emergency-root",
+      "name": "Emergency Root",
+      "source_of_truth": "ADR-RECOVERY-003 + DD-007 resolution",
+      "status": "SKELETON",
+      "maturity": "SKELETON",
+      "open_gaps": ["no real key store, no threshold cryptography, no production strong-auth, no final TTL/k-of-n parameters - reference contract only, never to be presented as production root-of-trust (audit §22)"],
+      "current_adrs": ["ADR-RECOVERY-003"],
+      "implementation_modules": ["hos_engine/emergency_root.py"]
+    },
+    {
+      "artifact_id": "self-model",
+      "name": "Living Self Model (Layer 2 slice)",
+      "source_of_truth": "ADR-SELFMODEL-001 + docs/LAYER_2_HUMAN_MODEL_DIGEST.md",
+      "status": "IMPLEMENTED",
+      "maturity": "ALPHA",
+      "open_gaps": ["deliberately-unreconciled conflicts listed in ADR-SELFMODEL-001"],
+      "current_adrs": ["ADR-SELFMODEL-001", "ADR-HUMAN-001..005"],
+      "implementation_modules": ["hos_engine/self_model.py", "hos_engine/human_model.py", "hos_engine/self_model_store.py"]
+    },
+    {
+      "artifact_id": "commons",
+      "name": "Commons / Wspolnie",
+      "source_of_truth": "ADR-COMMONS-001..003 + commons digest",
+      "status": "PARTIAL",
+      "maturity": "ALPHA_SLICE",
+      "open_gaps": ["Commons Evidence -> Knowledge Map boundary undesigned (audit §26: popularity must never equal truth)"],
+      "current_adrs": ["ADR-COMMONS-001..003"],
+      "implementation_modules": ["event.types.json commons_*", "policies/commons.challenge.risk.json"]
+    },
+    {
+      "artifact_id": "lab",
+      "name": "Human OS Lab",
+      "source_of_truth": "ADR-LAB-001..006",
+      "status": "ARCHITECTURE_ONLY",
+      "maturity": "DIGESTED",
+      "open_gaps": ["exists as architecture and test practice, not as a complete environment/platform (audit §24)"],
+      "current_adrs": ["ADR-LAB-001..006", "ADR-0006 (different concept: simulation)"],
+      "implementation_modules": ["hos_engine/simulation.py", "hos_engine/simulation_gate.py"]
+    },
+    {
+      "artifact_id": "atlas",
+      "name": "Human Atlas",
+      "source_of_truth": "NOT IN REPO - no confirmed canonical artifact",
+      "status": "ABSENT",
+      "maturity": "ABSENT",
+      "open_gaps": ["Atlas != Self Model; do not merge concepts without the original source (audit §25)"],
+      "current_adrs": [],
+      "implementation_modules": []
+    },
+    {
+      "artifact_id": "guardian",
+      "name": "Guardian",
+      "source_of_truth": "NOT IN REPO - no confirmed canonical artifact",
+      "status": "ABSENT",
+      "maturity": "ABSENT",
+      "open_gaps": ["functions partially covered by Constitution/SecurityGateway/Recovery, but Guardian = Recovery must not be silently assumed; needs its own contract (audit §25)"],
+      "current_adrs": [],
+      "implementation_modules": []
+    },
+    {
+      "artifact_id": "forge",
+      "name": "Forge",
+      "source_of_truth": "NOT IN REPO - no confirmed canonical artifact",
+      "status": "ABSENT",
+      "maturity": "ABSENT",
+      "open_gaps": ["must not be built from intuition and later called canon (audit §25)"],
+      "current_adrs": [],
+      "implementation_modules": []
+    },
+    {
+      "artifact_id": "white-paper",
+      "name": "White Paper - Rozdzial III",
+      "source_of_truth": "founder PDFs/DOCX; per-part files in docs/white_paper/ are 1:1 transcriptions and win over the concatenation",
+      "status": "COMPLETE_CHAPTER",
+      "maturity": "ALPHA",
+      "open_gaps": ["chapters other than III not yet supplied"],
+      "current_adrs": [],
+      "implementation_modules": ["docs/white_paper/ (main + A,B,C,D,E)"]
+    },
+    {
+      "artifact_id": "user-app",
+      "name": "Aplikacja osobista (apps/user-demo)",
+      "source_of_truth": "artifact file human_os_app.html (DD-005 exact copy); rules inside are a MOCK of Core behavior per ADR-ARCH-003",
+      "status": "UX_PROTOTYPE",
+      "maturity": "UX_PROTOTYPE",
+      "open_gaps": [
+        "implements local copies of Core rules - divergence table in docs/APP_CORE_CONTRACT.md; no new app-only rules allowed",
+        "single-file (~280kB) refactor deliberately waits for the App-Core contract boundary (audit §10)",
+        "E2E suites live in session scratchpad, not in repo"
+      ],
+      "current_adrs": ["ADR-APP-001..004", "ADR-ARCH-003"],
+      "implementation_modules": ["apps/user-demo/human_os_app.html", "apps/user-demo/PRIVACY.md"]
+    },
+    {
+      "artifact_id": "pwa-deploy",
+      "name": "Publiczny deploy PWA (GitHub Pages)",
+      "source_of_truth": ".github/workflows/pages.yml (source: GitHub Actions, enabled by founder 2026-08-17)",
+      "status": "LIVE",
+      "maturity": "ALPHA",
+      "open_gaps": ["public link not to be promoted beyond testers before legal review (DD-015 variant a, AR-006)"],
+      "current_adrs": [],
+      "implementation_modules": ["https://dudsi101-svg.github.io/Human-os/"]
+    }
+  ]
+}

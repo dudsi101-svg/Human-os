@@ -19,6 +19,12 @@ does not imply production readiness, and release numbering is
 independent of the roadmap's 0.9 → 1.0 axis. See `CHANGELOG.md` for the
 full delta since 0.9.0.
 
+**Canonical project state:** `artifact.registry.json` is the single
+source of truth for each major artifact's status, maturity, provenance
+and open gaps (2026-08-17 audit, §29). Where this README, `ROADMAP.md`,
+`manifest.json` or `CHANGELOG.md` disagree with the registry, the
+registry wins and the narrative files get corrected.
+
 The engine is a reference implementation of the Human OS protocol and
 constitution. Individual components carry their own maturity statuses in
 `manifest.json`; none of them implies the product as a whole is a
