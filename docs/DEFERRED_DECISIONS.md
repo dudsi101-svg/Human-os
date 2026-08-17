@@ -184,6 +184,18 @@ a rozszerzenie zbioru znaków nie unieważnia żadnego istniejącego ID.
 słownikiem i enumem; pełna walidacja koperty czeka na tę decyzję.
 
 ## DD-011 · Cennik i pakowanie wydania sklepowego (OPEN)
+
+**Aktualizacja 2026-08-17 (kierunek foundera, PROVISIONAL):** founder wskazał
+„zamiast robić sekcji premium — miesiąc za darmo, choć trzeba się zastanowić".
+Wdrożono prowizorycznie: każdy nowy użytkownik dostaje **30 dni pełnego
+dostępu na start** (bez podawania czegokolwiek; zdarzenia `intro_started`/
+`intro_expired` w rejestrze; wygaśnięcie niczego nie kasuje ani nie blokuje —
+biegnące eksperymenty biegną dalej). Miesiąc powitalny zastępuje 7-dniowy
+trial (jednorazowość zachowana). Ekran „Wersja i Premium" pozostaje jako
+porównanie wersji i miejsce aktywacji — nie wita już nowego użytkownika.
+Do ostatecznej decyzji foundera: czy 30 dni zostaje, czy wraca krótszy trial,
+oraz jak to połączyć z rozliczeniami sklepu (trial subskrypcji po stronie
+Google Play/App Store vs. własny okres powitalny).
 Founder zatwierdził kierunek (2026-08-17): dystrybucja sklepowa aplikacji
 osobistej w modelu freemium — wersja bezpłatna z ograniczeniami, Premium
 z pełnym dostępem. Granice konstytucyjne (eksport/wyjście/model/tryby
@@ -203,3 +215,20 @@ Otwarte pozostają decyzje wyłącznie founderskie:
 publikacją. **Tymczasowo:** mechanizm referencyjny kodu aktywacyjnego
 (format-only) + próbne 7 dni, wszystko audytowane w rejestrze aplikacji.
 
+
+## DD-012 · Konta i logowanie w wydaniu sklepowym (OPEN)
+Pytanie foundera (2026-08-17): „systemy logowania jakieś mamy?". Stan
+faktyczny: aplikacja celowo **nie ma** logowania, kont ani serwera — cała
+tożsamość jest lokalna (dane w pamięci urządzenia; wymiana „Wspólnie" przez
+pakiety przekazywane samodzielnie; pseudonim zamiast tożsamości). Silnik ma
+osobny rejestr tożsamości i kluczy (`security_identity`, HMAC, role), ale to
+mechanizm referencyjny protokołu, nie system kont użytkowników aplikacji.
+Logowanie stałoby się potrzebne dopiero dla: synchronizacji między
+urządzeniami, publicznych wyzwań z moderacją (etapy 5–6 rolloutu Wspólnie,
+DD-009) lub odzyskiwania danych po utracie urządzenia.
+**Rekomendacja:** wydanie 1 bez kont (lokalnie + eksport jako backup —
+najmniejsza powierzchnia ryzyka, spójna z Konstytucją); jeśli sync stanie się
+potrzebny, najpierw szyfrowany end-to-end backup pliku eksportu (klucz u
+użytkownika), a dopiero w dalszej kolejności konta z logowaniem platformy;
+pełna tożsamość federacyjna wg HOSS dopiero z prawdziwym Hubem.
+**Tymczasowo:** bez kont; README i ekran „O aplikacji" mówią to wprost.

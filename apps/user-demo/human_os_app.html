@@ -984,7 +984,7 @@ function freshState(name, domains, goal){
     modes:{ SAFE_MODE:false, READ_ONLY:false },
     log:[],
     profile: emptyProfile(), briefDismissedDay: 0,
-    premium:{ active:false, source:null, sinceDay:null, untilDay:null, trialUsed:false },
+    premium:{ active:true, source:"intro", sinceDay:1, untilDay:30, trialUsed:true },
     community:{ pid:"P-"+Math.random().toString(36).slice(2,8), pseudonym:"", challenges:[], experiences:[], circles:[], help:[] },
   };
 }
@@ -1021,7 +1021,7 @@ function migrateState(s){
   if(!s.community) s.community={ pid:"P-"+Math.random().toString(36).slice(2,8), pseudonym:"", challenges:[], experiences:[] };
   if(!s.community.circles) s.community.circles=[];
   if(!s.community.help) s.community.help=[];
-  if(!s.premium) s.premium={active:false, source:null, sinceDay:null, untilDay:null, trialUsed:false};
+  if(!s.premium) s.premium={active:true, source:"intro", sinceDay:s.day||1, untilDay:(s.day||1)+29, trialUsed:true};
   s.community.experiences.forEach(x=>{ if(x.happened===undefined){ x.happened=x.text||""; x.tried=x.tried||""; x.ktype=x.ktype||"doświadczenie"; } });
   if(!Array.isArray(s.experiments)){
     s.experiments = s.experiment ? [s.experiment] : [];
@@ -1074,14 +1074,24 @@ function randn(){ let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.r
 function pct(arr,p){ const a=[...arr].sort((x,y)=>x-y); const i=(a.length-1)*p; const lo=Math.floor(i), hi=Math.ceil(i); return a[lo]+(a[hi]-a[lo])*(i-lo); }
 function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
-/* ---------- motyw ---------- */
+/* ---------- motyw (start zawsze w jasnym; wybór użytkownika zapamiętany) ---------- */
+function applyTheme(t){
+  const r=document.documentElement;
+  if(t==="light"||t==="dark") r.setAttribute("data-theme",t); else r.removeAttribute("data-theme");
+  const b=$("themeBtn"); if(b) b.textContent = t==="light"?"○":t==="dark"?"●":"◐";
+}
 function cycleTheme(){
-  const r=document.documentElement, cur=r.getAttribute("data-theme");
+  const cur=document.documentElement.getAttribute("data-theme");
   const next = cur===null ? "light" : cur==="light" ? "dark" : null;
-  if(next) r.setAttribute("data-theme",next); else r.removeAttribute("data-theme");
-  $("themeBtn").textContent = next==="light"?"○":next==="dark"?"●":"◐";
+  try{ localStorage.setItem("human-os-theme", next||"system"); }catch(e){}
+  applyTheme(next);
   redrawCharts();
 }
+(function(){
+  let t="light";
+  try{ t=localStorage.getItem("human-os-theme")||"light"; }catch(e){}
+  applyTheme(t==="system"?null:t);
+})();
 try{
   matchMedia("(prefers-color-scheme: light)").addEventListener("change", redrawCharts);
 }catch(e){}
@@ -1109,6 +1119,7 @@ function finishOnboarding(){
     horizon:Number($("obGoalHorizon").value), createdDay:1,
   };
   S = freshState(name, domains, goal);
+  logEvent("PREMIUM","intro_started","Miesiąc pełnego dostępu na start (do dnia 30) — bez podawania czegokolwiek; potem wersja bezpłatna z pełną suwerennością");
   S.consents.C1 = $("cC1").checked;
   S.consents.C2 = $("cC2").checked;
   S.consents.C4 = $("cC4").checked;
@@ -1998,9 +2009,12 @@ function ensurePremium(){
 function isPremium(){
   const p=ensurePremium();
   if(!p.active) return false;
-  if(p.source==="trial" && p.untilDay!==null && S.day>p.untilDay){
-    p.active=false; p.source=null;
-    logEvent("PREMIUM","trial_expired","Okres próbny dobiegł końca — powrót do wersji bezpłatnej; wszystkie dane i biegnące eksperymenty pozostają");
+  if(p.untilDay!==null && p.untilDay!==undefined && S.day>p.untilDay){
+    p.active=false;
+    const kind = p.source==="intro" ? "intro_expired" : "trial_expired";
+    p.source=null;
+    logEvent("PREMIUM",kind,"Okres pełnego dostępu dobiegł końca — powrót do wersji bezpłatnej; wszystkie dane i biegnące eksperymenty pozostają");
+    const hp=$("hdrPrem"); if(hp) hp.style.display="none";
     save();
     return false;
   }
@@ -2011,8 +2025,8 @@ function paywallCard(what){
     <h3 style="font-size:16px;margin-bottom:8px">★ ${what} to funkcja Premium</h3>
     <p class="note" style="margin-bottom:10px">Wersja bezpłatna obejmuje pełną suwerenność: model „O mnie”, rozmowę, rekomendacje, jeden eksperyment naraz, symulator, rejestr oraz — zawsze — eksport, import i wymazanie. Premium dodaje moc, nie odbiera praw.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn primary" onclick="startTrial()">Wypróbuj 7 dni bezpłatnie</button>
-      <button class="btn" onclick="showView('konstytucja');openSub('konstytucja','premium')">Porównaj wersje</button>
+      ${S.premium&&S.premium.trialUsed?"":`<button class="btn primary" onclick="startTrial()">Wypróbuj 7 dni bezpłatnie</button>`}
+      <button class="btn ${S.premium&&S.premium.trialUsed?"primary":""}" onclick="showView('konstytucja');openSub('konstytucja','premium')">Porównaj wersje</button>
     </div></div>`;
 }
 function startTrial(){
@@ -2041,7 +2055,7 @@ function renderPremium(){
   const host=$("premiumHost"); if(!host) return;
   const p=S.premium, prem=isPremium();
   const status = prem
-    ? `<span class="pill verd">Premium aktywne${p.source==="trial"?` · próbne do dnia ${p.untilDay}`:" · pełne"}</span>`
+    ? `<span class="pill verd">${p.source==="intro"?`Pełny dostęp na start · do dnia ${p.untilDay}`:p.source==="trial"?`Premium próbne · do dnia ${p.untilDay}`:"Premium aktywne · pełne"}</span>`
     : `<span class="pill neutral">Wersja bezpłatna</span>`;
   const row=(t,free,premt)=>`<div class="rights-row"><div><b>${t}</b></div>
     <div style="display:flex;gap:8px;flex-shrink:0"><span class="pill ${free?"verd":"neutral"}">${free?"bezpłatna ✓":"—"}</span>
@@ -2050,7 +2064,7 @@ function renderPremium(){
     <div class="card" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px">
         <h3 style="font-size:16px">Twoja wersja</h3>${status}</div>
-      <p class="note" style="margin-top:6px">Human OS w sklepie będzie dostępny bezpłatnie z pełną suwerennością danych; Premium (subskrypcja przez sklep) dodaje funkcje zaawansowane. Bez reklam i bez sprzedaży danych — jedynym źródłem finansowania jest subskrypcja.</p>
+      <p class="note" style="margin-top:6px">Każdy nowy użytkownik zaczyna z <b>pełnym dostępem przez pierwszych 30 dni</b> — bez podawania czegokolwiek. Potem Human OS pozostaje bezpłatny z pełną suwerennością danych; Premium (subskrypcja przez sklep) dodaje funkcje zaawansowane. Bez reklam i bez sprzedaży danych — jedynym źródłem finansowania jest subskrypcja.</p>
     </div>
     <div class="card" style="margin-bottom:14px">
       <h3 style="font-size:15px;margin-bottom:8px">Porównanie wersji</h3>
@@ -2070,7 +2084,7 @@ function renderPremium(){
     <div class="card">
       <h3 style="font-size:15px;margin-bottom:8px">${prem?"Zarządzanie":"Aktywacja"}</h3>
       ${prem
-        ? `<p class="note" style="margin-bottom:10px">${p.source==="trial"?`Okres próbny trwa do dnia ${p.untilDay}. Po jego końcu wracasz do wersji bezpłatnej — wszystkie dane i biegnące eksperymenty zostają.`:"Masz pełny dostęp."}</p>
+        ? `<p class="note" style="margin-bottom:10px">${p.source==="intro"?`Miesiąc powitalny trwa do dnia ${p.untilDay}. Po jego końcu wracasz do wersji bezpłatnej — wszystkie dane i biegnące eksperymenty zostają, a pełny dostęp aktywujesz kodem (w sklepie: subskrypcją).`:p.source==="trial"?`Okres próbny trwa do dnia ${p.untilDay}. Po jego końcu wracasz do wersji bezpłatnej — wszystkie dane i biegnące eksperymenty zostają.`:"Masz pełny dostęp."}</p>
            <button class="btn ghost" onclick="deactivatePremium()">Wyłącz Premium (demo)</button>`
         : `${S.premium.trialUsed?"":`<div style="margin-bottom:12px"><button class="btn primary" onclick="startTrial()">Wypróbuj 7 dni bezpłatnie</button>
            <span class="note" style="margin-left:8px">bez podawania czegokolwiek</span></div>`}
