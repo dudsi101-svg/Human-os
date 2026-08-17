@@ -270,3 +270,56 @@ class ChainTamperTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PerCallAuthorizationAbuseTests(unittest.TestCase):
+    """Abuse attempts against the AR-003 closure (call_authorization.py):
+    an attacker holding a legitimate capability grant tries to widen a
+    single call beyond what its rule declares."""
+
+    def setUp(self):
+        from hos_engine.call_authorization import (
+            CallAuthorizer,
+            CallRule,
+            UnruledPolicy,
+        )
+        self.auth = CallAuthorizer(
+            [CallRule(
+                "CAP-EXPORT",
+                allowed_argument_keys=frozenset({"scope"}),
+                allowed_argument_values={"scope": ("own-data",)},
+                max_argument_chars=200,
+                allow_via_delegation=False,
+            )],
+            unruled=UnruledPolicy.DENY,
+        )
+
+    def _try(self, arguments, chain=0):
+        return self.auth.authorize(
+            capability_id="CAP-EXPORT", arguments=arguments,
+            delegation_chain_length=chain,
+        )
+
+    def test_widening_scope_value_is_refused(self):
+        self.assertTrue(self._try({"scope": "own-data"}).allowed)
+        self.assertFalse(self._try({"scope": "all-users"}).allowed)
+
+    def test_smuggling_extra_argument_is_refused(self):
+        self.assertFalse(
+            self._try({"scope": "own-data", "target": "external"}).allowed,
+        )
+
+    def test_payload_oversize_is_refused(self):
+        self.assertFalse(self._try({"scope": "x" * 500}).allowed)
+
+    def test_laundering_through_delegation_is_refused(self):
+        # The rule says direct holders only; arriving through any chain --
+        # even a formally valid one -- must not widen the call.
+        self.assertFalse(self._try({"scope": "own-data"}, chain=1).allowed)
+
+    def test_unknown_capability_is_denied_under_deny_stance(self):
+        verdict = self.auth.authorize(
+            capability_id="CAP-NOT-CONFIGURED", arguments={},
+            delegation_chain_length=0,
+        )
+        self.assertFalse(verdict.allowed)

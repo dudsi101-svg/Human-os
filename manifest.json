@@ -253,6 +253,26 @@
       "id": "CAP-052",
       "name": "Deferred decisions queue for founder governance",
       "status": "BETA"
+    },
+    {
+      "id": "CAP-053",
+      "name": "Per-call authorization with delegation-context rules (AR-003 closure)",
+      "status": "ALPHA"
+    },
+    {
+      "id": "CAP-054",
+      "name": "Shadow-phase DI/IQ/AR interpretation attached to decision outcomes",
+      "status": "ALPHA"
+    },
+    {
+      "id": "CAP-055",
+      "name": "Canonical commons_* event vocabulary with signed R0-R4 challenge risk mapping",
+      "status": "ALPHA"
+    },
+    {
+      "id": "CAP-056",
+      "name": "Legal foundation set: intended-purpose declaration, privacy policy, prototype entry gate",
+      "status": "ALPHA"
     }
   ],
   "ecosystem": {
