@@ -392,3 +392,24 @@ oryginalnego DOCX Warstwy 6; (2) kanoniczna wartość limitu §29.1 (aplikacja
 używa dziś 3 równoległych eksperymentów + 5 celów — przyjąć te wartości?).
 **Rekomendacja:** dosłać/odczytać źródło zamiast zgadywać; do tego czasu
 konfiguracja jawna przy każdym użyciu.
+
+## DD-016 · Moduł Dieta: decyzje startowe D-1…D-4 (CZĘŚCIOWO ROZSTRZYGNIĘTE 2026-08-17)
+**Kontekst:** koncepcja modułu Dieta (artefakt „Moduł Dieta", 2026-08-17,
+na polecenie foundera): baza 200 produktów + kreator planu posiłków
+z bramami konstytucyjnymi G-DIET-0…5.
+**Rozstrzygnięte (founder, „D1 D2", 2026-08-17):**
+- **D-1 (podpisane):** próg energetyczny G-DIET-1 — odmowa generacji
+  poniżej 1200 kcal/d; plan 1200–1500 kcal/d z wyraźnym ostrzeżeniem
+  i sugestią konsultacji. Pierwszy podpisany liczbowy próg bezpieczeństwa
+  w aplikacji.
+- **D-2 (podpisane):** źródłem wartości odżywczych jest USDA FoodData
+  Central (domena publiczna); wartości zaokrąglone i wszędzie oznaczone
+  jako przybliżone („~", §18.2).
+**Otwarte:**
+- **D-3:** granica free/Premium modułu — do decyzji; do tego czasu moduł
+  w całości bezpłatny (nowych paywalli nie dodaje się bez decyzji).
+- **D-4:** miejsce w nawigacji — tymczasowo sekcja w widoku „Plan"
+  (propozycja z koncepcji, odwracalne), bez nowej pozycji nawigacji.
+**Zasady wdrożenia:** plan = hipoteza (integracja z eksperymentem N-of-1);
+bramy G-DIET-0…5 twarde przed generacją; preferencje żywieniowe nigdy
+w pakiecie C5 bez jawnego zaznaczenia; moduł nie czyta serii C6.

@@ -772,6 +772,7 @@
       <h2>Plan i przypomnienia</h2>
       <p class="lede">Ustal, o której realizujesz swoje eksperymenty. Przypomnienia trafiają do porannej odprawy — bez alarmów, wibracji i kar za pominięcie: to plan, nie nadzorca.</p>
       <div id="planHost"></div>
+      <div id="dietHost"></div>
     </section>
 
     <!-- WSPÓLNOTA -->
@@ -1274,7 +1275,7 @@ function showView(id){
   if(id==="pulpit") renderPulpit();
   if(id==="omnie"){ renderProfile(); renderChat(); renderSelfModel(); renderOmnieHub(); renderBio(); }
   if(id==="eksperymenty"){ renderExperiments(); renderExpHub(); }
-  if(id==="plan") renderPlan();
+  if(id==="plan"){ renderPlan(); renderDiet(); }
   if(id==="decyzje") renderAgent();
   if(id==="wspolnota"){ renderCommunityHub(); renderCommunity(); }
   if(id==="rejestr") renderLog();
@@ -4131,6 +4132,420 @@ function dualKeyDemo(mode){
 }
 
 /* ---------- start ---------- */
+/* ══════════════════ MODUŁ DIETA (DD-016, koncepcja „Moduł Dieta" 2026-08-17) ══════════════════
+   E1: baza 200 produktów (D-2: wartości ~ z USDA FoodData Central, domena publiczna, zaokrąglone)
+   E2: kreator planu z bramami G-DIET-0…5 (D-1 podpisane: odmowa <1200 kcal, ostrzeżenie 1200–1500)
+   Plan = HIPOTEZA do przetestowania, nie zalecenie. Moduł nie czyta serii C6 i nie wysyła nic do C5. */
+
+/* [id, nazwa, kategoria, kcal, białko, tłuszcz, węgle, błonnik — na 100 g; porcja g, nazwa porcji, tagi]
+   tagi: v=wege n=wegan g=bez glutenu l=bez laktozy */
+const DIET_PRODUCTS=[
+["pomidor","Pomidor","warzywa",18,0.9,0.2,3.9,1.2,150,"1 sztuka","vngl"],
+["pomidorki-koktajlowe","Pomidorki koktajlowe","warzywa",18,0.9,0.2,3.9,1.2,100,"garść","vngl"],
+["ogorek","Ogórek","warzywa",15,0.7,0.1,3.6,0.5,100,"1/2 sztuki","vngl"],
+["ogorek-kiszony","Ogórek kiszony","warzywa",11,0.6,0.1,2.2,1,60,"1 sztuka","vngl"],
+["papryka","Papryka czerwona","warzywa",31,1,0.3,6,2.1,120,"1/2 sztuki","vngl"],
+["marchew","Marchew","warzywa",41,0.9,0.2,9.6,2.8,80,"1 sztuka","vngl"],
+["brokul","Brokuł","warzywa",34,2.8,0.4,6.6,2.6,200,"1/2 różyczki","vngl"],
+["kalafior","Kalafior","warzywa",25,1.9,0.3,5,2,200,"porcja","vngl"],
+["cukinia","Cukinia","warzywa",17,1.2,0.3,3.1,1,150,"1/2 sztuki","vngl"],
+["baklazan","Bakłażan","warzywa",25,1,0.2,5.9,3,150,"1/2 sztuki","vngl"],
+["szpinak","Szpinak","warzywa",23,2.9,0.4,3.6,2.2,60,"garść","vngl"],
+["salata","Sałata","warzywa",15,1.4,0.2,2.9,1.3,50,"kilka liści","vngl"],
+["mix-salat","Mix sałat","warzywa",17,1.5,0.3,3,1.5,80,"miska","vngl"],
+["kapusta","Kapusta biała","warzywa",25,1.3,0.1,5.8,2.5,150,"porcja","vngl"],
+["kapusta-kiszona","Kapusta kiszona","warzywa",19,0.9,0.1,4.3,2.9,100,"porcja","vngl"],
+["buraki","Buraki","warzywa",43,1.6,0.2,9.6,2.8,120,"1 sztuka","vngl"],
+["ziemniaki","Ziemniaki","warzywa",77,2,0.1,17,2.2,250,"2–3 sztuki","vngl"],
+["batat","Batat","warzywa",86,1.6,0.1,20,3,200,"1 sztuka","vngl"],
+["cebula","Cebula","warzywa",40,1.1,0.1,9.3,1.7,60,"1/2 sztuki","vngl"],
+["czosnek","Czosnek","warzywa",149,6.4,0.5,33,2.1,6,"1 ząbek","vngl"],
+["por","Por","warzywa",61,1.5,0.3,14,1.8,60,"1/2 sztuki","vngl"],
+["seler","Seler korzeniowy","warzywa",42,1.5,0.3,9.2,1.8,80,"plaster","vngl"],
+["pietruszka","Pietruszka (korzeń)","warzywa",55,2.6,0.5,10.5,4.9,60,"1 sztuka","vngl"],
+["rzodkiewka","Rzodkiewka","warzywa",16,0.7,0.1,3.4,1.6,50,"5 sztuk","vngl"],
+["pieczarki","Pieczarki","warzywa",22,3.1,0.3,3.3,1,100,"5 sztuk","vngl"],
+["fasolka-szparagowa","Fasolka szparagowa","warzywa",31,1.8,0.2,7,2.7,200,"porcja","vngl"],
+["groszek","Groszek zielony","warzywa",81,5.4,0.4,14,5.1,100,"1/2 szklanki","vngl"],
+["kukurydza","Kukurydza konserwowa","warzywa",86,3.3,1.4,19,2,80,"1/2 puszki","vngl"],
+["dynia","Dynia","warzywa",26,1,0.1,6.5,0.5,150,"porcja","vngl"],
+["jarmuz","Jarmuż","warzywa",49,4.3,0.9,8.8,3.6,60,"garść","vngl"],
+["jablko","Jabłko","owoce",52,0.3,0.2,14,2.4,180,"1 sztuka","vngl"],
+["banan","Banan","owoce",89,1.1,0.3,23,2.6,120,"1 sztuka","vngl"],
+["pomarancza","Pomarańcza","owoce",47,0.9,0.1,12,2.4,200,"1 sztuka","vngl"],
+["mandarynka","Mandarynka","owoce",53,0.8,0.3,13,1.8,80,"1 sztuka","vngl"],
+["cytryna","Cytryna","owoce",29,1.1,0.3,9,2.8,50,"1/2 sztuki","vngl"],
+["grejpfrut","Grejpfrut","owoce",42,0.8,0.1,11,1.6,230,"1 sztuka","vngl"],
+["truskawki","Truskawki","owoce",32,0.7,0.3,7.7,2,150,"szklanka","vngl"],
+["borowki","Borówki","owoce",57,0.7,0.3,14,2.4,100,"2/3 szklanki","vngl"],
+["maliny","Maliny","owoce",52,1.2,0.7,12,6.5,100,"2/3 szklanki","vngl"],
+["winogrona","Winogrona","owoce",69,0.7,0.2,18,0.9,100,"garść","vngl"],
+["kiwi","Kiwi","owoce",61,1.1,0.5,15,3,75,"1 sztuka","vngl"],
+["ananas","Ananas","owoce",50,0.5,0.1,13,1.4,120,"2 plastry","vngl"],
+["mango","Mango","owoce",60,0.8,0.4,15,1.6,150,"1/2 sztuki","vngl"],
+["brzoskwinia","Brzoskwinia","owoce",39,0.9,0.3,9.5,1.5,150,"1 sztuka","vngl"],
+["nektarynka","Nektarynka","owoce",44,1.1,0.3,11,1.7,140,"1 sztuka","vngl"],
+["sliwki","Śliwki","owoce",46,0.7,0.3,11,1.4,100,"3 sztuki","vngl"],
+["gruszka","Gruszka","owoce",57,0.4,0.1,15,3.1,170,"1 sztuka","vngl"],
+["arbuz","Arbuz","owoce",30,0.6,0.2,7.6,0.4,300,"duży kawałek","vngl"],
+["melon","Melon","owoce",34,0.8,0.2,8.2,0.9,200,"kawałek","vngl"],
+["wisnie","Wiśnie","owoce",50,1,0.3,12,1.6,100,"2/3 szklanki","vngl"],
+["czeresnie","Czereśnie","owoce",63,1.1,0.2,16,2.1,100,"garść","vngl"],
+["porzeczki","Porzeczki czarne","owoce",63,1.4,0.4,15,4.3,100,"2/3 szklanki","vngl"],
+["daktyle","Daktyle suszone","owoce",282,2.5,0.4,75,8,25,"3 sztuki","vngl"],
+["rodzynki","Rodzynki","owoce",299,3.1,0.5,79,3.7,30,"garść","vngl"],
+["morele-suszone","Morele suszone","owoce",241,3.4,0.5,63,7.3,30,"4 sztuki","vngl"],
+["platki-owsiane","Płatki owsiane","zboża",372,13.5,7,59,10,50,"5 łyżek","vnl"],
+["platki-jaglane","Płatki jaglane","zboża",372,10.5,4,73,3,50,"5 łyżek","vngl"],
+["otreby","Otręby owsiane","zboża",246,17,7,50,15,15,"2 łyżki","vnl"],
+["musli","Musli","zboża",358,9,6,66,8,50,"5 łyżek","vnl"],
+["ryz-bialy","Ryż biały (suchy)","zboża",365,7,0.7,80,1.3,70,"porcja przed gotowaniem","vngl"],
+["ryz-brazowy","Ryż brązowy (suchy)","zboża",370,7.5,2.7,76,3.4,70,"porcja przed gotowaniem","vngl"],
+["ryz-jasminowy","Ryż jaśminowy (suchy)","zboża",365,7,0.7,80,1.2,70,"porcja przed gotowaniem","vngl"],
+["kasza-gryczana","Kasza gryczana (sucha)","zboża",343,13,3.4,72,10,70,"porcja przed gotowaniem","vngl"],
+["kasza-jaglana","Kasza jaglana (sucha)","zboża",378,11,4.2,73,8.5,70,"porcja przed gotowaniem","vngl"],
+["kasza-peczak","Kasza pęczak (sucha)","zboża",352,9.8,1.4,74,15,70,"porcja przed gotowaniem","vnl"],
+["bulgur","Bulgur (suchy)","zboża",342,12,1.3,76,12.5,70,"porcja przed gotowaniem","vnl"],
+["kuskus","Kuskus (suchy)","zboża",376,13,0.6,77,5,70,"porcja przed gotowaniem","vnl"],
+["komosa","Komosa ryżowa (sucha)","zboża",368,14,6,64,7,70,"porcja przed gotowaniem","vngl"],
+["makaron","Makaron pszenny (suchy)","zboża",371,13,1.5,75,3.2,80,"porcja przed gotowaniem","vnl"],
+["makaron-pelnoziarnisty","Makaron pełnoziarnisty (suchy)","zboża",348,14.6,2.5,68,9,80,"porcja przed gotowaniem","vnl"],
+["makaron-ryzowy","Makaron ryżowy (suchy)","zboża",364,6,0.6,83,1.6,80,"porcja przed gotowaniem","vngl"],
+["chleb-zytni","Chleb żytni razowy","zboża",235,6.5,1.5,45,6,35,"1 kromka","vnl"],
+["chleb-pszenny","Chleb pszenny","zboża",265,9,3.2,49,2.7,40,"1 kromka","vnl"],
+["chleb-graham","Chleb graham","zboża",245,8,2,47,5,35,"1 kromka","vnl"],
+["bulka","Bułka pszenna","zboża",290,9.5,3,56,3,60,"1 sztuka","vnl"],
+["tortilla","Tortilla pszenna","zboża",310,8.5,8,50,3,64,"1 placek","vnl"],
+["maka-pszenna","Mąka pszenna","zboża",364,10,1,76,2.7,30,"2 łyżki","vnl"],
+["maka-zytnia","Mąka żytnia","zboża",325,9,1.7,70,12,30,"2 łyżki","vnl"],
+["platki-kukurydziane","Płatki kukurydziane","zboża",378,7,0.9,84,3,30,"miska","vnl"],
+["pumpernikiel","Pumpernikiel","zboża",250,6,1.5,47,9,45,"1 kromka","vnl"],
+["mleko-2","Mleko 2%","nabiał",50,3.4,2,4.8,0,200,"szklanka","vg"],
+["mleko-32","Mleko 3,2%","nabiał",61,3.2,3.2,4.7,0,200,"szklanka","vg"],
+["jogurt-naturalny","Jogurt naturalny 2%","nabiał",60,4.3,2,6.2,0,180,"opakowanie","vg"],
+["jogurt-grecki","Jogurt grecki 10%","nabiał",121,4.8,10,3.8,0,150,"opakowanie","vg"],
+["skyr","Skyr naturalny","nabiał",63,11,0.2,4,0,150,"opakowanie","vg"],
+["kefir","Kefir","nabiał",51,3.4,2,4.7,0,200,"szklanka","vg"],
+["maslanka","Maślanka","nabiał",37,3.4,0.5,4.7,0,250,"szklanka","vg"],
+["twarog-chudy","Twaróg chudy","nabiał",99,19.8,0.5,3.5,0,100,"1/2 kostki","vg"],
+["twarog-poltusty","Twaróg półtłusty","nabiał",132,18,4.7,3.7,0,100,"1/2 kostki","vg"],
+["serek-wiejski","Serek wiejski","nabiał",97,11,4.3,3.4,0,150,"opakowanie","vg"],
+["mozzarella","Mozzarella","nabiał",280,18.5,21,2.2,0,60,"1/2 kulki","vg"],
+["ser-gouda","Ser żółty (gouda)","nabiał",356,25,27,2,0,30,"2 plastry","vg"],
+["feta","Feta","nabiał",264,14,21,4,0,50,"1/4 kostki","vg"],
+["parmezan","Parmezan","nabiał",431,38,29,4,0,10,"łyżka tartego","vg"],
+["smietana-18","Śmietana 18%","nabiał",184,2.5,18,3.5,0,30,"łyżka","vg"],
+["camembert","Camembert","nabiał",300,20,24,0.5,0,60,"1/4 krążka","vg"],
+["jajo","Jajo kurze","jaja",143,12.5,9.5,0.7,0,56,"1 sztuka (M)","vgl"],
+["bialko-jaja","Białko jaja","jaja",52,11,0.2,0.7,0,33,"białko 1 jaja","vgl"],
+["piers-kurczaka","Pierś z kurczaka (surowa)","mięso",106,22,1.8,0,0,150,"1 mały filet","gl"],
+["udo-kurczaka","Udo kurczaka bez skóry","mięso",119,19.7,4.2,0,0,150,"1 sztuka","gl"],
+["indyk","Pierś z indyka (surowa)","mięso",105,22,1.2,0,0,150,"porcja","gl"],
+["wolowina-chuda","Wołowina chuda (ligawa)","mięso",122,21,4,0,0,150,"porcja","gl"],
+["wolowina-mielona","Wołowina mielona 5%","mięso",124,20,5,0,0,150,"porcja","gl"],
+["mielone-indyka","Mięso mielone z indyka","mięso",140,19,7,0,0,150,"porcja","gl"],
+["schab","Schab wieprzowy","mięso",143,21,6.5,0,0,150,"1 kotlet","gl"],
+["poledwiczka","Polędwiczka wieprzowa","mięso",120,21,3.5,0,0,150,"porcja","gl"],
+["karkowka","Karkówka","mięso",210,17,16,0,0,150,"porcja","gl"],
+["szynka","Szynka gotowana","mięso",110,18,3.5,1,0,30,"2 plastry","l"],
+["kabanosy","Kabanosy","mięso",380,27,30,1,0,50,"2 sztuki","l"],
+["kielbasa","Kiełbasa śląska","mięso",300,13,27,2,0,80,"1 sztuka","l"],
+["parowki","Parówki drobiowe","mięso",220,12,18,3,0,100,"2 sztuki","l"],
+["boczek","Boczek wędzony","mięso",458,13,45,0,0,30,"2 plastry","gl"],
+["watrobka","Wątróbka drobiowa","mięso",118,17,4.8,1,0,100,"porcja","gl"],
+["losos","Łosoś (surowy)","ryby",208,20,13,0,0,140,"1 filet","gl"],
+["losos-wedzony","Łosoś wędzony","ryby",117,18,4.5,0,0,80,"opakowanie","gl"],
+["dorsz","Dorsz (surowy)","ryby",82,18,0.7,0,0,150,"1 filet","gl"],
+["mintaj","Mintaj (surowy)","ryby",76,17,0.8,0,0,150,"1 filet","gl"],
+["pstrag","Pstrąg (surowy)","ryby",119,20,4.3,0,0,150,"1 sztuka","gl"],
+["tilapia","Tilapia (surowa)","ryby",96,20,1.7,0,0,150,"1 filet","gl"],
+["tunczyk","Tuńczyk w sosie własnym","ryby",116,26,1,0,0,120,"1 puszka","gl"],
+["makrela-wedzona","Makrela wędzona","ryby",305,20.7,25,0,0,100,"1/2 sztuki","gl"],
+["sledz","Śledź marynowany","ryby",158,14,11,1.5,0,100,"1 płat","gl"],
+["sardynki","Sardynki w oleju","ryby",208,24,11,0,0,90,"1 puszka","gl"],
+["krewetki","Krewetki","ryby",85,20,0.5,0.2,0,100,"porcja","gl"],
+["paluszki-rybne","Paluszki rybne","ryby",230,12,12,18,0.8,90,"3 sztuki","l"],
+["soczewica-czerwona","Soczewica czerwona (sucha)","strączki",358,24,2.2,60,11,70,"porcja przed gotowaniem","vngl"],
+["soczewica-gotowana","Soczewica gotowana","strączki",116,9,0.4,20,8,150,"porcja","vngl"],
+["ciecierzyca","Ciecierzyca konserwowa","strączki",139,7,2.6,22,6.5,120,"1/2 puszki","vngl"],
+["fasola-biala","Fasola biała konserwowa","strączki",91,6,0.5,16,6.4,120,"1/2 puszki","vngl"],
+["fasola-czerwona","Fasola czerwona konserwowa","strączki",96,7,0.5,17,6.5,120,"1/2 puszki","vngl"],
+["groch","Groch łuskany (suchy)","strączki",343,23,1.4,60,15,70,"porcja przed gotowaniem","vngl"],
+["bob","Bób","strączki",88,7.9,0.7,14,5.5,150,"szklanka","vngl"],
+["tofu","Tofu naturalne","strączki",118,12,7,2,0.3,150,"3/4 kostki","vngl"],
+["tempeh","Tempeh","strączki",193,19,11,9,0,100,"1/2 kostki","vnl"],
+["edamame","Edamame","strączki",121,11,5,9,5,100,"porcja","vngl"],
+["orzechy-wloskie","Orzechy włoskie","orzechy",654,15,65,14,6.7,20,"garść","vngl"],
+["migdaly","Migdały","orzechy",579,21,50,22,12.5,20,"garść","vngl"],
+["nerkowce","Nerkowce","orzechy",553,18,44,30,3.3,20,"garść","vngl"],
+["orzechy-laskowe","Orzechy laskowe","orzechy",628,15,61,17,9.7,20,"garść","vngl"],
+["orzeszki-ziemne","Orzeszki ziemne","orzechy",567,26,49,16,8.5,20,"garść","vngl"],
+["maslo-orzechowe","Masło orzechowe","orzechy",588,25,50,20,6,20,"łyżka","vngl"],
+["pistacje","Pistacje","orzechy",560,20,45,28,10,20,"garść","vngl"],
+["pestki-dyni","Pestki dyni","orzechy",559,30,49,11,6,15,"łyżka","vngl"],
+["slonecznik","Słonecznik łuskany","orzechy",584,21,51,20,8.6,15,"łyżka","vngl"],
+["siemie","Siemię lniane","orzechy",534,18,42,29,27,10,"łyżka","vngl"],
+["chia","Nasiona chia","orzechy",486,17,31,42,34,15,"łyżka","vngl"],
+["tahini","Tahini (pasta sezamowa)","orzechy",595,17,54,23,9,15,"łyżka","vngl"],
+["oliwa","Oliwa z oliwek","tłuszcze",884,0,100,0,0,10,"łyżka","vngl"],
+["olej-rzepakowy","Olej rzepakowy","tłuszcze",884,0,100,0,0,10,"łyżka","vngl"],
+["maslo","Masło","tłuszcze",735,0.6,82,0.7,0,10,"łyżeczka z górką","vg"],
+["maslo-klarowane","Masło klarowane","tłuszcze",876,0,99,0,0,10,"łyżeczka z górką","vgl"],
+["olej-kokosowy","Olej kokosowy","tłuszcze",892,0,99,0,0,10,"łyżka","vngl"],
+["awokado","Awokado","tłuszcze",160,2,15,9,6.7,100,"1/2 sztuki","vngl"],
+["oliwki","Oliwki zielone","tłuszcze",145,1,15,4,3.3,30,"8 sztuk","vngl"],
+["margaryna","Margaryna miękka","tłuszcze",550,0.2,60,0.5,0,10,"łyżeczka z górką","vngl"],
+["woda","Woda mineralna","napoje",0,0,0,0,0,250,"szklanka","vngl"],
+["kawa","Kawa czarna","napoje",2,0.3,0,0,0,200,"kubek","vngl"],
+["herbata","Herbata","napoje",1,0,0,0.3,0,250,"szklanka","vngl"],
+["napoj-owsiany","Napój owsiany","napoje",46,1,1.5,7,0.8,200,"szklanka","vnl"],
+["napoj-migdalowy","Napój migdałowy","napoje",24,0.5,1.8,1.3,0.3,200,"szklanka","vngl"],
+["napoj-sojowy","Napój sojowy","napoje",42,3.3,1.9,2.5,0.5,200,"szklanka","vngl"],
+["sok-pomaranczowy","Sok pomarańczowy","napoje",45,0.7,0.2,10,0.2,200,"szklanka","vngl"],
+["sok-jablkowy","Sok jabłkowy","napoje",46,0.1,0.1,11,0.2,200,"szklanka","vngl"],
+["kombucha","Kombucha","napoje",19,0,0,4.5,0,250,"butelka 250 ml","vngl"],
+["woda-kokosowa","Woda kokosowa","napoje",19,0.7,0.2,3.7,1.1,250,"szklanka","vngl"],
+["czekolada-gorzka","Czekolada gorzka 70%","przekąski",546,7.9,38,46,11,20,"2 kostki","vgl"],
+["czekolada-mleczna","Czekolada mleczna","przekąski",535,7.7,30,59,2,20,"2 kostki","vg"],
+["hummus","Hummus","przekąski",166,8,10,14,6,50,"2 łyżki","vngl"],
+["wafle-ryzowe","Wafle ryżowe","przekąski",387,8,2.8,81,4,20,"2 sztuki","vngl"],
+["chipsy","Chipsy ziemniaczane","przekąski",536,7,34,50,4.4,30,"garść","vngl"],
+["popcorn","Popcorn (ziarno)","przekąski",387,12,4.5,78,15,30,"porcja","vngl"],
+["baton-musli","Baton musli","przekąski",420,6,14,68,5,25,"1 sztuka","vnl"],
+["ciastka-owsiane","Ciastka owsiane","przekąski",450,7,18,65,5,30,"2 sztuki","vl"],
+["dzem","Dżem truskawkowy","przekąski",240,0.5,0.1,60,1,25,"łyżka","vngl"],
+["zelki","Żelki","przekąski",343,6.9,0.2,77,0,30,"garść","gl"],
+["lody","Lody waniliowe","przekąski",207,3.5,11,24,0.7,66,"2 gałki","vg"],
+["paluszki","Paluszki słone","przekąski",380,11,3,77,3.5,30,"porcja","vnl"],
+["krakersy","Krakersy","przekąski",430,9,13,68,3,30,"porcja","vnl"],
+["drozdzowka","Drożdżówka","przekąski",330,6,12,50,2,80,"1 sztuka","v"],
+["paczek","Pączek","przekąski",420,5.5,22,50,1.5,70,"1 sztuka","v"],
+["musztarda","Musztarda","dodatki",66,4,3,6,3,10,"łyżeczka","vngl"],
+["ketchup","Ketchup","dodatki",100,1.3,0.2,24,0.3,15,"łyżka","vngl"],
+["passata","Passata pomidorowa","dodatki",38,1.6,0.3,7,1.4,200,"szklanka","vngl"],
+["sos-sojowy","Sos sojowy","dodatki",53,8,0.1,5,0.8,10,"łyżka","vn"],
+["miod","Miód","dodatki",324,0.3,0,81,0,15,"łyżka","vgl"],
+["cukier","Cukier","dodatki",405,0,0,100,0,5,"łyżeczka","vngl"],
+["kakao","Kakao (proszek)","dodatki",228,19.6,13.7,58,33,10,"łyżka","vngl"],
+["ocet-balsamiczny","Ocet balsamiczny","dodatki",88,0.5,0,17,0,10,"łyżka","vngl"],
+["majonez","Majonez","dodatki",680,1,75,2.5,0,15,"łyżka","vgl"],
+["koncentrat","Koncentrat pomidorowy","dodatki",82,4.3,0.5,19,4.1,30,"łyżka","vngl"],
+["pierogi-ruskie","Pierogi ruskie","dania",236,6.5,8,35,2,300,"porcja (8–10 szt.)","v"],
+["pierogi-miesem","Pierogi z mięsem","dania",250,9,10,30,2,300,"porcja (8–10 szt.)","l"],
+["bigos","Bigos","dania",110,6,7,6,2.5,350,"talerz","gl"],
+["kotlet-schabowy","Kotlet schabowy panierowany","dania",350,17,25,15,1,150,"1 sztuka","l"],
+["kotlet-mielony","Kotlet mielony","dania",290,14,22,10,1,120,"1 sztuka","l"],
+["golabki","Gołąbki w sosie pomidorowym","dania",120,6,5,13,1.5,300,"2 sztuki","l"],
+["nalesniki","Naleśniki z serem","dania",220,9,8,28,1,200,"2 sztuki","v"],
+["placki-ziemniaczane","Placki ziemniaczane","dania",210,4,12,22,2,200,"3 sztuki","vl"],
+["zurek","Żurek","dania",55,2.5,3,4.5,0.5,400,"talerz","l"],
+["pomidorowa","Zupa pomidorowa z ryżem","dania",50,1.5,1.5,8,0.5,400,"talerz","vl"]
+];
+const DIET_CATS=["warzywa","owoce","zboża","nabiał","jaja","mięso","ryby","strączki","orzechy","tłuszcze","napoje","przekąski","dodatki","dania"];
+const DIET_SRC="Wartości przybliżone (~) na 100 g, zaokrąglone; źródło: USDA FoodData Central (domena publiczna) — decyzja D-2 (DD-016). Realne produkty różnią się od tabel.";
+
+/* Szablony posiłków: S=śniadanie O=obiad K=kolacja P=przekąska; min=czas przyrządzenia */
+const DIET_TEMPLATES=[
+{id:"owsianka",t:"S",name:"Owsianka z bananem i orzechami",min:10,ing:[["platki-owsiane",60],["mleko-2",200],["banan",100],["orzechy-wloskie",15]],hint:"Płatki zalej mlekiem i gotuj 5 minut na małym ogniu, mieszając. Zdejmij z ognia, dodaj pokrojonego banana i orzechy."},
+{id:"jajecznica",t:"S",name:"Jajecznica z pieczywem i pomidorem",min:15,ing:[["jajo",168],["maslo",10],["chleb-zytni",70],["pomidor",120]],hint:"Jajka wbij na rozgrzane masło, ścinaj powoli na średnim ogniu. Podawaj z pieczywem i pomidorem posypanym szczypiorkiem."},
+{id:"skyr-musli",t:"S",name:"Skyr z musli i borówkami",min:5,ing:[["skyr",250],["musli",50],["borowki",80],["miod",10]],hint:"Wymieszaj skyr z miodem, wsyp musli, dodaj borówki. Zero gotowania — idealne na zabiegany poranek."},
+{id:"kanapki-twarozek",t:"S",name:"Kanapki z twarożkiem i warzywami",min:10,ing:[["chleb-graham",105],["serek-wiejski",150],["ogorek",80],["rzodkiewka",40]],hint:"Serek rozgnieć widelcem z odrobiną soli i pieprzu, nałóż na kromki, przykryj plastrami ogórka i rzodkiewki."},
+{id:"tosty-awokado",t:"S",name:"Tosty z awokado i jajkiem",min:15,ing:[["chleb-pszenny",80],["awokado",70],["jajo",112],["pomidorki-koktajlowe",80]],hint:"Chleb zrumień na suchej patelni. Awokado rozgnieć z cytryną i solą, jajka usmaż sadzone i ułóż na tostach z połówkami pomidorków."},
+{id:"kurczak-ryz",t:"O",name:"Kurczak z ryżem i brokułem",min:35,ing:[["piers-kurczaka",180],["ryz-bialy",80],["brokul",200],["oliwa",10]],hint:"Pierś pokrój w kostkę, obsmaż na oliwie, dopraw papryką i czosnkiem. Ryż ugotuj, brokuł gotuj na parze 5–6 minut, aż będzie jędrny."},
+{id:"losos-ziemniaki",t:"O",name:"Łosoś z ziemniakami i fasolką",min:40,ing:[["losos",160],["ziemniaki",300],["fasolka-szparagowa",200],["maslo",10]],hint:"Łososia skrop cytryną i piecz 15 minut w 200°C. Ziemniaki i fasolkę ugotuj; fasolkę okraś odrobiną masła."},
+{id:"chili-soczewica",t:"O",name:"Wegańskie chili z soczewicą",min:35,ing:[["soczewica-czerwona",90],["passata",200],["ryz-bialy",70],["cebula",50],["kukurydza",50],["oliwa",10]],hint:"Cebulę zeszklij na oliwie, dodaj soczewicę, passatę i pół szklanki wody; gotuj 20 minut. Dopraw kuminem i ostrą papryką, podawaj z ryżem i kukurydzą."},
+{id:"makaron-indyk",t:"O",name:"Makaron z indykiem i cukinią",min:30,ing:[["makaron-pelnoziarnisty",90],["indyk",150],["cukinia",150],["passata",150],["oliwa",10],["parmezan",10]],hint:"Indyka obsmaż na oliwie, dodaj cukinię w półplastrach, po 5 minutach passatę. Wymieszaj z ugotowanym makaronem i posyp parmezanem."},
+{id:"gulasz-kasza",t:"O",name:"Gulasz z polędwiczki z kaszą gryczaną",min:45,ing:[["poledwiczka",160],["kasza-gryczana",80],["pieczarki",100],["cebula",50],["olej-rzepakowy",10]],hint:"Mięso i cebulę obsmaż, dodaj pieczarki, podlej wodą i duś 25 minut pod przykryciem. Kaszę ugotuj na sypko; sos dopraw majerankiem."},
+{id:"salatka-kurczak",t:"K",name:"Sałatka z kurczakiem i pestkami",min:15,ing:[["mix-salat",80],["piers-kurczaka",120],["pomidor",100],["ogorek",100],["oliwa",15],["pestki-dyni",10],["chleb-zytni",35]],hint:"Grillowaną pierś pokrój w paski, wymieszaj z warzywami, skrop oliwą z cytryną i posyp uprażonymi pestkami. Podawaj z kromką pieczywa."},
+{id:"miska-tofu",t:"K",name:"Miska z tofu i komosą",min:25,ing:[["tofu",150],["komosa",60],["szpinak",80],["papryka",100],["tahini",15]],hint:"Tofu pokrój w kostkę, obsmaż z sosem sojowym. Komosę ugotuj, szpinak podduś chwilę na patelni. Całość polej tahini rozrzedzonym wodą z cytryną."},
+{id:"kanapki-losos",t:"K",name:"Kanapki z łososiem wędzonym",min:10,ing:[["chleb-zytni",70],["losos-wedzony",80],["serek-wiejski",60],["mix-salat",30]],hint:"Kromki posmaruj serkiem, ułóż łososia i garść zielonych liści. Dopraw pieprzem i sokiem z cytryny."},
+{id:"omlet-warzywa",t:"K",name:"Omlet z warzywami",min:15,ing:[["jajo",168],["szpinak",60],["papryka",80],["oliwa",8],["chleb-zytni",35]],hint:"Jajka roztrzep, wylej na rozgrzaną oliwę, po chwili dodaj szpinak i paprykę. Złóż na pół, gdy spód się zetnie; podawaj z pieczywem."},
+{id:"jogurt-migdaly",t:"P",name:"Jogurt z migdałami i jabłkiem",min:5,ing:[["jogurt-naturalny",180],["migdaly",20],["jablko",150]],hint:"Jabłko pokrój w kostkę, wymieszaj z jogurtem i posyp migdałami. Możesz dodać cynamon."},
+{id:"hummus-warzywa",t:"P",name:"Hummus z warzywami",min:5,ing:[["hummus",80],["marchew",150],["papryka",100]],hint:"Marchew i paprykę pokrój w słupki i maczaj w hummusie. Chrupiąca przekąska bez gotowania."},
+{id:"twarog-owoce",t:"P",name:"Twaróg z truskawkami",min:5,ing:[["twarog-poltusty",150],["truskawki",150],["miod",10]],hint:"Twaróg rozgnieć z odrobiną miodu, dodaj pokrojone truskawki. Poza sezonem użyj mrożonych owoców."},
+{id:"kanapka-orzechowa",t:"P",name:"Kanapka z masłem orzechowym i bananem",min:5,ing:[["chleb-pszenny",70],["maslo-orzechowe",25],["banan",100]],hint:"Kromki posmaruj masłem orzechowym i przykryj plastrami banana. Działa też jako szybkie drugie śniadanie."}
+];
+/* zamiany dla wegan / bez laktozy (mleko i masło mają odpowiedniki; reszta nabiału wyklucza szablon) */
+const DIET_SWAPS={vegan:{"mleko-2":"napoj-sojowy","mleko-32":"napoj-sojowy","maslo":"oliwa","miod":"dzem"},lf:{"mleko-2":"napoj-sojowy","mleko-32":"napoj-sojowy","maslo":"oliwa"}};
+const DIET_ALLERGENS=[["orzechy","Orzechy i sezam",p=>p[2]==="orzechy"],["ryby","Ryby i owoce morza",p=>p[2]==="ryby"],["jaja","Jaja",p=>p[2]==="jaja"],["soja",'Soja',p=>["tofu","tempeh","edamame","napoj-sojowy","sos-sojowy"].includes(p[0])]];
+
+function dietState(){ if(!S.diet) S.diet={kcal:"",pb:25,pt:30,pw:45,styl:"all",gf:false,lf:false,excl:[],alrg:[],meals:3,maxmin:60,week:false,ack:false}; return S.diet; }
+function dietProd(id){ return DIET_PRODUCTS.find(p=>p[0]===id); }
+function dietTagOk(p,d){
+  const tags=p[10]||"";
+  if(d.styl==="vege"&&!tags.includes("v")) return false;
+  if(d.styl==="vegan"&&!tags.includes("n")) return false;
+  if(d.gf&&!tags.includes("g")) return false;
+  if(d.lf&&!tags.includes("l")) return false;
+  return true;
+}
+function dietExcluded(p,d){
+  if(d.excl.some(x=>p[1].toLowerCase().includes(x))) return true;
+  for(const [aid,,fn] of DIET_ALLERGENS) if(d.alrg.includes(aid)&&fn(p)) return true;
+  return false;
+}
+function dietResolveIng(ing,d){
+  /* zwraca [produkt, gram] po zamianach albo null, gdy składnik odpada (G-DIET-2: wykluczone nie wraca) */
+  let [pid,g]=ing; if(!g) return null;
+  const swaps=(d.styl==="vegan")?DIET_SWAPS.vegan:(d.lf?DIET_SWAPS.lf:{});
+  if(swaps[pid]) pid=swaps[pid];
+  const p=dietProd(pid); if(!p) return null;
+  if(!dietTagOk(p,d)||dietExcluded(p,d)) return null;
+  return [p,g];
+}
+function dietTemplateFit(tpl,d){
+  /* szablon dopuszczalny, jeśli KAŻDY składnik przechodzi (po zamianach) i czas mieści się w limicie */
+  if(tpl.min>d.maxmin) return null;
+  const out=[];
+  for(const ing of tpl.ing){ if(!ing[1]) continue; const r=dietResolveIng(ing,d); if(!r) return null; out.push(r); }
+  return out;
+}
+function dietMacro(list,f){
+  let k=0,b=0,t=0,w=0;
+  for(const [p,g] of list){ const x=g*(f||1)/100; k+=p[3]*x; b+=p[4]*x; t+=p[5]*x; w+=p[6]*x; }
+  return {k,b,t,w};
+}
+const DIET_SLOTS={2:["S","O"],3:["S","O","K"],4:["S","P","O","K"],5:["S","P","O","P","K"],6:["S","P","O","P","K","P"]};
+const DIET_SHARE={S:27,O:38,K:25,P:10};
+/* ─── bramy (koncepcja „Moduł Dieta" §4; D-1 podpisane 2026-08-17) ─── */
+function dietGates(d){
+  if(!d.ack) return {gate:"G-DIET-5",msg:"Kreator wymaga potwierdzenia, że żadna z sytuacji szczególnych (ciąża, karmienie, wiek poniżej 18 lat, historia zaburzeń odżywiania) Cię nie dotyczy. Jeśli któraś dotyczy — nie układaj planu w prototypie; porozmawiaj z dietetykiem klinicznym lub lekarzem, to ich teren i robią to lepiej niż algorytm."};
+  const kcal=Number(d.kcal);
+  if(!kcal||kcal<=0) return {gate:"G-DIET-1",msg:"Podaj docelową energię dnia (kcal) — kreator niczego nie zakłada za Ciebie."};
+  if(kcal<1200) return {gate:"G-DIET-1",msg:"Poniżej 1200 kcal dziennie kreator odmawia ułożenia planu (próg podpisany przez foundera, D-1/DD-016). Tak głębokie deficyty wymagają opieki profesjonalisty — nie planera nawyków."};
+  const sum=Number(d.pb)+Number(d.pt)+Number(d.pw);
+  if(Math.abs(sum-100)>1) return {gate:"G-DIET-3",msg:`Makro musi sumować się do 100% (teraz: ${sum}%).`};
+  if(d.pb<10||d.pb>35) return {gate:"G-DIET-3",msg:"Białko poza zakresem 10–35% energii. Kreator nie tnie po cichu — popraw rozkład albo porozmawiaj z profesjonalistą o nietypowych proporcjach."};
+  if(d.pt<20||d.pt>40) return {gate:"G-DIET-3",msg:"Tłuszcz poza zakresem 20–40% energii. Kreator nie tnie po cichu — popraw rozkład albo porozmawiaj z profesjonalistą o nietypowych proporcjach."};
+  if(d.pw<25||d.pw>65) return {gate:"G-DIET-3",msg:"Węglowodany poza zakresem 25–65% energii. Kreator nie tnie po cichu — popraw rozkład albo porozmawiaj z profesjonalistą o nietypowych proporcjach."};
+  return null;
+}
+function dietPlanDay(d,dayIdx){
+  const slots=DIET_SLOTS[d.meals]||DIET_SLOTS[3];
+  const wsum=slots.reduce((a,s)=>a+DIET_SHARE[s],0);
+  const kcal=Number(d.kcal);
+  const meals=[]; const used=new Set();
+  slots.forEach((slot,j)=>{
+    const target=kcal*DIET_SHARE[slot]/wsum;
+    let cands=DIET_TEMPLATES.filter(t=>t.t===slot).map(t=>({t,list:dietTemplateFit(t,d)})).filter(c=>c.list);
+    let overtime=false;
+    if(!cands.length){ /* awaryjnie: bez limitu czasu, z oznaczeniem */
+      cands=DIET_TEMPLATES.filter(t=>t.t===slot).map(t=>({t,list:dietTemplateFit(t,{...d,maxmin:999})})).filter(c=>c.list);
+      overtime=true;
+    }
+    if(!cands.length){ meals.push({empty:true,slot}); return; }
+    /* ranking po dopasowaniu makro, rotacja dzienna wśród 3 najlepszych; ten sam szablon nie powtarza się w dniu */
+    cands.forEach(c=>{
+      const base=dietMacro(c.list,1); const f=Math.min(1.9,Math.max(0.5,target/Math.max(base.k,1)));
+      const m=dietMacro(c.list,f);
+      const dev=Math.abs(m.b*4/target*100-d.pb)+Math.abs(m.t*9/target*100-d.pt)+Math.abs(m.w*4/target*100-d.pw);
+      c.f=f; c.m=m; c.dev=dev+(used.has(c.t.id)?100:0);
+    });
+    cands.sort((a,b)=>a.dev-b.dev);
+    const pick=cands[Math.min((dayIdx+j)%3,cands.length-1)];
+    used.add(pick.t.id);
+    meals.push({slot,tpl:pick.t,list:pick.list,f:pick.f,m:pick.m,overtime});
+  });
+  return meals;
+}
+function dietGenerate(){
+  const d=dietState();
+  ["dKcal","dPb","dPt","dPw"].forEach(id=>{const el=$(id); if(el) d[["dKcal","dPb","dPt","dPw"].indexOf(id)===0?"kcal":id==="dPb"?"pb":id==="dPt"?"pt":"pw"]=el.value;});
+  d.styl=$("dStyl").value; d.gf=$("dGf").checked; d.lf=$("dLf").checked;
+  d.meals=Number($("dMeals").value); d.maxmin=Number($("dMax").value); d.week=$("dWeek").checked;
+  d.ack=$("dAck").checked;
+  d.excl=($("dExcl").value||"").split(",").map(x=>x.trim().toLowerCase()).filter(Boolean);
+  d.alrg=DIET_ALLERGENS.map(a=>a[0]).filter(id=>$("dAl-"+id)&&$("dAl-"+id).checked);
+  save();
+  const gate=dietGates(d);
+  if(gate){
+    logEvent("DIETA","dieta_odmowa",`Kreator odmówił: brama ${gate.gate}`);
+    $("dietOut").innerHTML=`<div class="card" style="border-color:var(--warn);margin-top:12px"><b>Plan nie powstał — brama ${gate.gate}.</b><p class="note" style="margin-top:6px">${esc(gate.msg)}</p></div>`;
+    return;
+  }
+  const kcal=Number(d.kcal);
+  const warn=kcal<1500?`<div class="card" style="border-color:var(--warn);margin-top:12px"><b>Ostrzeżenie (D-1):</b> <span class="note">plan poniżej 1500 kcal to istotny deficyt dla większości dorosłych. Obserwuj energię i sytość w check-inach, a przy wątpliwościach skonsultuj deficyt z profesjonalistą.</span></div>`:"";
+  const days=d.week?7:1;
+  const shopping={};
+  let html=warn;
+  const dayNames=["Poniedziałek","Wtorek","Środa","Czwartek","Piątek","Sobota","Niedziela"];
+  for(let day=0;day<days;day++){
+    const meals=dietPlanDay(d,day);
+    let tk=0,tb=0,tt=0,tw=0;
+    const slotName={S:"Śniadanie",O:"Obiad",K:"Kolacja",P:"Przekąska"};
+    const mhtml=meals.map(m=>{
+      if(m.empty) return `<p class="note">Brak szablonu spełniającego preferencje dla: ${slotName[m.slot]}. Poluzuj wykluczenia albo limit czasu.</p>`;
+      tk+=m.m.k; tb+=m.m.b; tt+=m.m.t; tw+=m.m.w;
+      const rows=m.list.map(([p,g])=>{
+        const gg=Math.round(g*m.f/5)*5;
+        shopping[p[0]]=(shopping[p[0]]||0)+gg;
+        return `<span class="note">· ${esc(p[1])} ~${gg} g</span>`;
+      }).join("<br>");
+      return `<div style="margin:10px 0;padding:10px 12px;background:var(--panel-2,rgba(0,0,0,.03));border-radius:8px">
+        <b>${slotName[m.slot]}: ${esc(m.tpl.name)}</b> <span class="note">· ~${Math.round(m.m.k)} kcal · ${m.tpl.min} min${m.overtime?" <b>(przekracza Twój limit czasu — brak krótszej opcji)</b>":""}</span><br>
+        ${rows}
+        <p class="note" style="margin:6px 0 0"><i>Przyrządzenie:</i> ${esc(m.tpl.hint)}</p></div>`;
+    }).join("");
+    html+=`<div class="card" style="margin-top:12px"><h3 style="font-size:15px;margin-bottom:4px">${days>1?dayNames[day]:"Twój dzień"}</h3>
+      <p class="note">Razem: ~${Math.round(tk)} kcal · B ~${Math.round(tb)} g (${Math.round(tb*4/tk*100)}%) · T ~${Math.round(tt)} g (${Math.round(tt*9/tk*100)}%) · W ~${Math.round(tw)} g (${Math.round(tw*4/tk*100)}%) — cel: ${kcal} kcal, ${d.pb}/${d.pt}/${d.pw}${Math.abs(tk-kcal)/kcal>0.07?" · <b>odchylenie >7% — potraktuj dzień jako przybliżenie</b>":""}</p>
+      ${mhtml}</div>`;
+  }
+  if(d.week){
+    const byCat={};
+    Object.entries(shopping).forEach(([pid,g])=>{ const p=dietProd(pid); (byCat[p[2]]=byCat[p[2]]||[]).push(`${p[1]} ~${g>=1000?(g/1000).toFixed(1).replace(".",",")+" kg":Math.round(g)+" g"}`); });
+    html+=`<div class="card" style="margin-top:12px"><h3 style="font-size:15px;margin-bottom:6px">Lista zakupów na tydzień</h3>${DIET_CATS.filter(c=>byCat[c]).map(c=>`<p class="note" style="margin:4px 0"><b>${c}:</b> ${byCat[c].join(" · ")}</p>`).join("")}</div>`;
+  }
+  html+=`<div class="card tinted" style="margin-top:12px"><p class="note"><b>To hipoteza, nie zalecenie.</b> Wartości są przybliżone (${DIET_SRC.split(";")[0].toLowerCase()}). Najuczciwszy następny krok: potraktuj ten plan jak eksperyment — 7 dni, wieczorny check-in energii i sytości — i oceń go po swoich danych, nie po obietnicach.</p></div>`;
+  $("dietOut").innerHTML=html;
+  logEvent("DIETA","dieta_plan",`Kreator ułożył plan ${days>1?"tygodnia":"dnia"}: ${kcal} kcal, makro ${d.pb}/${d.pt}/${d.pw}, ${d.meals} posiłki/dzień${kcal<1500?" (z ostrzeżeniem D-1)":""}`);
+}
+function dietBrowse(){
+  const q=($("dQ").value||"").toLowerCase(); const cat=$("dCat").value;
+  const rows=DIET_PRODUCTS.filter(p=>(cat==="all"||p[2]===cat)&&(!q||p[1].toLowerCase().includes(q)))
+    .slice(0,60).map(p=>`<tr><td>${esc(p[1])}<br><span class="note">${p[2]} · porcja: ${p[9]} (~${p[8]} g)</span></td>
+      <td style="text-align:right;white-space:nowrap">~${p[3]} kcal<br><span class="note">B ${p[4]} · T ${p[5]} · W ${p[6]}</span></td></tr>`).join("");
+  $("dietList").innerHTML=rows?`<table style="width:100%;border-collapse:collapse">${rows}</table>`:`<p class="note">Nic nie znaleziono.</p>`;
+}
+function renderDiet(){
+  const host=$("dietHost"); if(!host||!S) return;
+  const d=dietState();
+  host.innerHTML=`<div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <h3 style="font-size:16px">🥗 Dieta <span class="note">· prototyp (DD-016)</span></h3>
+      <span class="note">baza: ${DIET_PRODUCTS.length} produktów</span></div>
+    <p class="note" style="margin:6px 0 10px">Układanie posiłków z popularnych produktów według Twoich deklaracji — bez diagnoz, bez diet „pod schorzenie" (brama G-DIET-0: to teren dietetyka klinicznego i lekarza). Wszystko liczy się lokalnie; preferencje nie wchodzą do pakietu Przewodnika. Bezpłatne w prototypie (granica Premium — otwarta decyzja D-3).</p>
+    <details style="margin-bottom:10px"><summary><b>Przeglądarka produktów</b> — makro na 100 g</summary>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+        <input type="text" id="dQ" placeholder="szukaj…" oninput="dietBrowse()" style="max-width:200px">
+        <select id="dCat" onchange="dietBrowse()"><option value="all">wszystkie kategorie</option>${DIET_CATS.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>
+      </div>
+      <div id="dietList" style="max-height:340px;overflow-y:auto"></div>
+      <p class="note" style="margin-top:8px">${DIET_SRC}</p></details>
+    <details open><summary><b>Kreator planu</b> — makro, preferencje, rytm</summary>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;align-items:end">
+        <div><label class="note" for="dKcal">Energia (kcal/dzień)</label><br><input type="number" id="dKcal" value="${esc(String(d.kcal))}" min="0" step="50" style="max-width:120px"></div>
+        <div><label class="note" for="dPb">Białko %</label><br><input type="number" id="dPb" value="${d.pb}" min="0" max="100" style="max-width:80px"></div>
+        <div><label class="note" for="dPt">Tłuszcz %</label><br><input type="number" id="dPt" value="${d.pt}" min="0" max="100" style="max-width:80px"></div>
+        <div><label class="note" for="dPw">Węgle %</label><br><input type="number" id="dPw" value="${d.pw}" min="0" max="100" style="max-width:80px"></div>
+        <div><label class="note" for="dMeals">Posiłki/dzień</label><br><select id="dMeals">${[2,3,4,5,6].map(n=>`<option value="${n}"${d.meals===n?" selected":""}>${n}</option>`).join("")}</select></div>
+        <div><label class="note" for="dMax">Maks. czas posiłku</label><br><select id="dMax">${[[15,"15 min"],[30,"30 min"],[60,"60 min"]].map(([v,l])=>`<option value="${v}"${d.maxmin===v?" selected":""}>${l}</option>`).join("")}</select></div>
+      </div>
+      <p class="note" style="margin:0 0 10px">Nie znasz swojej energii? Typowy zakres podtrzymania dla dorosłych to ~1800–2800 kcal zależnie od ciała i ruchu — wpisz wartość, którą znasz ze swojego doświadczenia lub kalkulatora, i traktuj ją jako <b>szacunek, nie zalecenie</b>.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+        <select id="dStyl"><option value="all"${d.styl==="all"?" selected":""}>jem wszystko</option><option value="vege"${d.styl==="vege"?" selected":""}>wegetariańsko</option><option value="vegan"${d.styl==="vegan"?" selected":""}>wegańsko</option></select>
+        <label class="note"><input type="checkbox" id="dGf"${d.gf?" checked":""}> bez glutenu</label>
+        <label class="note"><input type="checkbox" id="dLf"${d.lf?" checked":""}> bez laktozy</label>
+        <label class="note"><input type="checkbox" id="dWeek"${d.week?" checked":""}> cały tydzień + lista zakupów</label>
+      </div>
+      <div style="margin-bottom:10px">${DIET_ALLERGENS.map(([id,label])=>`<label class="note" style="margin-right:12px"><input type="checkbox" id="dAl-${id}"${d.alrg.includes(id)?" checked":""}> bez: ${label.toLowerCase()}</label>`).join("")}</div>
+      <div style="margin-bottom:10px"><label class="note" for="dExcl">Wyklucz produkty (po przecinku, np. „pieczarki, banan")</label><br><input type="text" id="dExcl" value="${esc(d.excl.join(", "))}" style="max-width:420px"></div>
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-bottom:12px"><input type="checkbox" id="dAck"${d.ack?" checked":""} style="margin-top:2px">
+        <span>Potwierdzam: nie jestem w ciąży, nie karmię, mam ukończone 18 lat i nie mam historii zaburzeń odżywiania. <span class="note">(W tych sytuacjach plan powinien układać profesjonalista — brama G-DIET-5.)</span></span></label>
+      <button class="btn primary" onclick="dietGenerate()">Ułóż plan</button>
+      <div id="dietOut"></div></details></div>`;
+  dietBrowse();
+}
+
 (function init(){
   bgInit();
   buildOnboarding();
