@@ -773,6 +773,7 @@
       <p class="lede">Ustal, o której realizujesz swoje eksperymenty. Przypomnienia trafiają do porannej odprawy — bez alarmów, wibracji i kar za pominięcie: to plan, nie nadzorca.</p>
       <div id="planHost"></div>
       <div id="dietHost"></div>
+      <div id="trainHost"></div>
     </section>
 
     <!-- WSPÓLNOTA -->
@@ -1275,7 +1276,7 @@ function showView(id){
   if(id==="pulpit") renderPulpit();
   if(id==="omnie"){ renderProfile(); renderChat(); renderSelfModel(); renderOmnieHub(); renderBio(); }
   if(id==="eksperymenty"){ renderExperiments(); renderExpHub(); }
-  if(id==="plan"){ renderPlan(); renderDiet(); }
+  if(id==="plan"){ renderPlan(); renderDiet(); renderTrening(); }
   if(id==="decyzje") renderAgent();
   if(id==="wspolnota"){ renderCommunityHub(); renderCommunity(); }
   if(id==="rejestr") renderLog();
@@ -4544,6 +4545,150 @@ function renderDiet(){
       <button class="btn primary" onclick="dietGenerate()">Ułóż plan</button>
       <div id="dietOut"></div></details></div>`;
   dietBrowse();
+}
+
+/* ══════════════════ MODUŁ TRENING (polecenie foundera 2026-08-24) ══════════════════
+   Profil trenujący: definicje treningów, dziennik sesji, postęp na osi czasu (SVG),
+   wskazanie „więcej siły następnym razem na…" (decyzja użytkownika; heurystyka tylko
+   jako podpowiedź-hipoteza). Wszystko lokalnie; dane samoopisowe; spadki to dane, nie porażki. */
+
+const TRAIN_TYPES=[["silowy","siłowy"],["cardio","cardio"],["mobilnosc","mobilność"]];
+function trainState(){ if(!S.trening) S.trening={defs:[],sessions:[]}; return S.trening; }
+function trainDef(id){ return trainState().defs.find(d=>d.id===id); }
+function trainSessions(defId){ return trainState().sessions.filter(s=>s.defId===defId); }
+function trainNewId(p){ return p+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+function trainAddDef(){
+  const name=($("trName").value||"").trim();
+  const type=$("trType").value;
+  const exs=($("trExs").value||"").split(",").map(x=>x.trim()).filter(Boolean);
+  if(!name){ toast("Nadaj treningowi nazwę."); return; }
+  if(type==="silowy"&&!exs.length){ toast("Trening siłowy potrzebuje listy ćwiczeń (po przecinku)."); return; }
+  trainState().defs.push({id:trainNewId("tr"),name,type,exercises:exs});
+  save(); renderTrening();
+  logEvent("TRENING","trening_zdefiniowany",`Nowy trening: ${name} (${type}${exs.length?", "+exs.length+" ćwiczeń":""})`);
+}
+function trainRemoveDef(id){
+  const st=trainState();
+  if(trainSessions(id).length){ toast("Ten trening ma zapisane sesje — historia zostaje, definicji nie usuwamy."); return; }
+  st.defs=st.defs.filter(d=>d.id!==id); save(); renderTrening();
+}
+/* metryka sesji na oś czasu: siłowy = objętość Σ(kg×powt×serie); cardio/mobilność = minuty */
+function trainSessionMetric(def,s){
+  if(def.type==="silowy") return s.entries.reduce((a,e)=>a+(e.kg||0)*(e.reps||0)*(e.sets||0),0);
+  return s.entries.reduce((a,e)=>a+(e.min||0),0);
+}
+function trainExVolume(s,ex){ const e=s.entries.find(x=>x.ex===ex); return e?(e.kg||0)*(e.reps||0)*(e.sets||0):0; }
+/* heurystyka podpowiedzi: ćwiczenie najdłużej bez wzrostu objętości (≥2 sesje) — tylko hipoteza */
+function trainStagnation(def){
+  if(def.type!=="silowy") return null;
+  const ss=trainSessions(def.id); if(ss.length<3) return null;
+  let best=null;
+  for(const ex of def.exercises){
+    const vols=ss.map(s=>trainExVolume(s,ex)).filter(v=>v>0);
+    if(vols.length<3) continue;
+    let stale=0;
+    for(let i=vols.length-1;i>0;i--){ if(vols[i]<=vols[i-1]) stale++; else break; }
+    if(stale>=2&&(!best||stale>best.stale)) best={ex,stale};
+  }
+  return best;
+}
+function trainLogSession(defId){
+  const def=trainDef(defId); if(!def) return;
+  const entries=[];
+  if(def.type==="silowy"){
+    for(let i=0;i<def.exercises.length;i++){
+      const kg=Number($("tw-"+i).value)||0, reps=Number($("tr-"+i).value)||0, sets=Number($("ts-"+i).value)||0;
+      if(kg||reps||sets) entries.push({ex:def.exercises[i],kg,reps,sets});
+    }
+    if(!entries.length){ toast("Wpisz przynajmniej jedno ćwiczenie (ciężar × powtórzenia × serie)."); return; }
+  }else{
+    const min=Number($("tmin").value)||0, dist=Number($("tkm").value)||0;
+    if(!min){ toast("Wpisz czas trwania w minutach."); return; }
+    entries.push({ex:def.name,min,km:dist});
+  }
+  const rpe=Number($("trpe").value)||null;
+  const focusSel=$("tfocus")?$("tfocus").value:"";
+  const focusTxt=($("tfocustxt").value||"").trim();
+  const focusNext=focusTxt||focusSel||"";
+  const s={id:trainNewId("ts"),defId,date:new Date().toISOString().slice(0,10),entries,rpe,focusNext,note:($("tnote").value||"").trim()};
+  trainState().sessions.push(s); save(); renderTrening();
+  logEvent("TRENING","trening_sesja",`Sesja: ${def.name}${rpe?` (RPE ${rpe})`:""}${focusNext?` · następnym razem więcej siły na: ${focusNext}`:""}`);
+  toast("Sesja zapisana."+(focusNext?" Wskazanie na następny raz zapamiętane.":""));
+}
+function trainChart(def){
+  const ss=trainSessions(def.id); if(ss.length<2) return "";
+  const vals=ss.map(s=>trainSessionMetric(def,s));
+  const W=560,H=120,P=24;
+  const mx=Math.max(...vals)*1.1||1;
+  const pts=vals.map((v,i)=>[P+i*(W-2*P)/Math.max(vals.length-1,1),H-P-(v/mx)*(H-2*P)]);
+  const line=pts.map(p=>p.map(n=>Math.round(n*10)/10).join(",")).join(" ");
+  const dots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===pts.length-1?5:3}" fill="${i===pts.length-1?"var(--accent,#8a6a2f)":"currentColor"}"/>`).join("");
+  const first=vals[0],last=vals[vals.length-1];
+  const delta=first>0?Math.round((last-first)/first*100):0;
+  const unit=def.type==="silowy"?"kg (objętość)":"min";
+  return `<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;color:var(--ink-3,#888)" role="img" aria-label="Postęp treningu ${esc(def.name)}">
+    <line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="currentColor" stroke-opacity=".4"/>
+    <polyline points="${line}" fill="none" stroke="currentColor" stroke-width="2"/>
+    ${dots}
+    <text x="${P}" y="14" font-size="11" fill="currentColor">${Math.round(last)} ${unit} · ${delta>=0?"+":""}${delta}% od pierwszej sesji · ${ss.length} sesji</text>
+  </svg></div>`;
+}
+function trainSessionForm(def){
+  let rows="";
+  if(def.type==="silowy"){
+    rows=def.exercises.map((ex,i)=>`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+      <span style="min-width:140px;font-size:14px">${esc(ex)}</span>
+      <input type="number" id="tw-${i}" placeholder="kg" min="0" step="0.5" style="width:76px">
+      <input type="number" id="tr-${i}" placeholder="powt." min="0" style="width:76px">
+      <input type="number" id="ts-${i}" placeholder="serie" min="0" style="width:76px"></div>`).join("");
+  }else{
+    rows=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+      <input type="number" id="tmin" placeholder="minuty" min="0" style="width:100px">
+      <input type="number" id="tkm" placeholder="km (opcjonalnie)" min="0" step="0.1" style="width:140px"></div>`;
+  }
+  const focusOpts=def.type==="silowy"
+    ? `<select id="tfocus" style="max-width:220px"><option value="">— wybierz ćwiczenie —</option>${def.exercises.map(e=>`<option>${esc(e)}</option>`).join("")}</select>`
+    : `<input type="hidden" id="tfocus" value="">`;
+  return `<div style="margin-top:10px">${rows}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0">
+      <label class="note" for="trpe">RPE (1–10, odczucie wysiłku)</label>
+      <input type="number" id="trpe" min="1" max="10" style="width:70px">
+      <input type="text" id="tnote" placeholder="notatka (opcjonalnie)" style="flex:1;min-width:160px">
+    </div>
+    <div style="margin:8px 0"><b style="font-size:14px">Więcej siły następnym razem na:</b><br>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">${focusOpts}
+        <input type="text" id="tfocustxt" placeholder="albo wpisz własne (np. „tempo na podbiegach")" style="flex:1;min-width:200px"></div>
+      <p class="note" style="margin-top:4px">To Twoje wskazanie dla siebie — pokaże się przy następnej sesji.</p></div>
+    <button class="btn small primary" onclick="trainLogSession('${def.id}')">Zapisz sesję</button></div>`;
+}
+function renderTrening(){
+  const host=$("trainHost"); if(!host||!S) return;
+  const st=trainState();
+  const defsHtml=st.defs.map(def=>{
+    const ss=trainSessions(def.id);
+    const last=ss[ss.length-1];
+    const focus=last&&last.focusNext?`<div style="margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent,#8a6a2f);background:var(--panel-2,rgba(0,0,0,.03));font-size:14px">
+      🎯 <b>Twoje wskazanie z ostatniej sesji (${esc(last.date)}):</b> więcej siły na <b>${esc(last.focusNext)}</b></div>`:"";
+    const stag=trainStagnation(def);
+    const hint=stag?`<p class="note" style="margin:4px 0">Heurystyka (hipoteza, nie zalecenie): <b>${esc(stag.ex)}</b> od ${stag.stale+1} sesji bez wzrostu objętości — może warto zaadresować, a może to celowy przystanek. Ty decydujesz.</p>`:"";
+    const lastList=last?`<p class="note" style="margin:4px 0">Ostatnia sesja ${esc(last.date)}${last.rpe?` · RPE ${last.rpe}`:""}: ${last.entries.map(e=>e.kg!==undefined&&e.sets?`${esc(e.ex)} ${e.kg}kg×${e.reps}×${e.sets}`:`${e.min} min${e.km?` · ${e.km} km`:""}`).join(" · ")}</p>`:"";
+    return `<div class="card" style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <b>${esc(def.name)}</b><span class="note">${TRAIN_TYPES.find(t=>t[0]===def.type)[1]} · ${ss.length} sesji${ss.length?"":` <button class="btn small ghost" onclick="trainRemoveDef('${def.id}')">usuń</button>`}</span></div>
+      ${focus}${trainChart(def)}${hint}${lastList}
+      <details><summary class="note">Zapisz nową sesję</summary>${trainSessionForm(def)}</details></div>`;
+  }).join("");
+  host.innerHTML=`<div class="card" style="margin-top:18px">
+    <h3 style="font-size:16px">🏋 Trening <span class="note">· profil trenujący (prototyp)</span></h3>
+    <p class="note" style="margin:6px 0 10px">Dziennik Twoich treningów z postępem na osi czasu. Wskazanie „więcej siły następnym razem na…" ustawiasz sam po sesji — system może najwyżej podpowiedzieć hipotezę. Postęp bywa nieliniowy: spadek to dana, nie porażka. Dane zostają na urządzeniu; przy bólu lub kontuzji trenuj z profesjonalistą, nie z aplikacją.</p>
+    ${defsHtml||`<p class="note">Nie masz jeszcze zdefiniowanego treningu.</p>`}
+    <details style="margin-top:10px"><summary><b>Nowy trening</b></summary>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:end">
+        <div><label class="note" for="trName">Nazwa</label><br><input type="text" id="trName" placeholder="np. Siła A (całe ciało)" style="max-width:220px"></div>
+        <div><label class="note" for="trType">Rodzaj</label><br><select id="trType">${TRAIN_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
+        <div style="flex:1;min-width:220px"><label class="note" for="trExs">Ćwiczenia (siłowy — po przecinku)</label><br><input type="text" id="trExs" placeholder="Przysiad, Wyciskanie, Martwy ciąg, Wiosłowanie"></div>
+        <button class="btn small" onclick="trainAddDef()">Dodaj</button></div></details></div>`;
 }
 
 (function init(){
