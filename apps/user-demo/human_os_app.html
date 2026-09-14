@@ -39,7 +39,7 @@
     --fx-alpha: .55;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
+    :root:not([data-theme="light"]):not([data-theme="energia"]) {
       color-scheme: dark;
       --bg: #161812;
       --surface: rgba(30,33,26,.88);
@@ -95,6 +95,60 @@
     --glow-accent: 0 0 18px rgba(163,184,150,.28);
     --glow-verd: 0 0 22px rgba(143,175,127,.22);
     --fx-alpha: 1;
+  }
+  /* ── Szata „Energia" (decyzja foundera 2026-09-14): jasna, żywa zieleń + błękit,
+        energiczny sznyt ikonek. Kolory semantyczne (good/warn/crit) zostają czytelne;
+        błękit wchodzi jako drugi akcent (--accent-2) w gradientach i ikonach. ── */
+  :root[data-theme="energia"] {
+    color-scheme: light;
+    --bg: #F2FAF5;
+    --surface: #FFFFFF;
+    --surface-2: #E8F6EE;
+    --surface-3: #DBF0E4;
+    --line: #C7E6D4;
+    --ink: #0D2419;
+    --ink-2: #3B5A4A;
+    --ink-3: #6C8A7A;
+    --accent: #12A150;
+    --accent-ink: #FFFFFF;
+    --accent-tint: #D8F3E3;
+    --accent-2: #0E86D4;
+    --verdigris: #0B8A55;
+    --verdigris-tint: #D5F1E2;
+    --good: #12A150;
+    --good-tint: #D8F3E3;
+    --warn: #DF8A00;
+    --warn-tint: #FCEFD6;
+    --crit: #E23D5B;
+    --crit-tint: #FBDFE5;
+    --clay: #E23D5B;
+    --clay-tint: #FBDFE5;
+    --shadow: 0 2px 4px rgba(13,36,25,.06), 0 12px 30px rgba(18,161,80,.14);
+    --glow-accent: 0 0 16px rgba(18,161,80,.25);
+    --glow-verd: 0 0 18px rgba(14,134,212,.22);
+    --fx-alpha: .85;
+  }
+  [data-theme="energia"] .btn.primary {
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(18,161,80,.28);
+  }
+  [data-theme="energia"] nav.tabs button .ti { opacity: 1; font-size: 14px; color: var(--accent); }
+  [data-theme="energia"] nav.tabs button.active {
+    background: linear-gradient(120deg, var(--accent-tint), #DCEFFB);
+  }
+  [data-theme="energia"] nav.tabs button.active .ti { color: var(--accent-2); }
+  [data-theme="energia"] .bnav button .bi { color: var(--accent); }
+  [data-theme="energia"] .bnav button.active {
+    background: linear-gradient(120deg, var(--accent-tint), #DCEFFB);
+  }
+  [data-theme="energia"] .bnav button.active .bi { color: var(--accent-2); }
+  [data-theme="energia"] .theme-toggle { color: var(--accent); border-color: var(--accent); }
+  @media (prefers-reduced-motion: no-preference) {
+    [data-theme="energia"] nav.tabs button .ti,
+    [data-theme="energia"] .bnav button .bi { transition: transform .15s ease; }
+    [data-theme="energia"] nav.tabs button:hover .ti,
+    [data-theme="energia"] .bnav button:hover .bi { transform: scale(1.18); }
   }
 
   * { box-sizing: border-box; }
@@ -1184,14 +1238,28 @@ function pct(arr,p){ const a=[...arr].sort((x,y)=>x-y); const i=(a.length-1)*p; 
 function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
 /* ---------- motyw (start zawsze w jasnym; wybór użytkownika zapamiętany) ---------- */
+/* Szata „Energia": własny zestaw ikon o energicznym sznycie (fallback: glify z VIEWS). */
+const ICON_SETS={
+  default:{pulpit:"◐",omnie:"◉",decyzje:"✦",symulator:"⟲",eksperymenty:"◇",plan:"◷",wspolnota:"❋",rejestr:"☰",konstytucja:"⚖︎",odzyskiwanie:"↺"},
+  energia:{pulpit:"⚡",omnie:"★",decyzje:"➤",symulator:"⟳",eksperymenty:"⚗",plan:"⏱",wspolnota:"✚",rejestr:"≣",konstytucja:"⛨",odzyskiwanie:"↻"}};
+function viewIcon(id){
+  const t=document.documentElement.getAttribute("data-theme");
+  const set=ICON_SETS[t]||ICON_SETS.default;
+  return set[id]||ICON_SETS.default[id]||"";
+}
+function refreshNavIcons(){
+  document.querySelectorAll('nav.tabs button[data-v] .ti').forEach(el=>{ el.textContent=viewIcon(el.parentElement.dataset.v); });
+  document.querySelectorAll('.bnav button[data-v] .bi').forEach(el=>{ el.textContent=viewIcon(el.parentElement.dataset.v); });
+}
 function applyTheme(t){
   const r=document.documentElement;
-  if(t==="light"||t==="dark") r.setAttribute("data-theme",t); else r.removeAttribute("data-theme");
-  const b=$("themeBtn"); if(b) b.textContent = t==="light"?"○":t==="dark"?"●":"◐";
+  if(t==="light"||t==="dark"||t==="energia") r.setAttribute("data-theme",t); else r.removeAttribute("data-theme");
+  const b=$("themeBtn"); if(b) b.textContent = t==="light"?"○":t==="dark"?"●":t==="energia"?"⚡":"◐";
+  refreshNavIcons();
 }
 function cycleTheme(){
   const cur=document.documentElement.getAttribute("data-theme");
-  const next = cur===null ? "light" : cur==="light" ? "dark" : null;
+  const next = cur===null ? "light" : cur==="light" ? "dark" : cur==="dark" ? "energia" : null;
   try{ localStorage.setItem("human-os-theme", next||"system"); }catch(e){}
   applyTheme(next);
   redrawCharts();
@@ -1258,7 +1326,7 @@ function enterApp(){
   $("app").style.display="block";
   $("tabs").innerHTML = NAV_GROUPS.map(g=>g.map(id=>{
     const v=VIEWS.find(x=>x[0]===id);
-    return `<button data-v="${v[0]}" onclick="showView('${v[0]}')"><span class="ti">${v[2]}</span>${v[1]}</button>`;
+    return `<button data-v="${v[0]}" onclick="showView('${v[0]}')"><span class="ti">${viewIcon(v[0])}</span>${v[1]}</button>`;
   }).join("")).join(`<span class="navsep"></span>`);
   buildDecSelect();
   buildSimSelect();
@@ -4482,7 +4550,7 @@ function dietGenerate(){
         shopping[p[0]]=(shopping[p[0]]||0)+gg;
         return `<span class="note">· ${esc(p[1])} ~${gg} g</span>`;
       }).join("<br>");
-      return `<div style="margin:10px 0;padding:10px 12px;background:var(--panel-2,rgba(0,0,0,.03));border-radius:8px">
+      return `<div style="margin:10px 0;padding:10px 12px;background:var(--surface-2);border-radius:8px">
         <b>${slotName[m.slot]}: ${esc(m.tpl.name)}</b> <span class="note">· ~${Math.round(m.m.k)} kcal · ${m.tpl.min} min${m.overtime?" <b>(przekracza Twój limit czasu — brak krótszej opcji)</b>":""}</span><br>
         ${rows}
         <p class="note" style="margin:6px 0 0"><i>Przyrządzenie:</i> ${esc(m.tpl.hint)}</p></div>`;
@@ -4668,7 +4736,7 @@ function renderTrening(){
   const defsHtml=st.defs.map(def=>{
     const ss=trainSessions(def.id);
     const last=ss[ss.length-1];
-    const focus=last&&last.focusNext?`<div style="margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent,#8a6a2f);background:var(--panel-2,rgba(0,0,0,.03));font-size:14px">
+    const focus=last&&last.focusNext?`<div style="margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent,#8a6a2f);background:var(--surface-2);font-size:14px">
       🎯 <b>Twoje wskazanie z ostatniej sesji (${esc(last.date)}):</b> więcej siły na <b>${esc(last.focusNext)}</b></div>`:"";
     const stag=trainStagnation(def);
     const hint=stag?`<p class="note" style="margin:4px 0">Heurystyka (hipoteza, nie zalecenie): <b>${esc(stag.ex)}</b> od ${stag.stale+1} sesji bez wzrostu objętości — może warto zaadresować, a może to celowy przystanek. Ty decydujesz.</p>`:"";
